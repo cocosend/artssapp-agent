@@ -1,0 +1,230 @@
+import { NextResponse } from "next/server";
+import { configuredProviders, runModelWithFallback, type ChatMessage, type ProviderId } from "@/lib/providers";
+import { addEvent, addMessage, createRun, createSession, finishRun } from "@/lib/supabase";
+import { createBranch, createPullRequest, deployVercel, listRepo, readRepoFile, commitFiles } from "@/lib/github";
+import { parsePlan, validatePath } from "@/lib/agent-plan";
+import { isAgentAuthenticated } from "@/lib/auth";
+
+export const runtime = "nodejs";
+
+const REPO = process.env.GITHUB_REPO || "cocosend/artssapp-agent";
+const MAX_MESSAGE_CHARS = 12_000;
+const SYSTEM_APPEND = `
+Return ONLY valid JSON, with no markdown fences.
+Schema:
+{"action":"answer"|"change","message":"string","commit":boolean,"createPr":boolean,"deploy":boolean,"deployTarget":"preview"|"production","branch":"string","commitMessage":"string","prTitle":"string","readFiles":["path"],"files":[{"path":"string","content":"complete file contents"}]}
+For action=answer, files may be [].
+For action=change, use readFiles when you need the server to inspect additional repository files before producing the final edit plan.
+After inspection context is provided, return the final change plan with complete contents for every file that must be changed.
+Do not include secrets, .env files, tokens, credentials, or private keys.
+Set commit=true when the user asks to save, commit, implement, or apply the requested code changes. Set commit=false for preview-only requests.
+Set createPr=true when changes should be proposed through a pull request; otherwise false.
+Set deploy=true only when the user explicitly asks for deployment. Use deployTarget=preview unless production deployment is explicitly requested.
+Never write directly to main. The execution engine always creates an agent branch.
+If the repository context is insufficient and no specific files can be identified, return action=answer and explain what is missing.
+`;
+
+function normalizeMessages(value: unknown): ChatMessage[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((m): m is ChatMessage =>
+      Boolean(m) &&
+      typeof m === "object" &&
+      ["user", "assistant", "system"].includes((m as ChatMessage).role) &&
+      typeof (m as ChatMessage).content === "string",
+    )
+    .slice(-20)
+    .map((m) => ({ role: m.role, content: m.content.slice(0, MAX_MESSAGE_CHARS) }));
+}
+
+async function repoContext() {
+  try {
+    const root = await listRepo(REPO, "", "main");
+    const names = Array.isArray(root) ? root.map((x: any) => x.path).slice(0, 100) : [];
+    const important = [
+      "package.json",
+      "README.md",
+      "app/page.tsx",
+      "app/globals.css",
+      "app/api/agent/route.ts",
+      "lib/agent-plan.ts",
+      "lib/providers.ts",
+      "lib/github.ts",
+      "lib/supabase.ts",
+    ];
+    const files = await Promise.all(important.map(async (path) => {
+      try {
+        const data = await readRepoFile(REPO, path, "main");
+        return `FILE: ${path}\n${Buffer.from(data.content, "base64").toString("utf8").slice(0, 18_000)}`;
+      } catch {
+        return `FILE: ${path}\n<not found>`;
+      }
+    }));
+    return `REPOSITORY: ${REPO}\nROOT: ${names.join(", ")}\n\n${files.join("\n\n")}`;
+  } catch (error) {
+    return `REPOSITORY: ${REPO}\nGitHub context unavailable: ${error instanceof Error ? error.message : "unknown error"}`;
+  }
+}
+
+async function inspectRequestedFiles(paths: string[]) {
+  const safePaths = paths.map(validatePath).slice(0, 12);
+  const results = await Promise.all(safePaths.map(async (path) => {
+    try {
+      const data = await readRepoFile(REPO, path, "main");
+      return `FILE: ${path}\n${Buffer.from(data.content, "base64").toString("utf8").slice(0, 18_000)}`;
+    } catch (error) {
+      return `FILE: ${path}\n<unavailable: ${error instanceof Error ? error.message : "unknown error"}>`;
+    }
+  }));
+  return results.join("\n\n");
+}
+
+export async function POST(req: Request) {
+  const serviceKey = req.headers.get("x-agent-service-key");
+  const expectedServiceKey = process.env.AGENT_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceAuthorized = Boolean(serviceKey && expectedServiceKey && serviceKey === expectedServiceKey);
+  if (!serviceAuthorized && !(await isAgentAuthenticated())) {
+    return NextResponse.json({ error: "Authentication required. Open /login." }, { status: 401 });
+  }
+
+  let sessionId: string | undefined;
+  let runId: string | undefined;
+
+  try {
+    const body = await req.json();
+    const messages = normalizeMessages(body?.messages);
+    const requested = body?.provider as ProviderId | undefined;
+    const available = configuredProviders();
+
+    if (!messages.length) return NextResponse.json({ error: "messages is required" }, { status: 400 });
+    if (!available.length) {
+      return NextResponse.json({
+        error: "No AI provider is configured.",
+        setup: ["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "GEMINI_API_KEY"],
+      }, { status: 503 });
+    }
+
+    const provider = requested && available.includes(requested) ? requested : available[0];
+    const task = messages.filter((m) => m.role === "user").at(-1)?.content || "Agent task";
+
+    try {
+      const session = await createSession(task.slice(0, 120));
+      sessionId = session?.id;
+      if (sessionId) {
+        const run = await createRun(sessionId, task);
+        runId = run?.id;
+        if (runId) await addEvent(runId, "thinking", "Агент аналізує задачу та репозиторій.");
+        await addMessage(sessionId, "user", task);
+      }
+    } catch {
+      // Persistence is optional; the agent can continue without Supabase.
+    }
+
+    const context = await repoContext();
+    const baseMessages: ChatMessage[] = [
+      ...messages,
+      { role: "system", content: `You have repository context below. ${SYSTEM_APPEND}\n\n${context}` },
+    ];
+
+    let modelResult = await runModelWithFallback(provider, baseMessages);
+    let plan = parsePlan(modelResult.text);
+
+    if (plan.readFiles?.length) {
+      if (runId) await addEvent(runId, "inspecting", `Читаю ${plan.readFiles.length} додаткових файлів репозиторію.`, { files: plan.readFiles });
+      const inspected = await inspectRequestedFiles(plan.readFiles);
+      const inspectionMessages: ChatMessage[] = [
+        ...messages,
+        {
+          role: "system",
+          content: `You already inspected the base repository context. Here are the additional requested files. Produce the FINAL JSON plan now. Do not request more files unless absolutely necessary.\n\n${SYSTEM_APPEND}\n\nADDITIONAL FILES:\n${inspected}`,
+        },
+      ];
+      modelResult = await runModelWithFallback(modelResult.provider, inspectionMessages);
+      plan = parsePlan(modelResult.text);
+    }
+
+    const activeProvider = modelResult.provider;
+
+    if (plan.action !== "change" || !plan.files?.length) {
+      if (runId) {
+        await addEvent(runId, "completed", "Задача оброблена без змін у GitHub.");
+        await finishRun(runId, "completed", plan.message);
+      }
+      return NextResponse.json({ text: plan.message, provider: activeProvider, available, action: "answer" });
+    }
+
+    const safeFiles = plan.files.map((file) => ({
+      path: validatePath(file.path),
+      content: file.content,
+    }));
+
+    if (runId) await addEvent(runId, "editing", `Підготовлено ${safeFiles.length} файлів.`, { files: safeFiles.map((f) => f.path) });
+
+    const executionEnabled = process.env.AGENT_EXECUTION_ENABLED === "true";
+    if (!executionEnabled || plan.commit !== true) {
+      const text = `${plan.message}\n\nПідготовлено файли: ${safeFiles.map((f) => f.path).join(", ")}.\n\nРежим preview: зміни не записані в GitHub.`;
+      if (runId) await finishRun(runId, "completed", text);
+      return NextResponse.json({ text, provider: activeProvider, available, action: "preview", files: safeFiles.map((f) => f.path) });
+    }
+
+    const branch = `agent/${Date.now()}`;
+    await createBranch(REPO, branch, "main");
+    if (runId) await addEvent(runId, "branch", `Створено гілку ${branch}.`, { branch });
+
+    const commit = await commitFiles(
+      REPO,
+      safeFiles,
+      plan.commitMessage || "chore(agent): apply requested changes",
+      branch,
+    );
+    if (runId) await addEvent(runId, "commit", `Створено atomic commit ${commit.sha}.`, { branch, commit: commit.sha });
+
+    let prUrl: string | undefined;
+    if (plan.createPr) {
+      const pr = await createPullRequest(
+        REPO,
+        plan.prTitle || "Arts Agent: automated changes",
+        branch,
+        "main",
+        plan.message,
+      );
+      prUrl = pr?.html_url;
+      if (runId) await addEvent(runId, "pr", prUrl || "Pull request created.", { branch });
+    }
+
+    let deploymentUrl: string | undefined;
+    if (plan.deploy) {
+      const target = plan.deployTarget === "production" ? "production" : "preview";
+      if (target === "production") {
+        throw new Error("Production deployment is blocked until the agent branch is merged. Request a preview deployment or merge the PR first.");
+      }
+      if (runId) await addEvent(runId, "deploying", `Запускаю Vercel ${target} deployment для ${branch}.`);
+      const deployment = await deployVercel(undefined, target, branch);
+      deploymentUrl = deployment?.url ? `https://${deployment.url}` : deployment?.inspectorUrl;
+      if (runId) await addEvent(runId, "deployed", deploymentUrl || "Vercel deployment started.", { branch, target });
+    }
+
+    const result = `${plan.message}\n\nCommit: ${commit.sha}\nBranch: ${branch}${prUrl ? `\nPR: ${prUrl}` : ""}${deploymentUrl ? `\nDeploy: ${deploymentUrl}` : ""}`;
+    if (runId) await finishRun(runId, "completed", result);
+
+    return NextResponse.json({
+      text: result,
+      provider: activeProvider,
+      available,
+      action: "executed",
+      branch,
+      commitSha: commit.sha,
+      prUrl,
+      deploymentUrl,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Agent request failed";
+    if (runId) {
+      try {
+        await addEvent(runId, "failed", message);
+        await finishRun(runId, "failed", message);
+      } catch {}
+    }
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

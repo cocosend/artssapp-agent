@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "ARTSS Agent",
+    "slug": "artss-agent",
+    "scheme": "artssagent",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.artsoffss.artssagent"
+    },
+    "android": {
+      "package": "com.artsoffss.artssagent"
+    },
+    "plugins": ["expo-secure-store"]
+  }
+}
