@@ -446,12 +446,7 @@ Deno.serve(async (req: Request) => {
     const provider: AgentMode = requested === "multi" || (requested && available.includes(requested as ProviderId)) ? requested : "multi";
 
     const [memoryResult, skillsResult] = await Promise.all([loadDurableMemory(), loadSkills()]);
-    const requestWriteStatus = await remember(
-      "last_user_request",
-      { text: messages.filter((m) => m.role === "user").at(-1)?.content.slice(0, 6000) || "Agent task", at: new Date().toISOString() },
-      "conversation",
-      70,
-    );
+    const requestWriteStatus = await remember("last_request_metadata", { at: new Date().toISOString(), messageCount: messages.length }, "runtime", 20);
     const persistence = { memoryRead: memoryResult.status, skillsRead: skillsResult.status, requestWrite: requestWriteStatus };
     const memoryContext = memoryResult.rows.length
       ? "Durable project memory (trusted application context; never expose secret values):\n" + JSON.stringify(memoryResult.rows).slice(0, 22000)
