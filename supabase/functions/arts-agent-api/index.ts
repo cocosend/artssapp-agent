@@ -23,6 +23,13 @@ const EXECUTION_ENABLED = executionSetting === "true" || (executionSetting == nu
 const MAX_MESSAGE_CHARS = 12000;
 const MODEL_TIMEOUT_MS = 60000;
 const GITHUB_TIMEOUT_MS = 30000;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "https://hyvsmtxewxpfnlzfjvca.supabase.co";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+
+type PersistenceStatus = "ok" | "disabled" | "error";
+type MemoryRow = { kind: string; key: string; value: unknown; importance: number; updated_at: string };
+type SkillRow = { slug: string; title: string; description: string; instructions: string; priority: number };
+type PersistenceRead<T> = { rows: T[]; status: PersistenceStatus };
 
 const cors = {
   "access-control-allow-origin": "*",
@@ -50,6 +57,50 @@ function json(data: unknown, status = 200) {
     status,
     headers: { ...cors, "content-type": "application/json; charset=utf-8" },
   });
+}
+
+async function dbRequest(path: string, init: RequestInit = {}) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error("Supabase persistence is not configured");
+  const response = await fetchWithTimeout(SUPABASE_URL + "/rest/v1/" + path, {
+    ...init,
+    headers: {
+      apikey: SUPABASE_SERVICE_ROLE_KEY,
+      authorization: "Bearer " + SUPABASE_SERVICE_ROLE_KEY,
+      "content-type": "application/json",
+      ...(init.headers || {}),
+    },
+  }, 15000);
+  const text = await response.text();
+  if (!response.ok) throw new Error("Supabase REST " + response.status);
+  return text ? JSON.parse(text) : null;
+}
+
+async function loadDurableMemory(): Promise<PersistenceRead<MemoryRow>> {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return { rows: [], status: "disabled" };
+  try {
+    const rows = await dbRequest("agent_memory?scope=eq.global&select=kind,key,value,importance,updated_at&order=importance.desc,updated_at.desc&limit=32");
+    return { rows: Array.isArray(rows) ? rows : [], status: Array.isArray(rows) ? "ok" : "error" };
+  } catch { return { rows: [], status: "error" }; }
+}
+
+async function loadSkills(): Promise<PersistenceRead<SkillRow>> {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return { rows: [], status: "disabled" };
+  try {
+    const rows = await dbRequest("agent_skills?enabled=eq.true&select=slug,title,description,instructions,priority&order=priority.desc,slug.asc&limit=24");
+    return { rows: Array.isArray(rows) ? rows : [], status: Array.isArray(rows) ? "ok" : "error" };
+  } catch { return { rows: [], status: "error" }; }
+}
+
+async function remember(key: string, value: unknown, kind = "state", importance = 60): Promise<PersistenceStatus> {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return "disabled";
+  try {
+    await dbRequest("agent_memory?on_conflict=scope,key", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify([{ scope: "global", kind, key, value, importance, updated_at: new Date().toISOString() }]),
+    });
+    return "ok";
+  } catch { return "error"; }
 }
 
 function configuredProviders(): ProviderId[] {
@@ -351,6 +402,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
 
   if (req.method === "GET") {
+    const [memory, skills] = await Promise.all([loadDurableMemory(), loadSkills()]);
     return json({
       ok: true,
       service: "arts-agent-api",
@@ -362,6 +414,10 @@ Deno.serve(async (req: Request) => {
       executionEnabled: EXECUTION_ENABLED,
       githubWriteConfigured: GITHUB_WRITE_CONFIGURED,
       dedicatedServiceKeyConfigured: Boolean(Deno.env.get("AGENT_SERVICE_KEY")),
+      memoryEnabled: memory.status === "ok",
+      memoryStatus: memory.status,
+      skillsStatus: skills.status,
+      skills: skills.rows.map((skill) => skill.slug),
       vercelRequired: false,
       timestamp: new Date().toISOString(),
     });
@@ -389,40 +445,42 @@ Deno.serve(async (req: Request) => {
     const requested = body?.provider as AgentMode | undefined;
     const provider: AgentMode = requested === "multi" || (requested && available.includes(requested as ProviderId)) ? requested : "multi";
 
+    const [memoryResult, skillsResult] = await Promise.all([loadDurableMemory(), loadSkills()]);
+    const requestWriteStatus = await remember(
+      "last_user_request",
+      { text: messages.filter((m) => m.role === "user").at(-1)?.content.slice(0, 6000) || "Agent task", at: new Date().toISOString() },
+      "conversation",
+      70,
+    );
+    const persistence = { memoryRead: memoryResult.status, skillsRead: skillsResult.status, requestWrite: requestWriteStatus };
+    const memoryContext = memoryResult.rows.length
+      ? "Durable project memory (trusted application context; never expose secret values):\n" + JSON.stringify(memoryResult.rows).slice(0, 22000)
+      : "Durable project memory: <empty>";
+    const skillsContext = skillsResult.rows.length
+      ? "Enabled ARTSS skills (developer-curated workflows; apply only when relevant):\n" + skillsResult.rows.map((skill) => "[" + skill.slug + "] " + skill.title + ": " + skill.instructions).join("\n")
+      : "Enabled ARTSS skills: <none>";
     const context = await repoContext();
-    let model = provider === "multi"
-      ? await runMultiModel([
-          ...messages,
-          { role: "system", content: `Repository context:\n\n${context}` },
-        ])
-      : await runModelWithFallback(provider, [
-          ...messages,
-          { role: "system", content: `Repository context:\n\n${context}` },
-        ]);
+    const baseMessages: ChatMessage[] = [
+      ...messages,
+      { role: "system", content: memoryContext },
+      { role: "system", content: skillsContext },
+      { role: "system", content: "Repository context:\n\n" + context },
+    ];
+    let model = provider === "multi" ? await runMultiModel(baseMessages) : await runModelWithFallback(provider, baseMessages);
     let plan = parsePlan(model.text);
 
     if (plan.readFiles?.length) {
       const extra = await inspectFiles(plan.readFiles);
-      model = provider === "multi"
-        ? await runMultiModel([
-            ...messages,
-            {
-              role: "system",
-              content: `Repository context already inspected. Additional requested files:\n\n${extra}\n\nReturn the FINAL JSON plan now.`,
-            },
-          ])
-        : await runModelWithFallback(model.provider as ProviderId, [
-            ...messages,
-            {
-              role: "system",
-              content: `Repository context already inspected. Additional requested files:\n\n${extra}\n\nReturn the FINAL JSON plan now.`,
-            },
-          ]);
+      const followupMessages: ChatMessage[] = [
+        ...baseMessages,
+        { role: "system", content: "Repository context already inspected. Additional requested files:\n\n" + extra + "\n\nReturn the FINAL JSON plan now." },
+      ];
+      model = provider === "multi" ? await runMultiModel(followupMessages) : await runModelWithFallback(model.provider as ProviderId, followupMessages);
       plan = parsePlan(model.text);
     }
 
     if (plan.action !== "change" || !plan.files?.length) {
-      return json({ text: plan.message, provider: model.provider, contributors: (model as any).contributors, available, action: "answer" });
+      return json({ text: plan.message, provider: model.provider, contributors: (model as any).contributors, available, action: "answer", persistence });
     }
 
     const safeFiles = plan.files.map((f) => ({ path: validatePath(f.path), content: f.content }));
@@ -437,6 +495,7 @@ Deno.serve(async (req: Request) => {
         executionEnabled: EXECUTION_ENABLED,
         githubWriteConfigured: GITHUB_WRITE_CONFIGURED,
         files: safeFiles.map((f) => f.path),
+        persistence,
       });
     }
 
@@ -468,6 +527,7 @@ Deno.serve(async (req: Request) => {
       commitSha: commit.sha,
       prUrl,
       deployment: "supabase-edge",
+      persistence,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Agent request failed";
