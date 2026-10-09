@@ -85,6 +85,7 @@ export default function Home() {
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeSection, setActiveSection] = useState<StudioSection>("home");
   const [openedImage, setOpenedImage] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -259,14 +260,26 @@ export default function Home() {
     } catch { setNotice("Не вдалося відкрити файл."); }
   }
   function jumpTo(id: "models" | "integrations" | "chat") {
-    const target = id === "models" ? modelRef.current : id === "integrations" ? servicesRef.current : document.getElementById("agent-composer");
-    target?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+    if (id !== "chat") {
+      const fold = document.getElementById("fold-" + id) as HTMLDetailsElement | null;
+      if (fold) fold.open = true;
+    }
+    window.setTimeout(() => {
+      const target = id === "models" ? document.getElementById("fold-models") :
+        id === "integrations" ? document.getElementById("fold-integrations") :
+        document.getElementById("agent-composer");
+      target?.scrollIntoView({ behavior: "auto", block: "start" });
+    }, 0);
   }
 
   function goToSection(section: StudioSection) {
     setSidebarOpen(false);
     if (section === "code") { setActiveSection("code"); return; }
     setActiveSection(section);
+    if (section === "models" || section === "integrations" || section === "runs") {
+      const fold = document.getElementById("fold-" + section) as HTMLDetailsElement | null;
+      if (fold) fold.open = true;
+    }
     if (section === "web") setToolMode("web");
     if (section === "images") setToolMode("image");
     window.setTimeout(() => {
@@ -406,14 +419,14 @@ export default function Home() {
     catch { setNotice("Копіювання недоступне у цьому браузері."); }
   }
 
-  return <div className="pm-shell neo-app flagship-app studio-layout" data-density={preferences.density} data-effects={preferences.effects ? "on" : "off"} data-motion={preferences.motion} data-textsize={preferences.textSize}>
+  return <div className={"pm-shell neo-app flagship-app studio-layout night-shell" + (sidebarCollapsed ? " night-sidebar-hidden" : "")} data-density={preferences.density} data-effects={preferences.effects ? "on" : "off"} data-motion={preferences.motion} data-textsize={preferences.textSize}>
     <StudioSidebar open={sidebarOpen} active={activeSection} busy={busy} onClose={() => setSidebarOpen(false)}
       onNavigate={goToSection} onSettings={() => { setSidebarOpen(false); setSettingsOpen(true); }}
-      onNewChat={() => { setSidebarOpen(false); newChat(); goToSection("home"); }}/>
+      onNewChat={() => { setSidebarOpen(false); newChat(); goToSection("home"); }} onCollapse={() => setSidebarCollapsed(true)}/>
     <div className="studio-workarea">
     <header className="pm-header neo-header">
       <button type="button" className="studio-mobile-trigger" aria-controls="studio-nav" aria-expanded={sidebarOpen}
-        aria-label={sidebarOpen ? "Закрити бічне меню" : "Відкрити бічне меню"} onClick={() => setSidebarOpen(x => !x)}>☰</button>
+        aria-label={sidebarOpen ? "Закрити бічне меню" : "Відкрити бічне меню"} onClick={() => { if (window.matchMedia("(min-width: 981px)").matches) setSidebarCollapsed(x => !x); else setSidebarOpen(x => !x); }}>☰</button>
       <Link className="pm-brand" href="/" aria-label="ARTSS AI — головна">
         <span className="pm-brand-mark flagship-logo"><ArtssMark size={48}/></span>
         <span className="pm-brand-label">ARTSS<span className="pm-dot">●</span>AI<small>PRIVATE AGENT STUDIO</small></span>
@@ -439,20 +452,13 @@ export default function Home() {
         <CodeWorkspace onSendToAgent={sendEditorDraft} onClose={() => goToSection("home")}
           githubWrite={Boolean(health?.integrations.github && health?.executionEnabled)}/> :
       <>
-      <section className="pm-hero neo-hero" aria-labelledby="neo-title">
-        <div className="pm-hero-copy">
-          <span className="pm-kicker"><span className="pm-kicker-mark">✦</span> НОВИЙ РІВЕНЬ ВАШИХ ІДЕЙ</span>
-          <h1 id="neo-title">Створюйте більше.<br /><span>Без зайвого.</span></h1>
-          <p>Усі ваші AI-інструменти в одному просторі. Один запит — команда моделей.</p>
-          <div className="neo-hero-actions">
-            <button type="button" className="neo-pill neo-pill-main" onClick={() => jumpTo("models")}>✦ <strong>{configured.length} активних ключів</strong><Icon name="chevron" size={15}/></button>
-            <button type="button" className="neo-pill" onClick={() => { chooseModel("multi"); jumpTo("models"); }}><Icon name="shield" size={16}/> Розумний fallback <Icon name="chevron" size={14}/></button>
-            <button type="button" className="neo-pill" onClick={() => jumpTo("chat")}>◈ Приватний простір <Icon name="chevron" size={14}/></button>
-          </div>
-        </div>
-        <div className="neo-orb flagship-orb" aria-hidden="true"/>
+      <section className="night-intro" aria-labelledby="neo-title">
+        <div><span className="night-kicker">ARTSS AI / PRIVATE STUDIO</span><h1 id="neo-title">Ваш AI-простір<span>.</span></h1><p>Код, пошук та моделі — в одному місці. Інструменти згорнуті ліворуч.</p></div>
+        <span className={"night-system-indicator" + (health?.ok ? " online" : "")}><i/>{loading ? "Перевірка" : health?.ok ? "Система активна" : "Немає зв'язку"}</span>
       </section>
 
+      <details className="night-fold" id="fold-models">
+        <summary className="night-fold-summary"><span className="night-fold-number">01</span><strong>Моделі AI</strong><small>Вибір та маршрутизація</small><span className="night-fold-chevron" aria-hidden="true">⌄</span></summary>
       <section className="pm-panel neo-section" aria-labelledby="models-title">
         <div className="neo-section-head">
           <h2 id="models-title"><span className="neo-heading-symbol">⬡</span> AI МОДЕЛІ</h2>
@@ -473,7 +479,10 @@ export default function Home() {
         </div>
         {!ready && health ? <p className="neo-inline-alert">Для вибраної моделі немає ключа. Оберіть активну модель.</p> : null}
       </section>
+      </details>
 
+      <details className="night-fold" id="fold-tasks">
+        <summary className="night-fold-summary"><span className="night-fold-number">02</span><strong>Швидкі дії</strong><small>Шаблони та сценарії</small><span className="night-fold-chevron" aria-hidden="true">⌄</span></summary>
       <section className="pm-panel neo-section" aria-labelledby="tasks-title">
         <div className="neo-section-head"><h2 id="tasks-title"><span className="neo-heading-symbol sun">ϟ</span> ШВИДКІ ДІЇ</h2></div>
         <div className="pm-carousel neo-action-strip" ref={shortcutRef}>
@@ -486,7 +495,10 @@ export default function Home() {
           </button>)}
         </div>
       </section>
+      </details>
 
+      <details className="night-fold" id="fold-integrations">
+        <summary className="night-fold-summary"><span className="night-fold-number">03</span><strong>Інтеграції</strong><small>GitHub · Vercel · Supabase</small><span className="night-fold-chevron" aria-hidden="true">⌄</span></summary>
       <section className="pm-panel neo-section" aria-labelledby="integrations-title" ref={servicesRef}>
         <div className="neo-section-head"><h2 id="integrations-title"><span className="neo-heading-symbol gold">♧</span> ІНТЕГРАЦІЇ ТА СТАТУС</h2><button className="neo-show-more" type="button" onClick={() => { setLoading(true); void refresh(); }}>Оновити <Icon name="refresh" size={14}/></button></div>
         <div className="neo-service-strip">
@@ -515,7 +527,10 @@ export default function Home() {
           <p className="diagnostic-caption">Читання GitHub: {diagnostics.githubRead ? "працює" : "недоступне"}. Запис у GitHub: {diagnostics.githubWrite === "missing_key" ? "немає токена" : diagnostics.githubWrite === "token_present_not_write_tested" ? "токен є, запис не тестувався" : "недоступний"}. Автоматичне виконання: {diagnostics.agentExecution === "disabled" ? "вимкнене" : "налаштоване, не тестувалося"}.</p>
         </div> : null}
       </section>
+      </details>
 
+      <details className="night-fold" id="fold-runs">
+        <summary className="night-fold-summary"><span className="night-fold-number">04</span><strong>Запуски</strong><small>Історія задач</small><span className="night-fold-chevron" aria-hidden="true">⌄</span></summary>
       <section className="pm-panel neo-section" aria-labelledby="runs-title">
         <div className="neo-section-head">
           <h2 id="runs-title"><span className="neo-heading-symbol gold">◷</span> НЕДАВНІ ЗАПУСКИ</h2>
@@ -530,6 +545,7 @@ export default function Home() {
             </div>)}
         </div>
       </section>
+      </details>
 
       <section className="neo-chat-section" id="agent-composer" aria-label="AI-чат">
         {messages.length ? <div className="pm-thread neo-thread" ref={threadRef} role="log" aria-live="polite">
