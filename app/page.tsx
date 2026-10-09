@@ -70,6 +70,7 @@ export default function Home() {
   const [selected, setSelected] = useState<Mode>("multi");
   const [messages, setMessages] = useState<Message[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
+  const [storedRuns, setStoredRuns] = useState<Run[]>([]);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [showAllModels, setShowAllModels] = useState(false);
@@ -82,6 +83,7 @@ export default function Home() {
   const threadRef = useRef<HTMLDivElement>(null);
   const servicesRef = useRef<HTMLElement>(null);
   const inFlightHealth = useRef(false);
+  const recentRuns = runs.length ? runs : storedRuns;
   const configured = health?.providers.configured ?? [];
   const ready = selected === "multi" ? configured.length > 0 : configured.includes(selected);
 
@@ -114,6 +116,22 @@ export default function Home() {
   useEffect(() => {
     if (messages.length) threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "auto" });
   }, [messages]);
+
+  useEffect(() => {
+    let active = true;
+    void fetch("/api/runs", { cache: "no-store" }).then(response => response.ok ? response.json() : null)
+      .then((data: { runs?: { id?: string; title?: string; status?: string; created_at?: string | null }[] } | null) => {
+        if (!active || !Array.isArray(data?.runs)) return;
+        const historic: Run[] = data.runs.map((run, i) => ({
+          id: run.created_at ? Date.parse(run.created_at) || -(i + 1) : -(i + 1),
+          title: run.title || "Agent task",
+          status: run.status === "done" ? "done" : run.status === "error" ? "error" : "running",
+          model: "ARTSS Agent",
+        }));
+        setStoredRuns(historic);
+      }).catch(() => { /* Optional storage: keep local runs visible. */ });
+    return () => { active = false; };
+  }, []);
 
   function chooseTask(text: string) {
     setToolMode("agent");
@@ -214,13 +232,13 @@ export default function Home() {
       </Link>
       <div className="pm-header-right">
         <span className={"pm-live " + (health ? "up" : "")} title={health ? "API відповідає" : "API не перевірено"}><i /><span className="neo-status-caption">{loading ? "Перевірка" : health ? "API онлайн" : "Офлайн"}</span></span>
-        <button type="button" className={"pm-round-icon flagship-alert-button" + (menu === "notifications" ? " selected" : "")} onClick={() => setMenu(x => x === "notifications" ? null : "notifications")} aria-expanded={menu === "notifications"} aria-label="Сповіщення та запуски">♧{runs.some(r => r.status === "running") ? <span className="flagship-alert-dot"/> : null}</button>
+        <button type="button" className={"pm-round-icon flagship-alert-button" + (menu === "notifications" ? " selected" : "")} onClick={() => setMenu(x => x === "notifications" ? null : "notifications")} aria-expanded={menu === "notifications"} aria-label="Сповіщення та запуски">♧{recentRuns.some(r => r.status === "running") ? <span className="flagship-alert-dot"/> : null}</button>
         <button type="button" className={"pm-round-icon flagship-profile-button" + (menu === "profile" ? " selected" : "")} onClick={() => setMenu(x => x === "profile" ? null : "profile")} aria-expanded={menu === "profile"} aria-label="Профіль та вихід">♙</button>
         {menu ? <div className="flagship-header-menu" role="region" aria-label={menu === "profile" ? "Профіль" : "Сповіщення"}>
           {menu === "profile" ? <><strong>Приватний простір ARTSS AI</strong><p>Доступ до AI, інтеграцій та робочих сценаріїв.</p>
           <button type="button" onClick={() => { setMenu(null); setLoading(true); void refresh(); }}><Icon name="refresh" size={16}/> Оновити стан</button>
           <button type="button" onClick={() => { void logout(); }}><Icon name="logout" size={16}/> Вийти</button></> :
-          <><strong>Запуски та сповіщення</strong>{runs.length ? runs.slice(0,4).map(run =>
+          <><strong>Запуски та сповіщення</strong>{recentRuns.length ? recentRuns.slice(0,4).map(run =>
             <p key={run.id} className="flagship-menu-run"><span>{run.status === "done" ? "✓" : run.status === "error" ? "!" : "◷"}</span>{run.title.slice(0,78)}</p>) :
             <p>Нових запусків немає. Завдання з'являться після запиту.</p>}
           <button type="button" onClick={() => { setMenu(null); document.getElementById("runs-title")?.scrollIntoView({ block: "center", behavior: "smooth" }); }}>Переглянути запуски <Icon name="chevron" size={16}/></button></>}
@@ -294,10 +312,10 @@ export default function Home() {
           <button type="button" className="neo-show-more" onClick={() => setShowAllRuns(x => !x)} aria-expanded={showAllRuns}>{showAllRuns ? "Згорнути" : "Усі запуски"} <Icon name="chevron" size={15}/></button>
         </div>
         <div className="neo-runs">
-          {!runs.length ? <div className="neo-no-runs"><span>◎</span><div><strong>Поки що немає запусків</strong><p>Результати реальних задач з&apos;являться тут після першого запиту.</p></div></div> :
-            runs.slice(0,showAllRuns ? 40 : 3).map(r => <div className="neo-run-row" key={r.id}>
+          {!recentRuns.length ? <div className="neo-no-runs"><span>◎</span><div><strong>Поки що немає запусків</strong><p>Результати реальних задач з&apos;являться тут після першого запиту.</p></div></div> :
+            recentRuns.slice(0,showAllRuns ? 40 : 3).map(r => <div className="neo-run-row" key={r.id}>
               <span className={"neo-run-logo " + r.status}>{r.status === "done" ? "✓" : r.status === "error" ? "!" : "⌘"}</span>
-              <span className="neo-run-info"><strong>{r.title}</strong><small>{r.model} · {displayTime(r.id)} · {r.seconds ? r.seconds.toFixed(1) + " c" : "обробка"}</small>{r.prUrl?.startsWith("https://github.com/") ? <a href={r.prUrl} target="_blank" rel="noreferrer">Відкрити PR ↗</a> : null}</span>
+              <span className="neo-run-info"><strong>{r.title}</strong><small>{r.model} · {r.id > 0 ? displayTime(r.id) : "—"} {r.seconds ? "· " + r.seconds.toFixed(1) + " c" : ""}</small>{r.prUrl?.startsWith("https://github.com/") ? <a href={r.prUrl} target="_blank" rel="noreferrer">Відкрити PR ↗</a> : null}</span>
               <span className={"neo-run-pill " + r.status}>{r.status === "done" ? "✓ Готово" : r.status === "error" ? "Помилка" : "Виконується"}</span>
             </div>)}
         </div>
