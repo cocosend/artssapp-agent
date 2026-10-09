@@ -1,0 +1,95 @@
+/* Flagship iOS details: accessible settings, image workspace and size-independent layout. */
+.studio-settings-overlay,.image-lightbox{position:fixed;inset:0;z-index:150;overflow:auto;overscroll-behavior:contain;background:#050108e8;display:flex;align-items:center;justify-content:center;padding:calc(16px + env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));-webkit-overflow-scrolling:touch}
+.studio-settings-panel{display:flex;flex-direction:column;min-width:0;width:min(100%,540px);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px);border:1px solid #dc4181;background:#1f091d;border-radius:28px;box-shadow:0 18px 65px #000a,inset 0 1px #ffb5dd4d;overflow:hidden}
+.settings-head{padding:21px 21px 16px;display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #6a2847}
+.settings-head h2{margin:4px 0 4px;font-size:clamp(24px,6vw,31px);font-weight:820;letter-spacing:-.8px;color:#fff5fa}
+.settings-head p{font-size:12px;line-height:1.5;color:#d3aec8}
+.settings-eyebrow{font-size:10px;letter-spacing:2px;font-weight:750;color:#ffcd85}
+.settings-close{flex:none;display:grid;place-items:center;width:44px;height:44px;border:1px solid #a94171;background:#42132f;color:white;border-radius:16px;font-size:30px;line-height:1;touch-action:manipulation}
+.settings-body{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:18px 20px;display:flex;flex-direction:column;gap:15px;min-height:0}
+.settings-group{min-width:0;border:1px solid #65304e;background:#2b1028;border-radius:19px;padding:16px;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.settings-group legend{font-weight:720;color:#ffe4ef;padding:0 7px;font-size:13px}
+.settings-group label:not(.settings-toggle){color:#e7bbd2;font-size:12px;font-weight:600;margin-top:6px}
+.settings-group select{width:100%;color:#fff7fb;background:#190d1d;border:1px solid #8f416a;border-radius:12px;min-height:46px;padding:10px 11px;font-size:16px;outline-offset:3px;appearance:auto}
+.settings-group select:focus-visible{outline:2px solid #f9b9df}
+.settings-group option{color:#fff;background:#220c23}
+.settings-toggle{display:flex;align-items:center;gap:12px;margin-top:9px;cursor:pointer;color:#fff2f7;font-size:12px;font-weight:640}
+.settings-toggle input{width:22px;height:22px;min-width:22px;accent-color:#ff398c}
+.settings-toggle small{font-weight:400;color:#cfaec1;display:block;font-size:10px;line-height:1.5;margin-top:2px}
+.settings-explain{font-size:11px;color:#cfb0c5;line-height:1.55;margin:4px 0 0}
+.settings-device{display:flex;flex-direction:column;gap:3px;font-size:12px;color:#fbd9e9}
+.settings-device span{color:#80f1d6;font-variant-numeric:tabular-nums}
+.settings-device small{font-size:10px;line-height:1.5;color:#c3a5ba}
+.settings-buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.settings-buttons button{flex:1 1 140px;border:1px solid #97426d;background:#481632;color:#ffe7f0;border-radius:12px;min-height:44px;padding:8px;font-size:11px;font-weight:650}
+.settings-buttons button:disabled{opacity:.55}
+.settings-footer{padding:13px 18px calc(13px + env(safe-area-inset-bottom) * .15);border-top:1px solid #6a2847;display:flex;align-items:center;justify-content:space-between;gap:13px}
+.settings-footer span{font-size:10px;color:#cfb3c6;line-height:1.5}
+.settings-footer button{min-height:44px;padding:10px 20px;border:1px solid #ff94c3;background:linear-gradient(110deg,#e31569,#ff4e9c);color:#fff;border-radius:14px;font-size:12px;font-weight:750}
+.image-current-options{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 3px 12px;color:#ffe2f1;font-size:11px}
+.image-current-options button{padding:9px 11px;min-height:40px;border-radius:999px;background:#4a1738;border:1px solid #bd5883;color:#fff;font-size:11px;white-space:nowrap}
+.image-result{margin-top:12px}.image-result-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+.image-result-actions button{flex:1 1 130px;min-height:44px;padding:10px 12px;background:#441232;color:#fce3ef;border:1px solid #a84777;border-radius:12px;font-size:11px}
+.image-result-actions button:active,.settings-footer button:active,.settings-close:active{transform:scale(.98)}
+.image-lightbox{z-index:180}
+.image-lightbox-content{display:flex;flex-direction:column;gap:12px;min-width:0;width:min(100%,850px);max-height:calc(100dvh - 25px - env(safe-area-inset-top) - env(safe-area-inset-bottom));background:#190a1a;border:1px solid #bf4a80;border-radius:23px;padding:13px;box-shadow:0 16px 65px #000b;overflow-y:auto}
+.image-lightbox-content img{display:block;max-width:100%;width:auto;max-height:65dvh;object-fit:contain;height:auto;border-radius:12px;align-self:center}
+.image-lightbox-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;color:#fff}
+.image-lightbox-toolbar button,.image-lightbox-save{background:#531735;border:1px solid #d66d9b;color:#fff;border-radius:12px;padding:10px 14px;min-height:44px;font-size:12px}
+.image-lightbox-save{background:#c71663}
+.studio-login{position:relative;isolation:isolate;background:radial-gradient(ellipse at 50% 7%,#8d194f88,transparent 49%),linear-gradient(165deg,#070309,#190617 70%,#080208);min-height:100svh;min-height:100dvh}
+.login-glow{pointer-events:none;position:absolute;top:0;left:15%;width:70%;height:35%;z-index:-1;background:radial-gradient(ellipse,#ac1c5e42,transparent 73%)}
+.studio-login-card{position:relative;background:linear-gradient(142deg,#300d28 0%,#1a0b1a 72%,#28101f);border:1px solid #e7438b;box-shadow:inset 0 1px #fff2,0 17px 50px #000b;width:min(100%,480px);border-radius:30px;padding:clamp(21px,5vw,34px)}
+.studio-login-top{display:flex;justify-content:space-between;align-items:center;gap:9px;margin-bottom:18px}
+.studio-login-top .flagship-login-mark{width:70px;height:70px;border-radius:23px;display:grid;place-items:center;border:1px solid #f269a2;background:linear-gradient(140deg,#510a2f,#210921);box-shadow:0 0 18px #ef177144;margin:0}
+.login-private-badge{font-size:9px;color:#ffe8bf;font-weight:720;letter-spacing:1.6px;text-align:right}
+.login-eyebrow{font-size:10px;letter-spacing:2px;color:#ff9ac5;font-weight:700}
+.studio-login-card h1{font-size:clamp(29px,7vw,40px);letter-spacing:-1.3px;line-height:1.13;margin:10px 0 10px}
+.studio-login-card h1 span{background:linear-gradient(100deg,#ff58a0,#ffd18f);-webkit-background-clip:text;background-clip:text;color:transparent}
+.studio-login-card>p{font-size:12px;line-height:1.65;color:#e0b8cf;margin:0 0 23px}
+.studio-login-card label{display:block;font-size:12px;color:#f0d3e3;margin-bottom:8px}
+.login-input-wrap{display:flex;align-items:center;background:#160b19;border:1px solid #93436e;border-radius:16px;min-height:53px;overflow:hidden}
+.login-input-wrap:focus-within{border-color:#ff8dbb;box-shadow:0 0 0 2px #f64d9152}
+.studio-login-card .login-input-wrap input{flex:1;min-width:0;border:0!important;background:transparent!important;box-shadow:none!important;outline:0!important;font-size:16px;min-height:52px;padding:10px 12px;color:white}
+.login-reveal{font-size:11px;min-height:44px;min-width:89px;padding:8px 12px;border:0;background:transparent;color:#ffa4cf}
+.studio-login-card .pm-login-submit{display:flex;align-items:center;justify-content:center;gap:10px;min-height:53px;margin-top:16px;background:linear-gradient(115deg,#fa1c71,#ff65a9);border:1px solid #ffc0e1;color:white;font-size:13px;font-weight:770;border-radius:16px;box-shadow:0 0 13px #dd1a6377}
+.studio-login-card .pm-login-submit:disabled{opacity:.55}
+.studio-login-card .pm-login-error{color:#ffd5e0;margin:11px 0 0}
+.login-meta{display:flex;justify-content:space-between;flex-wrap:wrap;gap:7px;margin-top:21px;padding-top:15px;border-top:1px solid #622741;color:#f7c8df;font-size:10px}
+.studio-login-card .login-footnote{font-size:10px;color:#bfa2b5;margin:14px 0 0}
+.flagship-app[data-density="compact"] .neo-section{padding:10px 12px;margin-top:8px}
+.flagship-app[data-density="compact"] .neo-hero{min-height:0;padding-top:17px;padding-bottom:17px}
+.flagship-app[data-density="compact"] .neo-model{height:124px;padding:9px}
+.flagship-app[data-density="compact"] .neo-action{min-height:110px}
+.flagship-app[data-textsize="large"] .neo-section-head h2{font-size:clamp(15px,3.7vw,22px)}
+.flagship-app[data-textsize="large"] .neo-model strong,.flagship-app[data-textsize="large"] .neo-action strong{font-size:16px}
+.flagship-app[data-textsize="large"] .neo-hero .pm-hero-copy>p{font-size:clamp(15px,4vw,19px)}
+.flagship-app[data-textsize="large"] .neo-pill,.flagship-app[data-textsize="large"] .neo-composer-tools button{font-size:13px}
+.flagship-app[data-textsize="large"] .pm-bubble{font-size:15px}
+.flagship-app[data-effects="off"] .flagship-orb{opacity:.22}
+.flagship-app[data-effects="off"] .neo-hero,.flagship-app[data-effects="off"] .neo-section,.flagship-app[data-effects="off"] .neo-chat-section,.flagship-app[data-effects="off"] .neo-model.chosen{box-shadow:none}
+.flagship-app[data-motion="reduced"] *,.flagship-app[data-motion="reduced"] *::before,.flagship-app[data-motion="reduced"] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+@media(max-width:480px){
+.studio-settings-overlay,.image-lightbox{padding-top:calc(8px + env(safe-area-inset-top));padding-bottom:calc(8px + env(safe-area-inset-bottom));padding-left:8px;padding-right:8px}
+.studio-settings-panel{border-radius:20px;max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px)}
+.settings-head{padding:15px}.settings-body{padding:13px;gap:10px}.settings-group{padding:12px;border-radius:15px}
+.settings-footer{padding:11px}
+.studio-login{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+.studio-login-card{border-radius:25px}
+.flagship-app .neo-hero{min-height:0}
+.flagship-app .neo-hero h1{overflow-wrap:anywhere}
+.flagship-app .neo-main{padding-left:max(11px,env(safe-area-inset-left));padding-right:max(11px,env(safe-area-inset-right))}
+.flagship-app .neo-service-strip{touch-action:pan-x pan-y}
+.flagship-app .neo-model-strip,.flagship-app .neo-action-strip{touch-action:pan-x pan-y}
+}
+@media(orientation:landscape) and (max-height:520px){
+.studio-settings-overlay,.image-lightbox{align-items:flex-start}
+.studio-settings-panel{max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 14px)}
+.studio-login{padding-top:calc(10px + env(safe-area-inset-top));padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+.studio-login-card{max-width:580px}
+.studio-login-top{margin-bottom:8px}
+.studio-login-card>p{margin-bottom:14px}
+.flagship-app .neo-hero{min-height:0;padding:18px}
+.flagship-app .flagship-orb{opacity:.2}
+}
+@media(prefers-reduced-motion:reduce){.settings-close,.image-result-actions button,.studio-login-card .pm-login-submit{transition:none}}
