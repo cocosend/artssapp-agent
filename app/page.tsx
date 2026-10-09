@@ -180,7 +180,7 @@ export default function Home() {
         await navigator.share({ files: [file], title: "ARTSS AI — зображення" });
         return;
       }
-      const href = URL.createObjectURL(blob);
+      const href = URL.createObjectURL(file);
       const link = document.createElement("a");
       link.href = href;
       link.download = file.name;
