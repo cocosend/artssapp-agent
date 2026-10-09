@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAgentAuthenticated } from "@/lib/auth";
+import { imageOptions } from "@/lib/image-options";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -12,8 +13,10 @@ export async function POST(req: Request) {
   if (!key) return NextResponse.json({ error: "OpenAI image API key is not configured." }, { status: 503 });
 
   let prompt: string;
+  let options = imageOptions({});
   try {
     const input: unknown = await req.json();
+    options = imageOptions(input);
     prompt = typeof input === "object" && input !== null && "prompt" in input &&
       typeof input.prompt === "string" ? input.prompt.trim() : "";
   } catch {
@@ -31,8 +34,8 @@ export async function POST(req: Request) {
         model: process.env.OPENAI_IMAGE_MODEL || "gpt-image-1",
         prompt,
         n: 1,
-        size: "1024x1024",
-        quality: "low",
+        size: options.size,
+        quality: options.quality,
         output_format: "png",
       }),
       signal: AbortSignal.timeout(55_000),
@@ -46,7 +49,7 @@ export async function POST(req: Request) {
     if (typeof image !== "string" || !image.length || image.length > 12_000_000) {
       return NextResponse.json({ error: "Image provider returned no valid image." }, { status: 502 });
     }
-    return NextResponse.json({ image: "data:image/png;base64," + image }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json({ image: "data:image/png;base64," + image, size: options.size, quality: options.quality }, { headers: { "Cache-Control": "private, no-store" } });
   } catch {
     return NextResponse.json({ error: "Image generation timed out or is unavailable." }, { status: 504 });
   }
