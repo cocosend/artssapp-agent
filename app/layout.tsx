@@ -1,9 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import "./globals.css";
-import "./aurora.css";
+import "./premium.css";
 
 export const metadata: Metadata = {
-  title: "ARTSS AI — Agent Control Center",
+  title: "ARTSS AI — Private Agent Studio",
   description: "Приватний мультимодельний AI-агент для розробки, автоматизації, GitHub, Vercel та Supabase.",
   applicationName: "ARTSS AI",
   appleWebApp: { capable: true, title: "ARTSS AI", statusBarStyle: "black-translucent" },
@@ -14,7 +13,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#05091a",
+  themeColor: "#0d1221",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

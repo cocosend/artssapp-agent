@@ -19,6 +19,8 @@ export async function GET() {
       openai: configured("OPENAI_API_KEY"),
       deepseek: configured("DEEPSEEK_API_KEY"),
       gemini: configured("GEMINI_API_KEY"),
+      claude: configured("ANTHROPIC_API_KEY") || configured("CLAUDE_API_KEY"),
+      mistral: configured("MISTRAL_API_KEY"),
     },
     integrations: {
       github: configured("GITHUB_TOKEN"),

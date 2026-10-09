@@ -1,4 +1,4 @@
-export type ProviderId = "openai" | "deepseek" | "gemini";
+export type ProviderId = "openai" | "deepseek" | "gemini" | "claude" | "mistral";
 export type AgentMode = ProviderId | "multi";
 
 export type ChatMessage = {
@@ -41,13 +41,14 @@ async function callOpenAI(messages: ChatMessage[], model: string) {
 async function callDeepSeek(messages: ChatMessage[], model: string) {
   const key = process.env.DEEPSEEK_API_KEY;
   if (!key) throw new Error("DEEPSEEK_API_KEY is not configured");
-  const r = await fetchWithTimeout("https://api.deepseek.com/responses", {
+  const response = await fetchWithTimeout("https://api.deepseek.com/chat/completions", {
     method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model, instructions: SYSTEM, input: messages, stream: false }),
+    headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
+    body: JSON.stringify({ model, messages: [{ role: "system", content: SYSTEM }, ...messages], stream: false }),
   });
-  if (!r.ok) throw new Error(`DeepSeek ${r.status}: ${await r.text()}`);
-  return extractOpenAIText(await r.json());
+  if (!response.ok) throw new Error("DeepSeek request failed (" + response.status + ")");
+  const data = await response.json();
+  return data?.choices?.[0]?.message?.content ?? "";
 }
 
 async function callGemini(messages: ChatMessage[], model: string) {
@@ -70,9 +71,47 @@ async function callGemini(messages: ChatMessage[], model: string) {
   return data?.candidates?.[0]?.content?.parts?.map((p: any) => p.text ?? "").join("\n") ?? "";
 }
 
+
+async function callClaude(messages: ChatMessage[], model: string) {
+  const key = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+  if (!key) throw new Error("ANTHROPIC_API_KEY is not configured");
+  const system = [SYSTEM, ...messages.filter(message => message.role === "system").map(message => message.content)].join("\n\n");
+  const chat = messages.filter(message => message.role !== "system").map(message => ({
+    role: message.role as "user" | "assistant", content: message.content,
+  }));
+  const response = await fetchWithTimeout("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({ model, max_tokens: 8192, system, messages: chat }),
+  });
+  if (!response.ok) throw new Error("Claude request failed (" + response.status + ")");
+  const data = await response.json();
+  return (data?.content ?? []).filter((part: { type?: string }) => part.type === "text")
+    .map((part: { text?: string }) => part.text ?? "").join("\n");
+}
+
+async function callMistral(messages: ChatMessage[], model: string) {
+  const key = process.env.MISTRAL_API_KEY;
+  if (!key) throw new Error("MISTRAL_API_KEY is not configured");
+  const response = await fetchWithTimeout("https://api.mistral.ai/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
+    body: JSON.stringify({ model, stream: false, messages: [
+      { role: "system", content: SYSTEM }, ...messages,
+    ] }),
+  });
+  if (!response.ok) throw new Error("Mistral request failed (" + response.status + ")");
+  const data = await response.json();
+  const content = data?.choices?.[0]?.message?.content;
+  return typeof content === "string" ? content : Array.isArray(content)
+    ? content.map((part: { text?: string }) => part.text ?? "").join("\n") : "";
+}
+
 export async function runModel(provider: ProviderId, messages: ChatMessage[]) {
-  if (provider === "deepseek") return callDeepSeek(messages, process.env.DEEPSEEK_MODEL || "deepseek-v4-pro");
+  if (provider === "deepseek") return callDeepSeek(messages, process.env.DEEPSEEK_MODEL || "deepseek-flash");
   if (provider === "gemini") return callGemini(messages, process.env.GEMINI_MODEL || "gemini-3.8-flash");
+  if (provider === "claude") return callClaude(messages, process.env.CLAUDE_MODEL || "claude-sonnet-5-5");
+  if (provider === "mistral") return callMistral(messages, process.env.MISTRAL_MODEL || "mistral-large-latest");
   return callOpenAI(messages, process.env.OPENAI_MODEL || "gpt-5.6-luna");
 }
 
@@ -81,6 +120,8 @@ export function configuredProviders(): ProviderId[] {
   if (process.env.OPENAI_API_KEY) out.push("openai");
   if (process.env.DEEPSEEK_API_KEY) out.push("deepseek");
   if (process.env.GEMINI_API_KEY) out.push("gemini");
+  if (process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY) out.push("claude");
+  if (process.env.MISTRAL_API_KEY) out.push("mistral");
   return out;
 }
 
