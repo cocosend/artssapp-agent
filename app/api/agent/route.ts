@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { configuredProviders, runModelWithFallback, type ChatMessage, type ProviderId, type AgentMode } from "@/lib/providers";
 import { addEvent, addMessage, createRun, createSession, finishRun } from "@/lib/supabase";
 import { createBranch, createPullRequest, deployVercel, listRepo, readRepoFile, commitFiles } from "@/lib/github";
@@ -89,8 +90,12 @@ async function safeFinishRun(runId: string, status: "completed" | "failed", resu
 
 export async function POST(req: Request) {
   const serviceKey = req.headers.get("x-agent-service-key");
-  const expectedServiceKey = process.env.AGENT_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const serviceAuthorized = Boolean(serviceKey && expectedServiceKey && serviceKey === expectedServiceKey);
+  // Never accept a Supabase service-role key as an agent authentication secret.
+  const expectedServiceKey = process.env.AGENT_SERVICE_KEY;
+  const serviceAuthorized = Boolean(serviceKey && expectedServiceKey && timingSafeEqual(
+    createHash("sha256").update(serviceKey).digest(),
+    createHash("sha256").update(expectedServiceKey).digest(),
+  ));
   if (!serviceAuthorized && !(await isAgentAuthenticated())) {
     return NextResponse.json({ error: "Authentication required. Open /login." }, { status: 401 });
   }
@@ -170,7 +175,7 @@ export async function POST(req: Request) {
 
     const executionEnabled = process.env.AGENT_EXECUTION_ENABLED === "true" && Boolean(process.env.GITHUB_TOKEN?.trim());
     if (!executionEnabled || plan.commit !== true) {
-      const text = `${plan.message}\n\nПідготовлено файли: ${safeFiles.map((f) => f.path).join(", ")}.\n\nРежим preview: зміни не записані в GitHub.${!process.env.GITHUB_TOKEN ? "\\nВідсутній токен GitHub для запису." : ""}`;
+      const text = `${plan.message}\n\nПідготовлено файли: ${safeFiles.map((f) => f.path).join(", ")}.\n\nРежим preview: зміни не записані в GitHub.${!process.env.GITHUB_TOKEN ? "\nВідсутній токен GitHub для запису." : ""}`;
       if (runId) await safeFinishRun(runId, "completed", text);
       return NextResponse.json({ text, provider: activeProvider, contributors: modelResult.contributors, available, action: "preview", files: safeFiles.map((f) => f.path) });
     }
