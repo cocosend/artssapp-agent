@@ -99,3 +99,19 @@ jobs:
       uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4
       with:
         category: "/language:${{matrix.language}}"
+
+    - name: Summarize security rule and location
+      if: matrix.language == 'javascript-typescript'
+      shell: bash
+      run: |
+        node - <<'NODE'
+        const fs = require('fs');
+        const path = '../results/javascript.sarif';
+        if (!fs.existsSync(path)) process.exit(0);
+        const sarif = JSON.parse(fs.readFileSync(path, 'utf8'));
+        for (const run of sarif.runs || []) for (const result of run.results || []) {
+          const loc = result.locations?.[0]?.physicalLocation;
+          console.log(JSON.stringify({ rule: result.ruleId, path: loc?.artifactLocation?.uri,
+            line: loc?.region?.startLine, detail: result.message?.text?.slice(0, 160) }));
+        }
+        NODE
