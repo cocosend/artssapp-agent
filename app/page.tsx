@@ -4,10 +4,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AgentComposer, type ComposerHandle } from "./agent-composer";
+import { ArtssMark } from "./artss-mark";
+import Image from "next/image";
+import { type ChangeEvent } from "react";
 
 type Provider = "openai" | "deepseek" | "gemini" | "claude" | "mistral";
 type Mode = Provider | "multi";
-type Message = { role: "user" | "assistant"; content: string; meta?: string };
+type Message = { role: "user" | "assistant"; content: string; meta?: string; imageUrl?: string };
 type Run = { id: number; title: string; model: string; status: "running" | "done" | "error"; seconds?: number; note?: string; prUrl?: string; deploymentUrl?: string };
 type Health = {
   ok: boolean;
@@ -15,7 +18,7 @@ type Health = {
   integrations: { github: boolean; vercel: boolean; supabase: boolean };
   executionEnabled: boolean;
 };
-type AgentReply = { text?: string; error?: string; provider?: string; contributors?: string[]; action?: string; prUrl?: string; deploymentUrl?: string };
+type AgentReply = { text?: string; error?: string; provider?: string; contributors?: string[]; action?: string; prUrl?: string; deploymentUrl?: string; image?: string };
 
 const models: { id: Mode; title: string; subtitle: string; symbol: string; color: string }[] = [
   { id: "multi", title: "Multi AI", subtitle: "Команда моделей", symbol: "✳", color: "berry" },
@@ -71,6 +74,8 @@ export default function Home() {
   const [notice, setNotice] = useState("");
   const [showAllModels, setShowAllModels] = useState(false);
   const [showAllRuns, setShowAllRuns] = useState(false);
+  const [toolMode, setToolMode] = useState<"agent" | "image" | "web">("agent");
+  const [menu, setMenu] = useState<"notifications" | "profile" | null>(null);
   const composerRef = useRef<ComposerHandle>(null);
   const modelRef = useRef<HTMLDivElement>(null);
   const shortcutRef = useRef<HTMLDivElement>(null);
@@ -111,7 +116,27 @@ export default function Home() {
   }, [messages]);
 
   function chooseTask(text: string) {
+    setToolMode("agent");
     composerRef.current?.fill(text);
+  }
+  function setTool(mode: "agent" | "image" | "web") {
+    setToolMode(mode);
+    composerRef.current?.focus();
+  }
+  async function attachFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (file.size > 40_000) { setNotice("Файл завеликий. Максимум 40 КБ."); return; }
+    if (!/\.(txt|md|json|ts|tsx|js|jsx|css|html|yaml|yml|sql|log|py|go|rs)$/i.test(file.name)) {
+      setNotice("Підтримуються лише текстові та кодові файли."); return;
+    }
+    try {
+      const content = await file.text();
+      setToolMode("agent");
+      composerRef.current?.fill("Файл: " + file.name + "\n\n" + content.slice(0, 11000));
+      setNotice("Файл " + file.name + " додано в запит.");
+    } catch { setNotice("Не вдалося відкрити файл."); }
   }
   function jumpTo(id: "models" | "integrations" | "chat") {
     const target = id === "models" ? modelRef.current : id === "integrations" ? servicesRef.current : document.getElementById("agent-composer");
@@ -120,18 +145,23 @@ export default function Home() {
 
   async function submit(text: string) {
     const task = text.trim();
-    if (!task || busy || (health && !ready)) return;
+    if (!task || busy || (toolMode === "agent" && health && !ready)) return;
     const started = performance.now();
     const id = Date.now();
     const conversation: Message[] = [...messages.slice(-18), { role: "user", content: task }];
     setMessages(conversation);
-    setRuns(previous => [{ id, title: task, model: selected, status: "running" as const }, ...previous].slice(0, 40));
+    const modeForRequest = toolMode;
+    const runModel = modeForRequest === "image" ? "Генерація зображення" : modeForRequest === "web" ? "Веб-пошук" : selected;
+    setRuns(previous => [{ id, title: task, model: runModel, status: "running" as const }, ...previous].slice(0, 40));
     setBusy(true);
     setNotice("");
     try {
-      const response = await fetch("/api/agent", {
+      const endpoint = modeForRequest === "image" ? "/api/images" : modeForRequest === "web" ? "/api/web-search" : "/api/agent";
+      const payload = modeForRequest === "image" ? { prompt: task } : modeForRequest === "web" ? { question: task } :
+        { provider: selected, messages: conversation.map(({ role, content }) => ({ role, content })) };
+      const response = await fetch(endpoint, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider: selected, messages: conversation.map(({ role, content }) => ({ role, content })) }),
+        body: JSON.stringify(payload),
       });
       const result: AgentReply = await response.json().catch(() => ({}));
       if (response.status === 401) {
@@ -140,9 +170,15 @@ export default function Home() {
         return;
       }
       if (!response.ok) throw new Error(result.error || "Запит завершився помилкою.");
-      const model = result.provider || selected;
-      const description = [model, result.action === "executed" ? "Зміни збережено" : result.action === "preview" ? "Підготовлено зміни" : "Відповідь"].join(" · ");
-      setMessages(previous => [...previous.slice(-39), { role: "assistant", content: result.text || "Агент не повернув текст.", meta: description }]);
+      const model = result.provider || runModel;
+      const description = [model, result.action === "executed" ? "Зміни збережено" : result.action === "preview" ? "Підготовлено зміни" : modeForRequest === "image" ? "Зображення" : "Відповідь"].join(" · ");
+      if (modeForRequest === "image" && (!result.image || !result.image.startsWith("data:image/png;base64,"))) {
+        throw new Error("Сервіс не повернув зображення.");
+      }
+      setMessages(previous => [...previous.slice(-39), {
+        role: "assistant", content: modeForRequest === "image" ? "Згенероване зображення: " + task : result.text || "Агент не повернув текст.",
+        meta: description, imageUrl: modeForRequest === "image" ? result.image : undefined,
+      }]);
       setRuns(previous => previous.map(run => run.id === id ? {
         ...run, status: "done", model, seconds: (performance.now() - started) / 1000,
         prUrl: result.prUrl, deploymentUrl: result.deploymentUrl, note: description,
@@ -170,16 +206,25 @@ export default function Home() {
     catch { setNotice("Копіювання недоступне у цьому браузері."); }
   }
 
-  return <div className="pm-shell neo-app">
+  return <div className="pm-shell neo-app flagship-app">
     <header className="pm-header neo-header">
       <Link className="pm-brand" href="/" aria-label="ARTSS AI — головна">
-        <span className="pm-brand-mark">a<span>✦</span></span>
+        <span className="pm-brand-mark flagship-logo"><ArtssMark size={48}/></span>
         <span className="pm-brand-label">ARTSS<span className="pm-dot">●</span>AI<small>PRIVATE AGENT STUDIO</small></span>
       </Link>
       <div className="pm-header-right">
         <span className={"pm-live " + (health ? "up" : "")} title={health ? "API відповідає" : "API не перевірено"}><i /><span className="neo-status-caption">{loading ? "Перевірка" : health ? "API онлайн" : "Офлайн"}</span></span>
-        <button type="button" className="pm-round-icon" onClick={() => { setLoading(true); void refresh(); }} title="Оновити стан" aria-label="Оновити стан"><Icon name="refresh" size={19}/></button>
-        <button type="button" className="pm-round-icon" onClick={() => { void logout(); }} title="Вийти" aria-label="Вийти"><Icon name="logout" size={19}/></button>
+        <button type="button" className={"pm-round-icon flagship-alert-button" + (menu === "notifications" ? " selected" : "")} onClick={() => setMenu(x => x === "notifications" ? null : "notifications")} aria-expanded={menu === "notifications"} aria-label="Сповіщення та запуски">♧{runs.some(r => r.status === "running") ? <span className="flagship-alert-dot"/> : null}</button>
+        <button type="button" className={"pm-round-icon flagship-profile-button" + (menu === "profile" ? " selected" : "")} onClick={() => setMenu(x => x === "profile" ? null : "profile")} aria-expanded={menu === "profile"} aria-label="Профіль та вихід">♙</button>
+        {menu ? <div className="flagship-header-menu" role="region" aria-label={menu === "profile" ? "Профіль" : "Сповіщення"}>
+          {menu === "profile" ? <><strong>Приватний простір ARTSS AI</strong><p>Доступ до AI, інтеграцій та робочих сценаріїв.</p>
+          <button type="button" onClick={() => { setMenu(null); setLoading(true); void refresh(); }}><Icon name="refresh" size={16}/> Оновити стан</button>
+          <button type="button" onClick={() => { void logout(); }}><Icon name="logout" size={16}/> Вийти</button></> :
+          <><strong>Запуски та сповіщення</strong>{runs.length ? runs.slice(0,4).map(run =>
+            <p key={run.id} className="flagship-menu-run"><span>{run.status === "done" ? "✓" : run.status === "error" ? "!" : "◷"}</span>{run.title.slice(0,78)}</p>) :
+            <p>Нових запусків немає. Завдання з'являться після запиту.</p>}
+          <button type="button" onClick={() => { setMenu(null); document.getElementById("runs-title")?.scrollIntoView({ block: "center", behavior: "smooth" }); }}>Переглянути запуски <Icon name="chevron" size={16}/></button></>}
+        </div> : null}
       </div>
     </header>
     <main className="pm-main neo-main">
@@ -189,12 +234,12 @@ export default function Home() {
           <h1 id="neo-title">Створюйте більше.<br /><span>Без зайвого.</span></h1>
           <p>Усі ваші AI-інструменти в одному просторі. Один запит — команда моделей.</p>
           <div className="neo-hero-actions">
-            <button type="button" className="neo-pill neo-pill-main" onClick={() => jumpTo("models")}>✦ <strong>5 AI-провайдерів</strong><Icon name="chevron" size={15}/></button>
+            <button type="button" className="neo-pill neo-pill-main" onClick={() => jumpTo("models")}>✦ <strong>{configured.length} активних ключів</strong><Icon name="chevron" size={15}/></button>
             <button type="button" className="neo-pill" onClick={() => { setSelected("multi"); jumpTo("models"); }}><Icon name="shield" size={16}/> Розумний fallback <Icon name="chevron" size={14}/></button>
             <button type="button" className="neo-pill" onClick={() => jumpTo("chat")}>◈ Приватний простір <Icon name="chevron" size={14}/></button>
           </div>
         </div>
-        <div className="neo-orb" aria-hidden="true"><div className="neo-orb-inner"/><span>✦</span></div>
+        <div className="neo-orb flagship-orb" aria-hidden="true"/>
       </section>
 
       <section className="pm-panel neo-section" aria-labelledby="models-title">
@@ -221,10 +266,11 @@ export default function Home() {
       <section className="pm-panel neo-section" aria-labelledby="tasks-title">
         <div className="neo-section-head"><h2 id="tasks-title"><span className="neo-heading-symbol sun">ϟ</span> ШВИДКІ ДІЇ</h2></div>
         <div className="pm-carousel neo-action-strip" ref={shortcutRef}>
-          <button className="neo-action" type="button" onClick={() => { if (!busy) { setMessages([]); composerRef.current?.fill(""); jumpTo("chat"); } }}>
+          <button className="neo-action" type="button" onClick={() => { if (!busy) { setToolMode("agent"); setMessages([]); composerRef.current?.fill(""); jumpTo("chat"); } }}>
             <span className="neo-action-symbol">▤</span><strong>Новий запит</strong><small>Текст, код, аналіз</small><Icon name="chevron" size={15}/>
           </button>
-          {shortcuts.slice(0,3).map(x => <button type="button" className={"neo-action neo-action-" + x.id} key={x.id} onClick={() => { chooseTask(x.value); jumpTo("chat"); }}>
+          <button className="neo-action neo-action-image" type="button" onClick={() => { setTool("image"); jumpTo("chat"); }}><span className="neo-action-symbol">▧</span><strong>Генерувати зображення</strong><small>OpenAI Images</small><Icon name="chevron" size={15}/></button>
+          {shortcuts.slice(0,2).map(x => <button type="button" className={"neo-action neo-action-" + x.id} key={x.id} onClick={() => { chooseTask(x.value); jumpTo("chat"); }}>
             <span className="neo-action-symbol">{x.symbol}</span><strong>{x.title === "План" ? "Агент-режим" : x.title === "Код" ? "Робота з кодом" : "Аудит системи"}</strong><small>{x.caption}</small><Icon name="chevron" size={15}/>
           </button>)}
         </div>
@@ -261,13 +307,16 @@ export default function Home() {
         {messages.length ? <div className="pm-thread neo-thread" ref={threadRef} role="log" aria-live="polite">
           {messages.map((message, index) => <article className={"pm-message " + message.role} key={index}>
             <span className="pm-message-label">{message.role === "user" ? "ВИ" : "ARTSS AI"} <small>{message.meta || ""}</small></span>
-            <div className="pm-bubble">{message.content}</div>
+            <div className="pm-bubble">{message.content}{message.imageUrl ? <Image className="flagship-generated-image" src={message.imageUrl} alt="Зображення, створене агентом" width={1024} height={1024} unoptimized/> : null}</div>
             {message.role === "assistant" ? <button type="button" className="pm-copy" onClick={() => { void copy(message.content); }}><Icon name="copy" size={14}/> Копіювати</button> : null}
           </article>)}</div> : null}
         {busy ? <p className="pm-thinking" role="status"><span className="pm-pulse"/>Агент обробляє запит…</p> : null}
-        <AgentComposer ref={composerRef} model={models.find(x=>x.id===selected)?.title || selected} busy={busy} unavailable={health !== null && !ready} onSend={submit}/>
+        <AgentComposer ref={composerRef} model={toolMode === "image" ? "Генерація зображень" : toolMode === "web" ? "Веб-пошук" : models.find(x=>x.id===selected)?.title || selected} busy={busy} unavailable={toolMode === "agent" && health !== null && !ready} onSend={submit}/>
         <div className="neo-composer-tools">
-          <button type="button" onClick={() => { setSelected("multi"); jumpTo("models"); }}>✦ Multi AI</button>
+          <button type="button" className={toolMode === "agent" ? "tool-active" : ""} onClick={() => { setTool("agent"); setSelected("multi"); }}>✦ Multi AI</button>
+          <button type="button" className={toolMode === "web" ? "tool-active" : ""} onClick={() => setTool("web")}>◎ Веб-пошук</button>
+          <label className="flagship-file-trigger">▤ Файли<input type="file" accept=".txt,.md,.json,.ts,.tsx,.js,.jsx,.css,.html,.yaml,.yml,.sql,.log,.py,.go,.rs,text/*" onChange={e => { void attachFile(e); }}/></label>
+          <button type="button" className={toolMode === "image" ? "tool-active" : ""} onClick={() => setTool("image")}>▧ Зображення</button>
           <button type="button" onClick={() => { chooseTask(shortcuts[1].value); }}>〈/〉 Код</button>
           <button type="button" onClick={() => { chooseTask(shortcuts[2].value); }}>⊞ Аудит</button>
           <button type="button" onClick={() => { chooseTask(shortcuts[0].value); }}>✧ План</button>
