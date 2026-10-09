@@ -163,7 +163,7 @@ export async function POST(req: Request) {
         await safeAddEvent(runId, "completed", "Задача оброблена без змін у GitHub.");
         await safeFinishRun(runId, "completed", plan.message);
       }
-      return NextResponse.json({ text: plan.message, provider: activeProvider, contributors: modelResult.contributors, available, action: "answer" });
+      return NextResponse.json({ text: plan.message, provider: activeProvider, contributors: modelResult.contributors, orchestration: modelResult.orchestration, available, action: "answer" });
     }
 
     const safeFiles = plan.files.map((file) => ({
@@ -177,7 +177,7 @@ export async function POST(req: Request) {
     if (!executionEnabled || plan.commit !== true) {
       const text = `${plan.message}\n\nПідготовлено файли: ${safeFiles.map((f) => f.path).join(", ")}.\n\nРежим preview: зміни не записані в GitHub.${!process.env.GITHUB_TOKEN ? "\nВідсутній токен GitHub для запису." : ""}`;
       if (runId) await safeFinishRun(runId, "completed", text);
-      return NextResponse.json({ text, provider: activeProvider, contributors: modelResult.contributors, available, action: "preview", files: safeFiles.map((f) => f.path) });
+      return NextResponse.json({ text, provider: activeProvider, contributors: modelResult.contributors, orchestration: modelResult.orchestration, available, action: "preview", files: safeFiles.map((f) => f.path) });
     }
 
     // A skipped HTTP request must not start a new GitHub write after the model finishes.
@@ -232,6 +232,7 @@ export async function POST(req: Request) {
       text: result,
       provider: activeProvider,
       contributors: modelResult.contributors,
+      orchestration: modelResult.orchestration,
       available,
       action: "executed",
       branch,
