@@ -32,7 +32,7 @@ export async function POST(req: Request) {
         tools: [{ type: "web_search_preview" }],
         max_output_tokens: 1400,
       }),
-      signal: AbortSignal.timeout(40_000),
+      signal: AbortSignal.any([req.signal, AbortSignal.timeout(40_000)]),
       cache: "no-store",
     });
     if (!response.ok) {
@@ -44,7 +44,14 @@ export async function POST(req: Request) {
         content?: { type?: string; text?: string }[]
       }) => (o.content || []).filter(p => p.type === "output_text").map(p => p.text || "")).join("\n") : "");
     if (!answer.trim()) return NextResponse.json({ error: "Search returned no text." }, { status: 502 });
-    return NextResponse.json({ text: answer, provider: "openai-web-search" }, { headers: { "Cache-Control": "no-store" } });
+    const sources = (Array.isArray(result?.output) ? result.output : [])
+      .flatMap((item: { content?: { annotations?: { type?: string; url?: string; title?: string }[] }[] }) =>
+        (item.content || []).flatMap(part => part.annotations || []))
+      .filter((annotation: { type?: string; url?: string }) =>
+        annotation.type === "url_citation" && typeof annotation.url === "string" && /^https:\/\/[^\s]+$/.test(annotation.url))
+      .slice(0, 10)
+      .map((annotation: { title?: string; url?: string }) => ({ title: (annotation.title || "Джерело").slice(0, 120), url: annotation.url }));
+    return NextResponse.json({ text: answer, provider: "openai-web-search", sources }, { headers: { "Cache-Control": "private, no-store" } });
   } catch {
     return NextResponse.json({ error: "Web search timed out." }, { status: 504 });
   }
