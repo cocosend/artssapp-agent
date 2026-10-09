@@ -248,7 +248,7 @@ export default function Home() {
           <button type="button" className="neo-show-more" onClick={() => setShowAllRuns(x => !x)} aria-expanded={showAllRuns}>{showAllRuns ? "Згорнути" : "Усі запуски"} <Icon name="chevron" size={15}/></button>
         </div>
         <div className="neo-runs">
-          {!runs.length ? <div className="neo-no-runs"><span>◎</span><div><strong>Поки що немає запусків</strong><p>Результати реальних задач з'являться тут після першого запиту.</p></div></div> :
+          {!runs.length ? <div className="neo-no-runs"><span>◎</span><div><strong>Поки що немає запусків</strong><p>Результати реальних задач з&apos;являться тут після першого запиту.</p></div></div> :
             runs.slice(0,showAllRuns ? 40 : 3).map(r => <div className="neo-run-row" key={r.id}>
               <span className={"neo-run-logo " + r.status}>{r.status === "done" ? "✓" : r.status === "error" ? "!" : "⌘"}</span>
               <span className="neo-run-info"><strong>{r.title}</strong><small>{r.model} · {displayTime(r.id)} · {r.seconds ? r.seconds.toFixed(1) + " c" : "обробка"}</small>{r.prUrl?.startsWith("https://github.com/") ? <a href={r.prUrl} target="_blank" rel="noreferrer">Відкрити PR ↗</a> : null}</span>
@@ -277,7 +277,7 @@ export default function Home() {
       </section>
 
       {notice ? <div className="pm-toast" role="status"><Icon name="check" size={16}/><span>{notice}</span><button type="button" onClick={() => setNotice("")} aria-label="Закрити">×</button></div> : null}
-      <footer className="pm-footer"><span>ARTSS AI <span className="pm-dot">●</span> PRIVATE AGENT STUDIO</span><span>Зв'язок перевірено: {lastCheck || "—"}</span></footer>
+      <footer className="pm-footer"><span>ARTSS AI <span className="pm-dot">●</span> PRIVATE AGENT STUDIO</span><span>Зв&apos;язок перевірено: {lastCheck || "—"}</span></footer>
     </main>
   </div>;
 }
