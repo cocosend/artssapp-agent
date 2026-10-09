@@ -29,11 +29,25 @@ export async function GET(req: Request) {
       headers: { "Cache-Control": "private, no-store" },
     });
   }
-  if (!editablePaths.some(p => p === path)) {
-    return NextResponse.json({ error: "File is not in the approved workspace." }, { status: 400 });
+  // Reconstruct from literals, never forward the request's raw path into an outbound URL.
+  // Using a switch prevents URL taint even if a request passes an unexpected query string.
+  let approved: typeof editablePaths[number] | undefined;
+  switch (path) {
+    case "app/page.tsx": approved = "app/page.tsx"; break;
+    case "app/agent-composer.tsx": approved = "app/agent-composer.tsx"; break;
+    case "app/studio-settings.tsx": approved = "app/studio-settings.tsx"; break;
+    case "app/flagship.css": approved = "app/flagship.css"; break;
+    case "app/ios-detail.css": approved = "app/ios-detail.css"; break;
+    case "app/api/web-search/route.ts": approved = "app/api/web-search/route.ts"; break;
+    case "app/api/health/route.ts": approved = "app/api/health/route.ts"; break;
+    case "lib/providers.ts": approved = "lib/providers.ts"; break;
+    case "lib/agent-plan.ts": approved = "lib/agent-plan.ts"; break;
+    case "README.md": approved = "README.md"; break;
+    default:
+      return NextResponse.json({ error: "File is not in the approved workspace." }, { status: 400 });
   }
   try {
-    const file = await readRepoFile(REPO, path, "main");
+    const file = await readRepoFile(REPO, approved, "main");
     if (!file || file.type !== "file" || typeof file.content !== "string") {
       return NextResponse.json({ error: "File not found." }, { status: 404 });
     }
@@ -42,7 +56,7 @@ export async function GET(req: Request) {
     }
     const text = Buffer.from(file.content.replace(/\s/g, ""), "base64").toString("utf8");
     if (text.length > 120_000) return NextResponse.json({ error: "File is too large." }, { status: 413 });
-    return NextResponse.json({ path, ref: "main", sha: file.sha, content: text }, {
+    return NextResponse.json({ path: approved, ref: "main", sha: file.sha, content: text }, {
       headers: { "Cache-Control": "private, no-store" },
     });
   } catch {
