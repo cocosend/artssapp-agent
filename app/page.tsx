@@ -118,7 +118,7 @@ export default function Home() {
     const id = Date.now();
     const conversation: Message[] = [...messages.slice(-18), { role: "user", content: task }];
     setMessages(conversation);
-    setRuns(previous => [{ id, title: task, model: selected, status: "running" }, ...previous].slice(0, 40));
+    setRuns(previous => [{ id, title: task, model: selected, status: "running" as const }, ...previous].slice(0, 40));
     setBusy(true);
     setNotice("");
     try {
