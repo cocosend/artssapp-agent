@@ -110,6 +110,7 @@ export default function Home() {
   const servicesRef = useRef<HTMLElement>(null);
   const inFlightHealth = useRef(false);
   const requestController = useRef<AbortController | null>(null);
+  const inFlightPrompt = useRef<string | null>(null);
   const activeRunId = useRef<number | null>(null);
   const recentRuns = runs.length ? runs : storedRuns;
   const configured = health?.providers.configured ?? [];
@@ -313,6 +314,8 @@ export default function Home() {
   function skipRequest() {
     if (!requestController.current) return;
     requestController.current.abort();
+    if (inFlightPrompt.current) composerRef.current?.restoreIfEmpty(inFlightPrompt.current);
+    inFlightPrompt.current = null;
     requestController.current = null;
     const id = activeRunId.current;
     activeRunId.current = null;
@@ -329,6 +332,7 @@ export default function Home() {
     const id = Date.now();
     const controller = new AbortController();
     requestController.current = controller;
+    inFlightPrompt.current = task;
     activeRunId.current = id;
     const conversation: Message[] = [...messages.slice(-18), { role: "user", content: task }];
     setMessages(conversation);
@@ -350,6 +354,7 @@ export default function Home() {
       const result: AgentReply = await response.json().catch(() => ({}));
       if (controller.signal.aborted) return;
       if (response.status === 401) {
+        inFlightPrompt.current = null;
         setRuns(previous => previous.map(run => run.id === id ? { ...run, status: "error" } : run));
         router.push("/login");
         return;
@@ -376,6 +381,7 @@ export default function Home() {
           sources: modeForRequest === "web" && Array.isArray(result.sources) ? result.sources.filter(x => typeof x?.url === "string" && x.url.startsWith("https://")).slice(0, 8) : undefined,
         }];
       });
+      if (requestController.current === controller) inFlightPrompt.current = null;
       if (modeForRequest === "agent" && result.orchestration) {
         setLastTeam({
           task, mode: selected, provider: result.provider || selected,
@@ -389,12 +395,14 @@ export default function Home() {
     } catch (error) {
       if (controller.signal.aborted) return;
       const description = error instanceof Error ? error.message : "Невідома помилка.";
+      composerRef.current?.restoreIfEmpty(task);
       setMessages(previous => [...previous.slice(-39), { role: "assistant", content: description, meta: "Помилка" }]);
       setRuns(previous => previous.map(run => run.id === id ? { ...run, status: "error", seconds: (performance.now() - started) / 1000, note: description } : run));
     } finally {
       if (requestController.current === controller) {
         requestController.current = null;
         activeRunId.current = null;
+        inFlightPrompt.current = null;
         setBusy(false);
         setWorkingMode(null);
       }
