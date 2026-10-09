@@ -44,7 +44,11 @@ export function CodeWorkspace({ onSendToAgent, onClose, githubWrite }: Props) {
     return () => controller.abort();
   }, []);
 
-  useEffect(() => load(path), [path, load]);
+  useEffect(() => {
+    let cancelRequest: (() => void) | undefined;
+    const next = window.setTimeout(() => { cancelRequest = load(path); }, 0);
+    return () => { window.clearTimeout(next); cancelRequest?.(); };
+  }, [path, load]);
 
   const changed = draft !== original;
   const lines = draft.split("\n").length;
