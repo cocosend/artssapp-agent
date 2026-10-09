@@ -4,7 +4,7 @@ import { isAgentAuthenticated } from "@/lib/auth";
 export const runtime = "nodejs";
 export const maxDuration = 25;
 
-type Probe = { state: "ok" | "missing_key" | "http_error" | "timeout"; status?: number };
+type Probe = { state: "ok" | "missing_key" | "http_error" | "timeout"; status?: number; via?: "direct" | "gateway" };
 type DiagnosticName = "openai" | "deepseek" | "gemini" | "claude" | "mistral" | "github" | "supabase" | "vercel";
 
 const timeoutMs = 6500;
@@ -24,6 +24,9 @@ export async function GET() {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   }
   const github = process.env.GITHUB_TOKEN?.trim();
+  const gatewayToken = process.env.AI_GATEWAY_API_KEY?.trim() || process.env.VERCEL_OIDC_TOKEN?.trim();
+  const claudeKey = process.env.ANTHROPIC_API_KEY?.trim() || process.env.CLAUDE_API_KEY?.trim();
+  const mistralKey = process.env.MISTRAL_API_KEY?.trim();
   const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   const supabaseUrl = process.env.SUPABASE_URL?.trim();
   const vercel = process.env.VERCEL_TOKEN?.trim();
@@ -38,10 +41,14 @@ export async function GET() {
       { Authorization: "Bearer " + (process.env.DEEPSEEK_API_KEY || "") }),
     gemini: probe("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1", process.env.GEMINI_API_KEY,
       { "x-goog-api-key": process.env.GEMINI_API_KEY || "" }),
-    claude: probe("https://api.anthropic.com/v1/models?limit=1", process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY,
-      { "x-api-key": process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY || "", "anthropic-version": "2023-06-01" }),
-    mistral: probe("https://api.mistral.ai/v1/models", process.env.MISTRAL_API_KEY,
-      { Authorization: "Bearer " + (process.env.MISTRAL_API_KEY || "") }),
+    claude: (claudeKey ? probe("https://api.anthropic.com/v1/models?limit=1", claudeKey,
+      { "x-api-key": claudeKey, "anthropic-version": "2023-06-01" }) :
+      probe("https://ai-gateway.vercel.sh/v1/models", gatewayToken,
+      { Authorization: "Bearer " + (gatewayToken || "") })).then(value => ({ ...value, via: claudeKey ? "direct" as const : "gateway" as const })),
+    mistral: (mistralKey ? probe("https://api.mistral.ai/v1/models", mistralKey,
+      { Authorization: "Bearer " + mistralKey }) :
+      probe("https://ai-gateway.vercel.sh/v1/models", gatewayToken,
+      { Authorization: "Bearer " + (gatewayToken || "") })).then(value => ({ ...value, via: mistralKey ? "direct" as const : "gateway" as const })),
     github: probe("https://api.github.com/repos/" + repo,
       // Public repository read-only is supported even if write credentials are absent.
       "public-access",
@@ -64,6 +71,6 @@ export async function GET() {
     githubWrite: github ? (results.github.state === "ok" ? "token_present_not_write_tested" : "unavailable") : "missing_key",
     agentExecution: executionEnabled && Boolean(github) ? "configured_not_write_tested" : "disabled",
     vercelDeploy: results.vercel.state === "ok" && executionEnabled && Boolean(github) ? "configured_not_tested" : "unavailable",
-    note: "GET probes confirm basic API authentication, not successful AI inference, code writes or deployments.",
+    note: "GET probes confirm basic API authentication, not successful AI inference, code writes or deployments. Gateway models may incur usage fees when selected.",
   }, { headers: { "Cache-Control": "private, no-store" } });
 }
