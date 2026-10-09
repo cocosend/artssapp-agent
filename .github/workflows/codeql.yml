@@ -107,7 +107,7 @@ jobs:
       run: |
         node - <<'NODE'
         const fs = require('fs');
-        const file = 'results/javascript.sarif';
+        const file = '../results/javascript.sarif';
         if (!fs.existsSync(file)) { console.log('SARIF not available in workspace'); process.exit(0); }
         const sarif = JSON.parse(fs.readFileSync(file, 'utf8'));
         for (const run of sarif.runs || []) for (const issue of run.results || []) {
