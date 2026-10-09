@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { ArtssMark } from "../artss-mark";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function LoginPage() {
   }
 
   return <main className="pm-login"><section className="pm-login-card">
-    <div className="pm-login-icon" aria-hidden="true">a✦</div>
+    <div className="pm-login-icon flagship-login-mark" aria-hidden="true"><ArtssMark size={55}/></div>
     <h1>ARTSS <span>AI.</span></h1>
     <p>Ваш приватний AI-простір. Введіть персональний код, щоб продовжити роботу.</p>
     <form onSubmit={submit}>

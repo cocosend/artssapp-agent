@@ -8,12 +8,12 @@ export default function AppleIcon() {
     <div style={{
       width: "100%", height: "100%", display: "flex", alignItems: "center",
       justifyContent: "center", borderRadius: 38, position: "relative",
-      background: "linear-gradient(140deg,#8d2553 0%,#3c1833 59%,#130a1b 100%)",
+      background: "linear-gradient(140deg,#ad084b 0%,#3c0528 59%,#13000e 100%)",
     }}>
       <div style={{
-        color: "#ffe4ad", fontSize: 133, lineHeight: 1, fontWeight: 800,
+        color: "#ffcedf", fontSize: 133, lineHeight: 1, fontWeight: 800,
         marginTop: -21, marginRight: 9, letterSpacing: -10,
-      }}>a</div>
+      }}>A</div>
       <div style={{
         position: "absolute", top: 22, right: 29, width: 20, height: 20,
         background: "#ffb0c6", transform: "rotate(45deg)", borderRadius: 5,

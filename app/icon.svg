@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c244f"/><stop offset=".6" stop-color="#35162e"/><stop offset="1" stop-color="#110a1a"/></linearGradient>
-    <linearGradient id="glyph" x1=".15" y1="0" x2=".8" y2="1"><stop stop-color="#ffe6a9"/><stop offset=".5" stop-color="#ff8fb9"/><stop offset="1" stop-color="#7de6d8"/></linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
-  <path d="M104 343c30-43 63-97 93-143 44-68 91-44 117-12 30 36 34 87 94 53" fill="none" stroke="#ff80a8" stroke-width="29" stroke-linecap="round" opacity=".56"/>
-  <path d="M138 361 226 155h49l95 206h-56l-22-52H205l-22 52h-45Zm85-96h51l-26-65-25 65Z" fill="url(#glyph)"/>
-  <path d="m362 100 13 34 34 13-34 13-13 34-13-34-34-13 34-13z" fill="#ffe5a1"/>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#230518"/><stop offset=".6" stop-color="#470826"/><stop offset="1" stop-color="#11000d"/></linearGradient>
+<linearGradient id="hot" x1="110" y1="435" x2="306" y2="60"><stop stop-color="#8A0755"/><stop offset=".4" stop-color="#FA0B79"/><stop offset=".72" stop-color="#FFA7D7"/><stop offset="1" stop-color="#FFF4FB"/></linearGradient>
+<linearGradient id="gold" x1="232" y1="90" x2="432" y2="441"><stop stop-color="#FFF5DA"/><stop offset=".3" stop-color="#FFDE84"/><stop offset=".72" stop-color="#FF5B48"/><stop offset="1" stop-color="#DC1169"/></linearGradient></defs>
+<rect width="512" height="512" rx="114" fill="url(#bg)"/><rect x="9" y="9" width="494" height="494" rx="108" fill="none" stroke="#E44E95" stroke-opacity=".55" stroke-width="9"/>
+<path d="m62 425 150-330c27-59 74-60 104 0l140 323c12 26 0 46-29 46h-55c-18 0-28-10-35-26l-62-148-66 149c-7 16-18 25-35 25H95c-31 0-42-14-33-39Z" fill="url(#hot)"/>
+<path d="m267 77 49 18 140 323c12 26 0 46-29 46h-55c-19 0-29-10-36-27L218 199l49-122Z" fill="url(#gold)"/>
+<path d="M164 327h184l34 71H133l31-71Z" fill="#FFB4D9"/><path d="M169 349h179l21 42H146l23-42Z" fill="#EA197E"/>
+<path d="m391 68 14 31 32 12-32 12-14 33-12-33-33-12 33-12 12-31Z" fill="#FFEBA4"/>
 </svg>

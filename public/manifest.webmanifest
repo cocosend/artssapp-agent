@@ -1,5 +1,5 @@
 {
-  "name": "ARTSS AI — Blood Dreams",
+  "name": "ARTSS AI — Flagship Studio",
   "short_name": "ARTSS AI",
   "description": "Приватний мультимодельний AI-агент ARTSS для iPhone.",
   "start_url": "/",
@@ -9,8 +9,8 @@
     "standalone",
     "minimal-ui"
   ],
-  "background_color": "#120a17",
-  "theme_color": "#120a17",
+  "background_color": "#090008",
+  "theme_color": "#090008",
   "lang": "uk",
   "icons": [
     {

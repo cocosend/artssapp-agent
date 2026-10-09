@@ -1,0 +1,85 @@
+/* Flagship Blood Dreams — production UI aligned with ARTSS reference */
+:root{--bg:#090008;--ink:#fff8fb;--berry:#ff186d;--mint:#00f0b1;--yellow:#ffe48e}
+html,body{background:#090008}
+body{background:linear-gradient(180deg,#0e010d 0%,#090008 48%,#140211 100%)}
+.flagship-app{color:#fff5fa;min-width:0}
+.flagship-app .neo-header{position:relative;z-index:10;max-width:1280px}
+.flagship-app .pm-brand{gap:11px}
+.flagship-logo{display:grid!important;place-items:center;background:radial-gradient(circle at 31% 22%,#68062f,#190116 85%)!important;border:1px solid #e32875!important;width:58px!important;height:58px!important;border-radius:17px!important;box-shadow:inset 0 1px #ffabe65e,0 0 18px #a5054933!important}
+.flagship-logo svg{height:51px;width:51px;filter:drop-shadow(0 2px 3px #f3147555)}
+.flagship-app .pm-brand-label{font-size:clamp(21px,2.6vw,34px);letter-spacing:-1.2px;font-weight:850;color:white;text-shadow:0 2px 15px #000}
+.flagship-app .pm-brand-label small{font-size:clamp(8px,.91vw,11px);letter-spacing:2.45px;color:#d7b8d1}
+.flagship-app .pm-dot{color:#ff408a}
+.flagship-app .neo-header .pm-round-icon{font-size:25px;min-height:50px;min-width:50px;border-radius:18px;color:#ffd1e9;background:#1c0618;border:1px solid #cd3980;box-shadow:inset 0 1px #ffc4e757,0 0 0 1px #210619}
+.flagship-app .neo-header .pm-round-icon.selected{border-color:#ff94ba;box-shadow:0 0 13px #e9226f77}
+.flagship-app .neo-header .pm-live{height:50px;min-width:54px;border:1px solid #cf4385;border-radius:18px}
+.flagship-app .neo-header .pm-live i{width:11px;height:11px}
+.flagship-alert-button{position:relative}
+.flagship-alert-dot{position:absolute;right:9px;top:8px;width:7px;height:7px;background:#ff449a;border-radius:50%;box-shadow:0 0 9px #ff4f99}
+.flagship-header-menu{position:absolute;right:clamp(12px,3vw,32px);top:calc(100% - 5px);width:min(350px,calc(100vw - 24px));background:#260a23;border:1px solid #e3488c;border-radius:20px;padding:18px;z-index:30;box-shadow:0 16px 48px #000b,0 0 18px #7d164433}
+.flagship-header-menu>strong{font-size:14px;color:white;display:block;margin-bottom:6px}
+.flagship-header-menu>p{font-size:12px;color:#dec4d8;line-height:1.55;overflow-wrap:anywhere;margin:10px 0}
+.flagship-header-menu>button{display:flex;align-items:center;gap:11px;border:1px solid #8e416c;background:#37102d;color:#ffe2f0;padding:11px 13px;border-radius:12px;font-size:12px;width:100%;margin-top:9px}
+.flagship-header-menu>button:hover{border-color:#ff9bc8}
+.flagship-menu-run span{color:#67f3bb;margin-right:9px}
+.flagship-app .neo-hero{background:radial-gradient(circle at 81% 31%,#e102599c,transparent 48%),linear-gradient(112deg,#2f021c 0%,#5b032d 43%,#93073e 79%,#b50848 100%);border:1px solid #ff4088;box-shadow:inset 0 1px #fff2f075,0 0 0 1px #4b0b338c,0 17px 32px #0008;overflow:hidden;min-height:375px}
+.flagship-app .neo-hero:before{background:linear-gradient(90deg,#280015d9 0%,#3b0023a8 43%,#35012122 81%,transparent);z-index:2}
+.flagship-app .neo-hero h1{font-weight:850;color:white;text-shadow:0 4px 3px #1e0018a6,0 0 18px #ff499f4a}
+.flagship-app .neo-hero h1 span{background:linear-gradient(100deg,#ff5dad 2%,#ff77a7 30%,#ffc17b 70%,#ffe986);background-clip:text;-webkit-background-clip:text;color:transparent;text-shadow:none;filter:none}
+.flagship-app .neo-hero .pm-kicker{color:#ffe3ac;font-weight:750}
+.flagship-app .neo-hero .pm-hero-copy>p{color:#fff1f7;font-size:clamp(13px,1.4vw,17px);max-width:600px;text-shadow:0 1px 10px #1a0017}
+.flagship-app .neo-pill-main{background:linear-gradient(105deg,#e40057,#ff1a70 65%,#ff4b98);color:#fff;border-color:#ffa8ca;box-shadow:0 0 15px #fc1d77a0,inset 0 1px #fff8}
+.flagship-app .neo-pill{font-weight:600;border-color:#f54f96;box-shadow:0 0 8px #d0176644,inset 0 1px #ffb9d833}
+.flagship-app .neo-pill:focus-visible{outline:2px solid white}
+.flagship-orb{background:url("/energy-orb.svg") center/contain no-repeat;position:absolute;top:-42px;right:-70px;z-index:1;width:475px;height:480px;opacity:.95}
+.flagship-app .neo-section{border:1px solid #871744;background:linear-gradient(125deg,#1e061e,#130917 59%,#2c071f);box-shadow:inset 0 1px #f652a333,0 9px 23px #0008;border-radius:27px}
+.flagship-app .neo-section-head h2{color:#fff8fb;text-shadow:0 1px #110008;font-weight:800;letter-spacing:1.7px}
+.flagship-app .neo-heading-symbol{color:#ff60a1}.flagship-app .neo-heading-symbol.sun,.flagship-app .neo-heading-symbol.gold{color:#ffe47f}
+.flagship-app .neo-model{background:linear-gradient(125deg,#251227,#100b17);border-color:#8d4175;box-shadow:inset 0 1px #ffb8ea20}
+.flagship-app .neo-model.chosen{background:linear-gradient(130deg,#4c1131,#21091b);border:2px solid #ff70af;box-shadow:0 0 13px #fb2182a6,inset 0 0 0 1px #ffe6f149}
+.flagship-app .neo-model-symbol{color:#fff}.flagship-app .neo-model-mint .neo-model-symbol{color:#ecfff9}.flagship-app .neo-model-sky .neo-model-symbol{color:#89b5ff}.flagship-app .neo-model-sun .neo-model-symbol{color:#ffe384}
+.flagship-app .neo-model-indicator.on,.flagship-app .neo-service-dot.active{background:#00f5aa;box-shadow:0 0 10px #00f5aa9c}
+.flagship-app .neo-action{border:1px solid #784168;background:linear-gradient(145deg,#35132c,#1b1222);box-shadow:inset 0 1px #ffdff61f;border-radius:21px}
+.flagship-app .neo-action:first-child{background:linear-gradient(140deg,#59092e,#220c21)}
+.flagship-app .neo-action-image{background:linear-gradient(140deg,#113449,#140d27);border-color:#4a7b9b}
+.flagship-app .neo-action-image .neo-action-symbol{color:#37e8fe}
+.flagship-app .neo-action-plan{background:linear-gradient(140deg,#5a3211,#25121d)}
+.flagship-app .neo-service-card{border:1px solid #663d5e;background:linear-gradient(130deg,#2c162f,#160f1c);box-shadow:inset 0 1px #ffdef520}
+.flagship-app .neo-runs{border:1px solid #4f173e}.flagship-app .neo-run-row,.flagship-app .neo-no-runs{background:#260e24;border-bottom:1px solid #522040}
+.flagship-app .neo-no-runs{border:0}.flagship-app .neo-run-logo.done{background:#12422f}.flagship-app .neo-run-pill.done{color:#15ffb2}
+.flagship-app .neo-chat-section{border:1.5px solid #ff83bc;background:linear-gradient(130deg,#68153e,#380923 53%,#540b31);box-shadow:0 0 13px #f42c829c,inset 0 1px #fff4;scroll-margin-bottom:calc(36px + env(safe-area-inset-bottom))}
+.flagship-app .neo-chat-section .pm-composer{background:linear-gradient(105deg,#210a1c,#330b25);border:1px solid #a03e70;box-shadow:inset 0 1px #ffc4e633}
+.flagship-app .neo-chat-section .pm-submit{background:linear-gradient(120deg,#fa1372,#ff3084);border:1px solid #ffbdde;box-shadow:0 0 13px #f72386bd,inset 0 1px #fff7}
+.flagship-app .neo-composer-tools button,.flagship-file-trigger{display:inline-flex;align-items:center;justify-content:center;min-height:41px;padding:10px 14px;white-space:nowrap;border-radius:99px;background:#240b21;border:1px solid #9c4471;color:#ffe3f0;font-size:11px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.flagship-app .neo-composer-tools .tool-active{border-color:#ff85c0;background:#65173e;box-shadow:0 0 10px #ed217866;color:white}
+.flagship-file-trigger input{position:absolute;width:1px;height:1px;clip:rect(0,0,0,0);overflow:hidden;opacity:0}
+.flagship-file-trigger:focus-within{outline:2px solid white;outline-offset:3px}
+.flagship-generated-image{display:block;max-width:100%;width:100%;height:auto;border-radius:14px;margin-top:11px;box-shadow:0 5px 15px #0006}
+.flagship-app .pm-bubble{overflow-wrap:anywhere}
+@media(max-width:880px){.flagship-orb{width:365px;height:380px;right:-85px;top:-16px;opacity:.81}.flagship-app .neo-hero:before{background:linear-gradient(90deg,#260019de,#370323c7 43%,#36001b55 84%,transparent)}}
+@media(max-width:560px){
+ .flagship-app .neo-header{padding-left:12px;padding-right:12px;gap:8px}
+ .flagship-logo{width:46px!important;height:46px!important;border-radius:14px!important}
+ .flagship-logo svg{width:42px;height:42px}
+ .flagship-app .pm-brand-label{font-size:20px;letter-spacing:-.8px}
+ .flagship-app .pm-brand-label small{font-size:7px;letter-spacing:1.25px}
+ .flagship-app .neo-header .pm-round-icon{height:42px;min-height:42px;width:42px;min-width:42px;font-size:21px;border-radius:15px}
+ .flagship-app .neo-header .pm-live{min-width:32px;width:32px;height:42px;padding:5px;border-radius:14px}
+ .flagship-app .neo-header .pm-live i{width:9px;height:9px}
+ .flagship-app .neo-main{padding:6px 12px calc(20px + env(safe-area-inset-bottom))}
+ .flagship-app .neo-hero{min-height:286px;border-radius:25px;padding:26px 20px}
+ .flagship-app .neo-hero h1{font-size:clamp(30px,8.1vw,43px);line-height:1.12;letter-spacing:-1.4px;position:relative;z-index:3}
+ .flagship-app .neo-hero .pm-hero-copy>p{max-width:100%;font-size:12px}
+ .flagship-orb{width:230px;height:260px;right:-89px;top:6px;opacity:.42}
+ .flagship-app .neo-hero:before{background:linear-gradient(90deg,#20000fd9 0%,#300018bf 60%,#30001833)}
+ .flagship-app .neo-section{border-radius:23px}
+ .flagship-app .neo-model{min-width:123px}
+ .flagship-app .neo-action{width:144px}
+ .flagship-app .neo-action-image{width:159px}
+ .flagship-app .neo-chat-section{padding:10px;border-radius:23px}
+ .flagship-app .neo-composer-tools{gap:7px}
+ .flagship-app .neo-composer-tools button,.flagship-file-trigger{font-size:10px;padding:8px 11px;min-height:40px}
+}
+@media(max-width:370px){.flagship-app .pm-brand-label{font-size:17px}.flagship-logo{width:40px!important;height:40px!important}.flagship-logo svg{width:36px;height:36px}}
+@media(hover:none) and (pointer:coarse){.flagship-app .neo-pill,.flagship-app .neo-model,.flagship-app .neo-action,.flagship-app .neo-composer-tools button,.flagship-file-trigger{transition:none!important}.flagship-app .neo-pill:active,.flagship-app .neo-action:active,.flagship-app .neo-model:active{transform:scale(.98)}}
+@media(prefers-reduced-motion:reduce){.flagship-app *{animation-duration:.01ms!important;scroll-behavior:auto!important}}
