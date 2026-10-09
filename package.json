@@ -13,7 +13,8 @@
   "dependencies": {
     "next": "latest",
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "@vercel/oidc": "latest"
   },
   "devDependencies": {
     "@types/node": "latest",
