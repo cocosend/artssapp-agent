@@ -1,3 +1,5 @@
+import { getVercelOidcTokenSync } from "@vercel/oidc";
+
 export type ProviderId = "openai" | "deepseek" | "gemini" | "claude" | "mistral";
 export type AgentMode = ProviderId | "multi";
 
@@ -73,12 +75,22 @@ async function callGemini(messages: ChatMessage[], model: string) {
 
 
 /** Supports gateway-issued OIDC on Vercel deployments. No secret is persisted in source. */
+export function getGatewayToken() {
+  if (process.env.AI_GATEWAY_API_KEY?.trim()) return process.env.AI_GATEWAY_API_KEY.trim();
+  try {
+    // On Vercel a fresh OIDC token may live in the request context, not process.env.
+    return getVercelOidcTokenSync();
+  } catch {
+    return process.env.VERCEL_OIDC_TOKEN?.trim();
+  }
+}
+
 export function gatewayConfigured() {
-  return Boolean(process.env.AI_GATEWAY_API_KEY?.trim() || process.env.VERCEL_OIDC_TOKEN?.trim());
+  return Boolean(getGatewayToken());
 }
 
 async function callGateway(messages: ChatMessage[], model: string) {
-  const token = process.env.AI_GATEWAY_API_KEY?.trim() || process.env.VERCEL_OIDC_TOKEN?.trim();
+  const token = getGatewayToken();
   if (!token) throw new Error("AI Gateway authentication is unavailable");
   const response = await fetchWithTimeout("https://ai-gateway.vercel.sh/v1/chat/completions", {
     method: "POST",
