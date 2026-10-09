@@ -11,6 +11,7 @@ import { StudioSettingsPanel, DEFAULT_SETTINGS, sanitizeSettings, type StudioSet
 import { StudioSidebar, type StudioSection } from "./studio-sidebar";
 import { CodeWorkspace } from "./code-workspace";
 import { MultiAgentBoard, type TeamLastRun, type TeamMode, type AgentRunReport } from "./multi-agent-board";
+import { beginRunClock, elapsedRunSeconds } from "./run-clock";
 
 type Provider = "openai" | "deepseek" | "gemini" | "claude" | "mistral";
 type Mode = Provider | "multi";
