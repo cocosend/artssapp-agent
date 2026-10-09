@@ -69,10 +69,13 @@ export default function Home() {
   const [runs, setRuns] = useState<Run[]>([]);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  const [showAllModels, setShowAllModels] = useState(false);
+  const [showAllRuns, setShowAllRuns] = useState(false);
   const composerRef = useRef<ComposerHandle>(null);
   const modelRef = useRef<HTMLDivElement>(null);
   const shortcutRef = useRef<HTMLDivElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
+  const servicesRef = useRef<HTMLElement>(null);
   const inFlightHealth = useRef(false);
   const configured = health?.providers.configured ?? [];
   const ready = selected === "multi" ? configured.length > 0 : configured.includes(selected);
@@ -109,6 +112,10 @@ export default function Home() {
 
   function chooseTask(text: string) {
     composerRef.current?.fill(text);
+  }
+  function jumpTo(id: "models" | "integrations" | "chat") {
+    const target = id === "models" ? modelRef.current : id === "integrations" ? servicesRef.current : document.getElementById("agent-composer");
+    target?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
   }
 
   async function submit(text: string) {
@@ -163,71 +170,114 @@ export default function Home() {
     catch { setNotice("Копіювання недоступне у цьому браузері."); }
   }
 
-  return <div className="pm-shell">
-    <header className="pm-header">
-      <Link className="pm-brand" href="/" aria-label="ARTSS AI — головна"><span className="pm-brand-mark">a<span>✦</span></span><span className="pm-brand-label">ARTSS<span className="pm-dot">●</span>AI<small>PRIVATE AGENT STUDIO</small></span></Link>
+  return <div className="pm-shell neo-app">
+    <header className="pm-header neo-header">
+      <Link className="pm-brand" href="/" aria-label="ARTSS AI — головна">
+        <span className="pm-brand-mark">a<span>✦</span></span>
+        <span className="pm-brand-label">ARTSS<span className="pm-dot">●</span>AI<small>PRIVATE AGENT STUDIO</small></span>
+      </Link>
       <div className="pm-header-right">
-        <span className={"pm-live " + (health ? "up" : "")}><i />{loading ? "Перевірка" : health ? "Система працює" : "Немає зв'язку"}</span>
-        <button type="button" className="pm-round-icon" onClick={() => { setLoading(true); void refresh(); }} title="Оновити стан" aria-label="Оновити стан"><Icon name="refresh" size={17} /></button>
-        <button type="button" className="pm-round-icon" onClick={() => { void logout(); }} title="Вийти" aria-label="Вийти"><Icon name="logout" size={17} /></button>
+        <span className={"pm-live " + (health ? "up" : "")} title={health ? "API відповідає" : "API не перевірено"}><i /><span className="neo-status-caption">{loading ? "Перевірка" : health ? "API онлайн" : "Офлайн"}</span></span>
+        <button type="button" className="pm-round-icon" onClick={() => { setLoading(true); void refresh(); }} title="Оновити стан" aria-label="Оновити стан"><Icon name="refresh" size={19}/></button>
+        <button type="button" className="pm-round-icon" onClick={() => { void logout(); }} title="Вийти" aria-label="Вийти"><Icon name="logout" size={19}/></button>
       </div>
     </header>
-
-    <main className="pm-main">
-      <section className="pm-hero">
+    <main className="pm-main neo-main">
+      <section className="pm-hero neo-hero" aria-labelledby="neo-title">
         <div className="pm-hero-copy">
           <span className="pm-kicker"><span className="pm-kicker-mark">✦</span> НОВИЙ РІВЕНЬ ВАШИХ ІДЕЙ</span>
-          <h1>Створюйте більше.<br /><span>Без зайвого.</span></h1>
-          <p>Усі ваші AI-інструменти в одному спокійному робочому просторі. Один запит — команда моделей.</p>
-          <div className="pm-hero-chips"><span>5 AI провайдерів</span><span>Розумний fallback</span><span>Ваш приватний простір</span></div>
+          <h1 id="neo-title">Створюйте більше.<br /><span>Без зайвого.</span></h1>
+          <p>Усі ваші AI-інструменти в одному просторі. Один запит — команда моделей.</p>
+          <div className="neo-hero-actions">
+            <button type="button" className="neo-pill neo-pill-main" onClick={() => jumpTo("models")}>✦ <strong>5 AI-провайдерів</strong><Icon name="chevron" size={15}/></button>
+            <button type="button" className="neo-pill" onClick={() => { setSelected("multi"); jumpTo("models"); }}><Icon name="shield" size={16}/> Розумний fallback <Icon name="chevron" size={14}/></button>
+            <button type="button" className="neo-pill" onClick={() => jumpTo("chat")}>◈ Приватний простір <Icon name="chevron" size={14}/></button>
+          </div>
         </div>
-        <div className="pm-hero-art" aria-hidden="true"><div className="pm-halo pm-halo-one"/><div className="pm-halo pm-halo-two"/><div className="pm-floating pm-floating-a">✳</div><div className="pm-floating pm-floating-b">✦</div><div className="pm-core">✺</div></div>
+        <div className="neo-orb" aria-hidden="true"><div className="neo-orb-inner"/><span>✦</span></div>
       </section>
 
-      <div className="pm-layout">
-        <div className="pm-primary">
-          <section className="pm-panel pm-studio" aria-labelledby="studio-title">
-            <div className="pm-section-heading"><div><span className="pm-overline">01 / WORKSPACE</span><h2 id="studio-title">Ваш AI-агент</h2></div><button type="button" className="pm-minor-button" disabled={busy || !messages.length} onClick={() => { setMessages([]); setNotice("Нова розмова відкрита."); }}><Icon name="plus" size={16}/> Нова розмова</button></div>
-            {messages.length ? <div className="pm-thread" ref={threadRef} role="log" aria-live="polite">{messages.map((message, index) => <article className={"pm-message " + message.role} key={index}><span className="pm-message-label">{message.role === "user" ? "ВИ" : "ARTSS AI"} <small>{message.meta || ""}</small></span><div className="pm-bubble">{message.content}</div>{message.role === "assistant" ? <button type="button" className="pm-copy" onClick={() => { void copy(message.content); }}><Icon name="copy" size={13}/> Копіювати</button> : null}</article>)}</div> : <div className="pm-empty-chat"><span className="pm-small-orb">✳</span><strong>Що зробимо сьогодні?</strong><p>Пишіть як звичайно. Моделі працюватимуть через налаштовані серверні інтеграції.</p></div>}
-            {busy ? <p className="pm-thinking" role="status"><span className="pm-pulse"/>Агент працює над завданням…</p> : null}
-            <AgentComposer ref={composerRef} model={models.find(x => x.id === selected)?.title || selected} busy={busy} unavailable={health !== null && !ready} onSend={submit} />
-            {healthError ? <div className="pm-notice-error" role="alert">{healthError} <button type="button" onClick={() => { void refresh(); }}>Повторити</button></div> : null}
-            {!loading && health && !configured.length ? <div className="pm-notice-error">Потрібен серверний ключ хоча б одного AI-провайдера.</div> : null}
-            {!loading && health && !ready ? <div className="pm-notice-error">У вибраної моделі немає налаштованого ключа. Виберіть іншу модель.</div> : null}
-          </section>
-
-          <section className="pm-panel pm-shortcuts" aria-labelledby="tasks-title">
-            <div className="pm-section-heading"><div><span className="pm-overline">02 / QUICK START</span><h2 id="tasks-title">Швидкий старт</h2></div><div className="pm-arrows"><button type="button" aria-label="Попередні сценарії" onClick={() => move(shortcutRef, -1)}>‹</button><button type="button" aria-label="Наступні сценарії" onClick={() => move(shortcutRef, 1)}>›</button></div></div>
-            <div className="pm-carousel pm-actions" ref={shortcutRef}>{shortcuts.map(x => <button type="button" className={"pm-action pm-action-"+x.id} key={x.id} onClick={() => chooseTask(x.value)}><span className="pm-action-mark">{x.symbol}</span><strong>{x.title}</strong><small>{x.caption}</small><span className="pm-action-go"><Icon name="arrow" size={16}/></span></button>)}</div>
-          </section>
+      <section className="pm-panel neo-section" aria-labelledby="models-title">
+        <div className="neo-section-head">
+          <h2 id="models-title"><span className="neo-heading-symbol">⬡</span> AI МОДЕЛІ</h2>
+          <button type="button" className="neo-show-more" aria-expanded={showAllModels} onClick={() => setShowAllModels(x => !x)}>{showAllModels ? "Згорнути" : "Показати всі"} <Icon name="chevron" size={16}/></button>
         </div>
+        <div className={"pm-carousel neo-model-strip " + (showAllModels ? "neo-expanded" : "")} ref={modelRef} aria-label="Моделі штучного інтелекту">
+          {models.map(m => {
+            const active = m.id === "multi" ? configured.length > 0 : configured.includes(m.id);
+            return <button type="button" key={m.id} disabled={busy} aria-pressed={selected === m.id}
+              className={"neo-model neo-model-" + m.color + (selected === m.id ? " chosen" : "")}
+              onClick={() => setSelected(m.id)}>
+              <span className="neo-model-symbol">{m.symbol}</span>
+              <span className={"neo-model-indicator" + (active ? " on" : "")} title={active ? "Ключ налаштовано" : "Потрібен ключ"}/>
+              <strong>{m.title}</strong><small>{m.subtitle}</small>
+              <span className="neo-model-status">{loading ? "Перевірка" : active ? "Доступний ключ" : "Немає ключа"}</span>
+            </button>;
+          })}
+        </div>
+        {!ready && health ? <p className="neo-inline-alert">Для вибраної моделі немає ключа. Оберіть активну модель.</p> : null}
+      </section>
 
-        <aside className="pm-secondary">
-          <section className="pm-panel pm-models" aria-labelledby="models-title">
-            <div className="pm-section-heading"><div><span className="pm-overline">03 / INTELLIGENCE</span><h2 id="models-title">AI-моделі</h2></div><div className="pm-arrows"><button type="button" aria-label="Попередні моделі" onClick={() => move(modelRef,-1)}>‹</button><button type="button" aria-label="Наступні моделі" onClick={() => move(modelRef,1)}>›</button></div></div>
-            <div className="pm-carousel pm-model-carousel" ref={modelRef}>{models.map(m => {
-              const active = m.id === "multi" ? configured.length > 0 : configured.includes(m.id);
-              return <button type="button" key={m.id} disabled={busy} aria-pressed={selected === m.id} className={"pm-model pm-model-"+m.color + (selected === m.id ? " chosen" : "")} onClick={() => setSelected(m.id)}>
-                <span className="pm-model-top"><span className="pm-model-symbol">{m.symbol}</span><span className="pm-model-radio">{selected === m.id ? "✓" : ""}</span></span>
-                <strong>{m.title}</strong><small>{m.subtitle}</small>
-                <span className={"pm-model-state " + (active ? "active" : "")}><i/>{loading ? "Перевірка" : active ? "Ключ налаштовано" : "Потрібен ключ"}</span>
-              </button>;
-            })}</div>
-            <p className="pm-fine">У Multi AI беруть участь лише налаштовані моделі. Наявність ключа не гарантує доступність API.</p>
-          </section>
+      <section className="pm-panel neo-section" aria-labelledby="tasks-title">
+        <div className="neo-section-head"><h2 id="tasks-title"><span className="neo-heading-symbol sun">ϟ</span> ШВИДКІ ДІЇ</h2></div>
+        <div className="pm-carousel neo-action-strip" ref={shortcutRef}>
+          <button className="neo-action" type="button" onClick={() => { if (!busy) { setMessages([]); composerRef.current?.fill(""); jumpTo("chat"); } }}>
+            <span className="neo-action-symbol">▤</span><strong>Новий запит</strong><small>Текст, код, аналіз</small><Icon name="chevron" size={15}/>
+          </button>
+          {shortcuts.slice(0,3).map(x => <button type="button" className={"neo-action neo-action-" + x.id} key={x.id} onClick={() => { chooseTask(x.value); jumpTo("chat"); }}>
+            <span className="neo-action-symbol">{x.symbol}</span><strong>{x.title === "План" ? "Агент-режим" : x.title === "Код" ? "Робота з кодом" : "Аудит системи"}</strong><small>{x.caption}</small><Icon name="chevron" size={15}/>
+          </button>)}
+        </div>
+      </section>
 
-          <section className="pm-panel pm-stacks" aria-labelledby="system-title">
-            <div className="pm-section-heading"><div><span className="pm-overline">04 / SYSTEM</span><h2 id="system-title">Все під контролем</h2></div></div>
-            <details className="pm-stack" open><summary><span className="pm-stack-icon">↗</span><span><strong>Підключення</strong><small>GitHub, Vercel, Supabase</small></span><span className="pm-stack-chevron"><Icon name="chevron" size={18}/></span></summary><div className="pm-stack-body">{integrations.map(s => <a key={s.key} className="pm-service" href={s.href} target="_blank" rel="noreferrer"><span className="pm-service-mark">{s.mark}</span><span><strong>{s.title}</strong><small>{s.subtitle}</small></span><span className={"pm-service-state " + (health?.integrations[s.key] ? "configured" : "")}>{health?.integrations[s.key] ? "Налаштовано" : "Не налаштовано"}</span></a>)}</div></details>
-            <details className="pm-stack"><summary><span className="pm-stack-icon berry">◷</span><span><strong>Останні запуски</strong><small>{runs.length ? runs.length+" завдань у сесії" : "Поки немає запусків"}</small></span><span className="pm-stack-chevron"><Icon name="chevron" size={18}/></span></summary><div className="pm-stack-body">{runs.length ? runs.map(r => <div className="pm-run" key={r.id}><div><strong>{r.title}</strong><small>{displayTime(r.id)} · {r.model} · {r.seconds ? r.seconds.toFixed(1)+" c" : "обробка"}</small>{r.prUrl?.startsWith("https://github.com/") ? <a href={r.prUrl} rel="noreferrer" target="_blank">Переглянути PR ↗</a> : null}</div><span className={"pm-run-status "+r.status}>{r.status === "done" ? "Готово" : r.status === "error" ? "Помилка" : "Працює"}</span></div>) : <p className="pm-stack-empty">Історія з&apos;явиться після першого запиту. Дані поточної вкладки не зберігаються після оновлення.</p>}</div></details>
-            <details className="pm-stack"><summary><span className="pm-stack-icon sun">⚙</span><span><strong>Режим виконання</strong><small>{health?.executionEnabled ? "Дозволено зміни" : "Безпечний перегляд"}</small></span><span className="pm-stack-chevron"><Icon name="chevron" size={18}/></span></summary><div className="pm-stack-body"><p className="pm-fine">Зараз: <strong>{health?.executionEnabled ? "Execution" : "Preview"}</strong>. Режим встановлюється сервером; цей екран не зберігає й не показує секрети.</p><button type="button" className="pm-refresh" onClick={() => { setLoading(true); void refresh(); }}><Icon name="refresh" size={15}/> Оновити стан</button></div></details>
-            <div className="pm-sync"><span className={"pm-sync-dot"+(health ? " online":"")}/>{loading ? "Перевірка…" : lastCheck ? "Перевірено "+lastCheck : "Стан невідомий"}</div>
-          </section>
-        </aside>
-      </div>
+      <section className="pm-panel neo-section" aria-labelledby="integrations-title" ref={servicesRef}>
+        <div className="neo-section-head"><h2 id="integrations-title"><span className="neo-heading-symbol gold">♧</span> ІНТЕГРАЦІЇ ТА СТАТУС</h2><button className="neo-show-more" type="button" onClick={() => { setLoading(true); void refresh(); }}>Оновити <Icon name="refresh" size={14}/></button></div>
+        <div className="neo-service-strip">
+          {integrations.map(s => <a className="neo-service-card" href={s.href} key={s.key} target="_blank" rel="noreferrer">
+            <span className={"neo-service-logo neo-service-" + s.key}>{s.mark}</span>
+            <span className="neo-service-text"><strong>{s.title}</strong><small>{loading ? "Перевірка" : health?.integrations[s.key] ? "Ключ налаштовано" : "Не налаштовано"}</small></span>
+            <i className={"neo-service-dot" + (health?.integrations[s.key] ? " active" : "")} aria-hidden="true"/>
+          </a>)}
+        </div>
+        <p className="neo-small-note">Статус показує наявність конфігурації, а не результат окремого API-запиту. Автоматичні зміни: {health?.executionEnabled ? "увімкнені" : "вимкнені"}.</p>
+      </section>
+
+      <section className="pm-panel neo-section" aria-labelledby="runs-title">
+        <div className="neo-section-head">
+          <h2 id="runs-title"><span className="neo-heading-symbol gold">◷</span> НЕДАВНІ ЗАПУСКИ</h2>
+          <button type="button" className="neo-show-more" onClick={() => setShowAllRuns(x => !x)} aria-expanded={showAllRuns}>{showAllRuns ? "Згорнути" : "Усі запуски"} <Icon name="chevron" size={15}/></button>
+        </div>
+        <div className="neo-runs">
+          {!runs.length ? <div className="neo-no-runs"><span>◎</span><div><strong>Поки що немає запусків</strong><p>Результати реальних задач з'являться тут після першого запиту.</p></div></div> :
+            runs.slice(0,showAllRuns ? 40 : 3).map(r => <div className="neo-run-row" key={r.id}>
+              <span className={"neo-run-logo " + r.status}>{r.status === "done" ? "✓" : r.status === "error" ? "!" : "⌘"}</span>
+              <span className="neo-run-info"><strong>{r.title}</strong><small>{r.model} · {displayTime(r.id)} · {r.seconds ? r.seconds.toFixed(1) + " c" : "обробка"}</small>{r.prUrl?.startsWith("https://github.com/") ? <a href={r.prUrl} target="_blank" rel="noreferrer">Відкрити PR ↗</a> : null}</span>
+              <span className={"neo-run-pill " + r.status}>{r.status === "done" ? "✓ Готово" : r.status === "error" ? "Помилка" : "Виконується"}</span>
+            </div>)}
+        </div>
+      </section>
+
+      <section className="neo-chat-section" id="agent-composer" aria-label="AI-чат">
+        {messages.length ? <div className="pm-thread neo-thread" ref={threadRef} role="log" aria-live="polite">
+          {messages.map((message, index) => <article className={"pm-message " + message.role} key={index}>
+            <span className="pm-message-label">{message.role === "user" ? "ВИ" : "ARTSS AI"} <small>{message.meta || ""}</small></span>
+            <div className="pm-bubble">{message.content}</div>
+            {message.role === "assistant" ? <button type="button" className="pm-copy" onClick={() => { void copy(message.content); }}><Icon name="copy" size={14}/> Копіювати</button> : null}
+          </article>)}</div> : null}
+        {busy ? <p className="pm-thinking" role="status"><span className="pm-pulse"/>Агент обробляє запит…</p> : null}
+        <AgentComposer ref={composerRef} model={models.find(x=>x.id===selected)?.title || selected} busy={busy} unavailable={health !== null && !ready} onSend={submit}/>
+        <div className="neo-composer-tools">
+          <button type="button" onClick={() => { setSelected("multi"); jumpTo("models"); }}>✦ Multi AI</button>
+          <button type="button" onClick={() => { chooseTask(shortcuts[1].value); }}>〈/〉 Код</button>
+          <button type="button" onClick={() => { chooseTask(shortcuts[2].value); }}>⊞ Аудит</button>
+          <button type="button" onClick={() => { chooseTask(shortcuts[0].value); }}>✧ План</button>
+        </div>
+        {healthError ? <div className="pm-notice-error" role="alert">{healthError}<button type="button" onClick={() => { void refresh(); }}>Повторити</button></div> : null}
+        {!loading && health && !configured.length ? <div className="pm-notice-error">Жоден AI-провайдер не має налаштованого ключа.</div> : null}
+      </section>
 
       {notice ? <div className="pm-toast" role="status"><Icon name="check" size={16}/><span>{notice}</span><button type="button" onClick={() => setNotice("")} aria-label="Закрити">×</button></div> : null}
-      <footer className="pm-footer"><span>ARTSS AI <span className="pm-dot">●</span> PRIVATE STUDIO</span><span>Плавно. Розумно. Без зайвого.</span></footer>
+      <footer className="pm-footer"><span>ARTSS AI <span className="pm-dot">●</span> PRIVATE AGENT STUDIO</span><span>Зв'язок перевірено: {lastCheck || "—"}</span></footer>
     </main>
   </div>;
 }
