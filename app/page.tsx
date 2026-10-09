@@ -99,9 +99,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    void refresh();
+    const immediate = window.setTimeout(() => { void refresh(); }, 0);
     const timer = window.setInterval(() => { void refresh(); }, 60_000);
-    return () => window.clearInterval(timer);
+    return () => { window.clearTimeout(immediate); window.clearInterval(timer); };
   }, [refresh]);
 
   useEffect(() => {
@@ -291,7 +291,7 @@ export default function Home() {
         </> : view === "activity" ? <section className="inner-page">
           <div className="inner-kicker">ACTIVITY / EXECUTION HISTORY</div><h1>Історія <span>запусків.</span></h1><p className="inner-subtitle">Результати запитів у поточній сесії. Немає вигаданих запусків — лише реальні відповіді API.</p>
           <div className="activity-summary"><div><span>УСЬОГО ЗАПИТІВ</span><strong>{runs.length}</strong></div><div><span>ЗАВЕРШЕНО</span><strong>{runs.filter(r=>r.status==="done").length}</strong></div><div><span>ПОМИЛКИ</span><strong>{runs.filter(r=>r.status==="error").length}</strong></div></div>
-          {runs.length === 0 ? <div className="empty-activity"><span><Icon name="activity" size={36} /></span><h2>Тут з'являться ваші задачі</h2><p>Відправте перший запит через консоль агента.</p><button type="button" className="hero-primary" onClick={() => go("workspace")}>Відкрити консоль <Icon name="arrow" size={17} /></button></div> : <div className="activity-list">{runs.map(run => <article className="activity-item" key={run.id}><span className={"activity-icon " + run.status}>{run.status === "done" ? <Icon name="check" size={19} /> : run.status === "error" ? "!" : <Icon name="clock" size={19} />}</span><div className="activity-info"><h3>{run.task}</h3><p>{run.provider} · {compactTime(run.id)}{run.duration === undefined ? "" : " · " + run.duration.toFixed(1) + " с"}</p>{run.prUrl && run.prUrl.startsWith("https://github.com/") ? <a target="_blank" rel="noreferrer" href={run.prUrl}>Відкрити pull request <Icon name="external" size={13} /></a> : null}</div><span className={"activity-state " + run.status}>{run.status==="done"?"Завершено":run.status==="error"?"Помилка":"В роботі"}</span></article>)}</div>}<p className="footnote">Історія цієї сторінки зберігається тільки до перезавантаження вкладки; сервер може зберігати окремі записи у Supabase.</p>
+          {runs.length === 0 ? <div className="empty-activity"><span><Icon name="activity" size={36} /></span><h2>Тут з&apos;являться ваші задачі</h2><p>Відправте перший запит через консоль агента.</p><button type="button" className="hero-primary" onClick={() => go("workspace")}>Відкрити консоль <Icon name="arrow" size={17} /></button></div> : <div className="activity-list">{runs.map(run => <article className="activity-item" key={run.id}><span className={"activity-icon " + run.status}>{run.status === "done" ? <Icon name="check" size={19} /> : run.status === "error" ? "!" : <Icon name="clock" size={19} />}</span><div className="activity-info"><h3>{run.task}</h3><p>{run.provider} · {compactTime(run.id)}{run.duration === undefined ? "" : " · " + run.duration.toFixed(1) + " с"}</p>{run.prUrl && run.prUrl.startsWith("https://github.com/") ? <a target="_blank" rel="noreferrer" href={run.prUrl}>Відкрити pull request <Icon name="external" size={13} /></a> : null}</div><span className={"activity-state " + run.status}>{run.status==="done"?"Завершено":run.status==="error"?"Помилка":"В роботі"}</span></article>)}</div>}<p className="footnote">Історія цієї сторінки зберігається тільки до перезавантаження вкладки; сервер може зберігати окремі записи у Supabase.</p>
         </section> : <section className="inner-page">
           <div className="inner-kicker">SYSTEM / INFRASTRUCTURE</div><h1>Єдина <span>екосистема.</span></h1><p className="inner-subtitle">Актуальний стан основних сервісів ARTSS. Перевірка конфігурації не означає перевірку прав доступу або доступності API.</p>
           <div className="connection-grid">{services.map(service => <article key={service.id} className="connection-card"><div className="connection-card-top"><span className="connection-logo">{service.monogram}</span><span className={"connection-status " + (health?.integrations[service.id] ? "up" : "")}><i />{health?.integrations[service.id] ? "Configured" : "Not configured"}</span></div><h2>{service.name}</h2><p>{service.info}</p><a target="_blank" rel="noreferrer" href={service.href}>Відкрити панель <Icon name="external" size={15} /></a></article>)}</div>
@@ -299,7 +299,7 @@ export default function Home() {
           <div className="connection-tools"><button type="button" className="hero-primary" onClick={() => { setLoadingHealth(true); void refresh(); }}>Оновити діагностику <Icon name="refresh" size={17} /></button><span>Остання перевірка: {lastSync || "—"}</span></div>
         </section>}
       </main>
-      <footer className="stage-footer"><span>ARTSS <strong>AI</strong> / CONTROL CENTER</span><span>PRIVATE SYSTEM · DEVELOPED FOR WHAT'S NEXT</span><span>2026 © ARTSS</span></footer>
+      <footer className="stage-footer"><span>ARTSS <strong>AI</strong> / CONTROL CENTER</span><span>PRIVATE SYSTEM · DEVELOPED FOR WHAT&apos;S NEXT</span><span>2026 © ARTSS</span></footer>
     </div>
   </div>;
 }
