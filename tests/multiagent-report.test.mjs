@@ -28,15 +28,15 @@ test("multiagent report only claims models that actually answered, with real jud
   let judgeCalls = 0;
   await stubbedEnv({ OPENAI_API_KEY: "test", DEEPSEEK_API_KEY: "test", GEMINI_API_KEY: "test" },
     async url => {
-      const u = String(url);
-      if (u.includes("api.openai.com")) {
+      const u = new URL(String(url));
+      if (u.origin === "https://api.openai.com") {
         judgeCalls++;
         return new Response(JSON.stringify({ output_text: judgeCalls === 2 ? "combined result" : "openai answer" }), { status: 200 });
       }
-      if (u.includes("api.deepseek.com")) {
+      if (u.origin === "https://api.deepseek.com") {
         return new Response(JSON.stringify({ choices: [{ message: { content: "deepseek answer" } }] }), { status: 200 });
       }
-      if (u.includes("generativelanguage.googleapis.com")) return new Response("unavailable", { status: 503 });
+      if (u.origin === "https://generativelanguage.googleapis.com") return new Response("unavailable", { status: 503 });
       throw new Error("Unexpected model URL");
     },
     async () => {
@@ -55,9 +55,9 @@ test("multiagent report only claims models that actually answered, with real jud
 test("multiagent report does not claim synthesis or contributions when one model fails", async () => {
   await stubbedEnv({ OPENAI_API_KEY: "test", DEEPSEEK_API_KEY: "test" },
     async url => {
-      const u = String(url);
-      if (u.includes("api.openai.com")) return new Response("failed", { status: 502 });
-      if (u.includes("api.deepseek.com")) return new Response(JSON.stringify({
+      const u = new URL(String(url));
+      if (u.origin === "https://api.openai.com") return new Response("failed", { status: 502 });
+      if (u.origin === "https://api.deepseek.com") return new Response(JSON.stringify({
         choices: [{ message: { content: "deepseek useful answer" } }],
       }), { status: 200 });
       throw new Error("Unexpected URL");
