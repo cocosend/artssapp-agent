@@ -560,7 +560,6 @@ export default function Home() {
 
       </>}
       {notice ? <div className="pm-toast" role="status"><Icon name="check" size={16}/><span>{notice}</span><button type="button" onClick={() => setNotice("")} aria-label="Закрити">×</button></div> : null}
-      </>}
       <footer className="pm-footer"><span>ARTSS AI <span className="pm-dot">●</span> PRIVATE AGENT STUDIO</span><span>Зв&apos;язок перевірено: {lastCheck || "—"}</span></footer>
     </main>
     </div>
