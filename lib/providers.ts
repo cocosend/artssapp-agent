@@ -41,13 +41,14 @@ async function callOpenAI(messages: ChatMessage[], model: string) {
 async function callDeepSeek(messages: ChatMessage[], model: string) {
   const key = process.env.DEEPSEEK_API_KEY;
   if (!key) throw new Error("DEEPSEEK_API_KEY is not configured");
-  const r = await fetchWithTimeout("https://api.deepseek.com/responses", {
+  const response = await fetchWithTimeout("https://api.deepseek.com/chat/completions", {
     method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model, instructions: SYSTEM, input: messages, stream: false }),
+    headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
+    body: JSON.stringify({ model, messages: [{ role: "system", content: SYSTEM }, ...messages], stream: false }),
   });
-  if (!r.ok) throw new Error(`DeepSeek ${r.status}: ${await r.text()}`);
-  return extractOpenAIText(await r.json());
+  if (!response.ok) throw new Error("DeepSeek request failed (" + response.status + ")");
+  const data = await response.json();
+  return data?.choices?.[0]?.message?.content ?? "";
 }
 
 async function callGemini(messages: ChatMessage[], model: string) {
