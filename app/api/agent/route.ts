@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { configuredProviders, runModelWithFallback, type ChatMessage, type ProviderId } from "@/lib/providers";
+import { configuredProviders, runModelWithFallback, type ChatMessage, type ProviderId, type AgentMode } from "@/lib/providers";
 import { addEvent, addMessage, createRun, createSession, finishRun } from "@/lib/supabase";
 import { createBranch, createPullRequest, deployVercel, listRepo, readRepoFile, commitFiles } from "@/lib/github";
 import { parsePlan, validatePath } from "@/lib/agent-plan";
@@ -30,7 +30,7 @@ function normalizeMessages(value: unknown): ChatMessage[] {
     .filter((m): m is ChatMessage =>
       Boolean(m) &&
       typeof m === "object" &&
-      ["user", "assistant", "system"].includes((m as ChatMessage).role) &&
+      ["user", "assistant"].includes((m as ChatMessage).role) &&
       typeof (m as ChatMessage).content === "string",
     )
     .slice(-20)
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const messages = normalizeMessages(body?.messages);
-    const requested = body?.provider as ProviderId | undefined;
+    const requested = body?.provider as AgentMode | undefined;
     const available = configuredProviders();
 
     if (!messages.length) return NextResponse.json({ error: "messages is required" }, { status: 400 });
@@ -104,7 +104,7 @@ export async function POST(req: Request) {
       }, { status: 503 });
     }
 
-    const provider = requested && available.includes(requested) ? requested : available[0];
+    const provider: AgentMode = requested === "multi" ? "multi" : requested && available.includes(requested as ProviderId) ? requested : available[0];
     const task = messages.filter((m) => m.role === "user").at(-1)?.content || "Agent task";
 
     try {
@@ -150,7 +150,7 @@ export async function POST(req: Request) {
         await addEvent(runId, "completed", "Задача оброблена без змін у GitHub.");
         await finishRun(runId, "completed", plan.message);
       }
-      return NextResponse.json({ text: plan.message, provider: activeProvider, available, action: "answer" });
+      return NextResponse.json({ text: plan.message, provider: activeProvider, contributors: modelResult.contributors, available, action: "answer" });
     }
 
     const safeFiles = plan.files.map((file) => ({
@@ -164,7 +164,7 @@ export async function POST(req: Request) {
     if (!executionEnabled || plan.commit !== true) {
       const text = `${plan.message}\n\nПідготовлено файли: ${safeFiles.map((f) => f.path).join(", ")}.\n\nРежим preview: зміни не записані в GitHub.`;
       if (runId) await finishRun(runId, "completed", text);
-      return NextResponse.json({ text, provider: activeProvider, available, action: "preview", files: safeFiles.map((f) => f.path) });
+      return NextResponse.json({ text, provider: activeProvider, contributors: modelResult.contributors, available, action: "preview", files: safeFiles.map((f) => f.path) });
     }
 
     const branch = `agent/${Date.now()}`;
@@ -210,6 +210,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       text: result,
       provider: activeProvider,
+      contributors: modelResult.contributors,
       available,
       action: "executed",
       branch,

@@ -1,4 +1,5 @@
 export type ProviderId = "openai" | "deepseek" | "gemini";
+export type AgentMode = ProviderId | "multi";
 
 export type ChatMessage = {
   role: "user" | "assistant" | "system";
@@ -83,21 +84,51 @@ export function configuredProviders(): ProviderId[] {
   return out;
 }
 
-export async function runModelWithFallback(preferred: ProviderId, messages: ChatMessage[]) {
+export async function runModelWithFallback(preferred: AgentMode, messages: ChatMessage[]) {
   const configured = configuredProviders();
-  const order = [preferred, ...configured.filter((p) => p !== preferred)];
-  let lastError: unknown;
+  if (!configured.length) throw new Error("No AI providers are configured.");
 
+  if (preferred === "multi" && configured.length > 1) {
+    // Independent providers run concurrently; one failing must not cancel the others.
+    const settled = await Promise.allSettled(configured.map(provider => runModel(provider, messages)));
+    const successes = settled.flatMap((result, index) =>
+      result.status === "fulfilled" && result.value.trim()
+        ? [{ provider: configured[index], text: result.value }]
+        : []
+    );
+    if (!successes.length) throw new Error("All configured AI providers failed.");
+
+    if (successes.length > 1) {
+      // Prefer the primary provider to synthesize the final answer or edit plan.
+      const judge = successes.find(result => result.provider === "openai") || successes[0];
+      const candidates = successes.map((result, i) =>
+        "CANDIDATE " + (i + 1) + " (" + result.provider + "):\n" + result.text.slice(0, 16000)
+      ).join("\n\n");
+      try {
+        const synthesis: ChatMessage[] = [
+          ...messages,
+          { role: "system", content: "Combine and critically evaluate these independent AI outputs for the original request. Preserve valid structured JSON required by the calling application; do not expose provider internals or secrets. Return one complete final answer or one safe coherent JSON edit plan.\n\n" + candidates },
+        ];
+        const text = await runModel(judge.provider, synthesis);
+        if (text.trim()) return { provider: "multi" as const, text, contributors: successes.map(result => result.provider) };
+      } catch {
+        // A failed judge must not discard a valid result.
+      }
+    }
+    return { provider: successes[0].provider, text: successes[0].text, contributors: successes.map(result => result.provider) };
+  }
+
+  const order = preferred === "multi" ? configured : [preferred, ...configured.filter(p => p !== preferred)];
+  let lastError: unknown;
   for (const provider of order) {
     if (!configured.includes(provider)) continue;
     try {
       const text = await runModel(provider, messages);
-      if (!text.trim()) throw new Error(`${provider} returned an empty response.`);
-      return { provider, text };
+      if (!text.trim()) throw new Error(provider + " returned an empty response.");
+      return { provider, text, contributors: [provider] };
     } catch (error) {
       lastError = error;
     }
   }
-
   throw lastError instanceof Error ? lastError : new Error("All configured AI providers failed.");
 }
