@@ -99,3 +99,23 @@ jobs:
       uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4
       with:
         category: "/language:${{matrix.language}}"
+
+    # Diagnostics only: rule IDs and affected file positions, never code contents or tokens.
+    - name: Summarize flagged rules for remediation
+      if: matrix.language == 'javascript-typescript'
+      shell: bash
+      run: |
+        node - <<'NODE'
+        const fs = require('fs');
+        const file = 'results/javascript.sarif';
+        if (!fs.existsSync(file)) { console.log('SARIF not available in workspace'); process.exit(0); }
+        const sarif = JSON.parse(fs.readFileSync(file, 'utf8'));
+        for (const run of sarif.runs || []) for (const issue of run.results || []) {
+          const loc = issue.locations?.[0]?.physicalLocation;
+          console.log(JSON.stringify({
+            ruleId: issue.ruleId, level: issue.level,
+            path: loc?.artifactLocation?.uri, line: loc?.region?.startLine,
+            description: issue.message?.text?.slice(0, 160),
+          }));
+        }
+        NODE
