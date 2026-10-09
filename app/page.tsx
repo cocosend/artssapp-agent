@@ -19,7 +19,7 @@ type Health = {
   executionEnabled: boolean;
 };
 type AgentReply = { text?: string; error?: string; provider?: string; contributors?: string[]; action?: string; prUrl?: string; deploymentUrl?: string; image?: string };
-type ProbeStatus = { state: "ok" | "missing_key" | "http_error" | "timeout"; status?: number };
+type ProbeStatus = { state: "ok" | "missing_key" | "http_error" | "timeout"; status?: number; via?: "direct" | "gateway" };
 type Diagnostics = { checkedAt: string; results: Record<string, ProbeStatus>; githubRead: boolean; githubWrite: string; agentExecution: string; vercelDeploy: string };
 const diagLabels: Record<string, string> = {
   openai: "OpenAI", deepseek: "DeepSeek", gemini: "Gemini",
@@ -346,7 +346,7 @@ export default function Home() {
             return <div className="diagnostic-row" key={key}>
               <strong>{label}</strong>
               <span className={result?.state === "ok" ? "good" : "notready"}>
-                <i/>{result ? diagStatus(result) : "Не перевірено"}
+                <i/>{result ? diagStatus(result) + (result.via === "gateway" && result.state === "ok" ? " · Gateway" : "") : "Не перевірено"}
               </span>
             </div>;
           })}</div>
