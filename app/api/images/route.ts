@@ -38,7 +38,7 @@ export async function POST(req: Request) {
         quality: options.quality,
         output_format: "png",
       }),
-      signal: AbortSignal.timeout(55_000),
+      signal: AbortSignal.any([req.signal, AbortSignal.timeout(55_000)]),
       cache: "no-store",
     });
     if (!response.ok) {
