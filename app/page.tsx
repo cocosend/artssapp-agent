@@ -329,8 +329,7 @@ export default function Home() {
   async function submit(text: string) {
     const task = text.trim();
     if (!task || busy || (toolMode === "agent" && health && !ready)) return;
-    const started = performance.now();
-    const id = Date.now();
+    const { started, id } = beginRunClock();
     const controller = new AbortController();
     requestController.current = controller;
     inFlightPrompt.current = task;
