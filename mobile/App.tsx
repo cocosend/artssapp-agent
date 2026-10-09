@@ -104,9 +104,9 @@ function AppShell({
     getHealth(controller.signal)
       .then((value) => {
         setHealth(value);
-        if (!value.providers.includes(provider) && value.providers[0]) setProvider(value.providers[0]);
+        setProvider(current => value.providers.includes(current) ? current : value.providers[0] || current);
       })
-      .catch(() => setHealth(null));
+      .catch(() => { if (!controller.signal.aborted) setHealth(null); });
     return () => controller.abort();
   }, []);
 
