@@ -99,3 +99,21 @@ jobs:
       uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4
       with:
         category: "/language:${{matrix.language}}"
+
+    # Temporary diagnostic: only rule names and source locations, no code contents or secrets.
+    - name: Summarize CodeQL source locations
+      if: matrix.language == 'javascript-typescript'
+      shell: bash
+      run: |
+        node - <<'NODE'
+        const fs = require('fs');
+        const path = '../results/javascript.sarif';
+        if (!fs.existsSync(path)) { console.log('No SARIF at expected location'); process.exit(0); }
+        const sarif = JSON.parse(fs.readFileSync(path, 'utf8'));
+        for (const run of sarif.runs || []) for (const finding of run.results || []) {
+          const loc = finding.locations?.[0]?.physicalLocation;
+          console.log(JSON.stringify({ rule: finding.ruleId, level: finding.level,
+            file: loc?.artifactLocation?.uri, line: loc?.region?.startLine,
+            text: finding.message?.text?.slice(0, 140) }));
+        }
+        NODE
