@@ -1,5 +1,5 @@
 {
-  "name": "ARTSS AI — Flagship Studio",
+  "name": "ARTSS AI — Blue Night",
   "short_name": "ARTSS AI",
   "description": "Приватний мультимодельний AI-агент ARTSS для iPhone.",
   "start_url": "/",
@@ -9,8 +9,8 @@
     "standalone",
     "minimal-ui"
   ],
-  "background_color": "#090008",
-  "theme_color": "#090008",
+  "background_color": "#050910",
+  "theme_color": "#050910",
   "lang": "uk",
   "icons": [
     {
