@@ -19,6 +19,16 @@ type Health = {
   executionEnabled: boolean;
 };
 type AgentReply = { text?: string; error?: string; provider?: string; contributors?: string[]; action?: string; prUrl?: string; deploymentUrl?: string; image?: string };
+type ProbeStatus = { state: "ok" | "missing_key" | "http_error" | "timeout"; status?: number; via?: "direct" | "gateway" };
+type Diagnostics = { checkedAt: string; results: Record<string, ProbeStatus>; githubRead: boolean; githubWrite: string; agentExecution: string; vercelDeploy: string };
+const diagLabels: Record<string, string> = {
+  openai: "OpenAI", deepseek: "DeepSeek", gemini: "Gemini",
+  claude: "Claude", mistral: "Mistral", github: "GitHub",
+  supabase: "Supabase", vercel: "Vercel",
+};
+const diagStatus = (value: ProbeStatus) => value.state === "ok" ? "API відповідає" :
+  value.state === "missing_key" ? "Потрібен ключ" : value.state === "timeout" ? "Немає відповіді" :
+  "API помилка" + (value.status ? " (" + value.status + ")" : "");
 
 const models: { id: Mode; title: string; subtitle: string; symbol: string; color: string }[] = [
   { id: "multi", title: "Multi AI", subtitle: "Команда моделей", symbol: "✳", color: "berry" },
@@ -77,6 +87,9 @@ export default function Home() {
   const [showAllRuns, setShowAllRuns] = useState(false);
   const [toolMode, setToolMode] = useState<"agent" | "image" | "web">("agent");
   const [menu, setMenu] = useState<"notifications" | "profile" | null>(null);
+  const [diagnostics, setDiagnostics] = useState<Diagnostics | null>(null);
+  const [diagnosticsBusy, setDiagnosticsBusy] = useState(false);
+  const [diagnosticsError, setDiagnosticsError] = useState("");
   const composerRef = useRef<ComposerHandle>(null);
   const modelRef = useRef<HTMLDivElement>(null);
   const shortcutRef = useRef<HTMLDivElement>(null);
@@ -219,6 +232,24 @@ export default function Home() {
     finally { router.push("/login"); router.refresh(); }
   }
 
+  async function checkIntegrations() {
+    if (diagnosticsBusy) return;
+    setDiagnosticsBusy(true);
+    setDiagnosticsError("");
+    try {
+      const response = await fetch("/api/diagnostics", { cache: "no-store" });
+      if (response.status === 401) { router.push("/login"); return; }
+      if (!response.ok) throw new Error("Не вдалося перевірити підключення.");
+      const result: Diagnostics = await response.json();
+      if (!result.results) throw new Error("Сервер повернув некоректні дані.");
+      setDiagnostics(result);
+    } catch (error) {
+      setDiagnosticsError(error instanceof Error ? error.message : "Перевірка недоступна.");
+    } finally {
+      setDiagnosticsBusy(false);
+    }
+  }
+
   async function copy(text: string) {
     try { await navigator.clipboard.writeText(text); setNotice("Відповідь скопійовано."); }
     catch { setNotice("Копіювання недоступне у цьому браузері."); }
@@ -303,7 +334,24 @@ export default function Home() {
             <i className={"neo-service-dot" + (health?.integrations[s.key] ? " active" : "")} aria-hidden="true"/>
           </a>)}
         </div>
-        <p className="neo-small-note">Статус показує наявність конфігурації, а не результат окремого API-запиту. Автоматичні зміни: {health?.executionEnabled ? "увімкнені" : "вимкнені"}.</p>
+        <p className="neo-small-note">Статус у картках показує наявність ключа, а не успіх запиту. Режим запису в GitHub: {health?.executionEnabled ? "дозволений" : "вимкнений"}.</p>
+        <button className="diagnostic-button" type="button" onClick={() => { void checkIntegrations(); }} disabled={diagnosticsBusy}>
+          <Icon name="refresh" size={16}/> {diagnosticsBusy ? "Перевіряю 8 підключень…" : "Перевірити реальні підключення"}
+        </button>
+        {diagnosticsError ? <p className="diagnostic-error" role="alert">{diagnosticsError}</p> : null}
+        {diagnostics ? <div className="diagnostic-panel" aria-label="Результати перевірки">
+          <p className="diagnostic-caption">Перевірено {new Date(diagnostics.checkedAt).toLocaleTimeString("uk-UA", {hour:"2-digit",minute:"2-digit"})} · Без запуску платних моделей</p>
+          <div className="diagnostic-grid">{Object.entries(diagLabels).map(([key, label]) => {
+            const result = diagnostics.results[key];
+            return <div className="diagnostic-row" key={key}>
+              <strong>{label}</strong>
+              <span className={result?.state === "ok" ? "good" : "notready"}>
+                <i/>{result ? diagStatus(result) + (result.via === "gateway" && result.state === "ok" ? " · Gateway" : "") : "Не перевірено"}
+              </span>
+            </div>;
+          })}</div>
+          <p className="diagnostic-caption">Читання GitHub: {diagnostics.githubRead ? "працює" : "недоступне"}. Запис у GitHub: {diagnostics.githubWrite === "missing_key" ? "немає токена" : diagnostics.githubWrite === "token_present_not_write_tested" ? "токен є, запис не тестувався" : "недоступний"}. Автоматичне виконання: {diagnostics.agentExecution === "disabled" ? "вимкнене" : "налаштоване, не тестувалося"}.</p>
+        </div> : null}
       </section>
 
       <section className="pm-panel neo-section" aria-labelledby="runs-title">

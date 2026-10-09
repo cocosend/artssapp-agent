@@ -83,3 +83,20 @@ body{background:linear-gradient(180deg,#0e010d 0%,#090008 48%,#140211 100%)}
 @media(max-width:370px){.flagship-app .pm-brand-label{font-size:17px}.flagship-logo{width:40px!important;height:40px!important}.flagship-logo svg{width:36px;height:36px}}
 @media(hover:none) and (pointer:coarse){.flagship-app .neo-pill,.flagship-app .neo-model,.flagship-app .neo-action,.flagship-app .neo-composer-tools button,.flagship-file-trigger{transition:none!important}.flagship-app .neo-pill:active,.flagship-app .neo-action:active,.flagship-app .neo-model:active{transform:scale(.98)}}
 @media(prefers-reduced-motion:reduce){.flagship-app *{animation-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* Real connection diagnostics — compact, keyboard accessible, mobile first. */
+.diagnostic-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;border-radius:14px;border:1px solid #e85c99;background:#530b33;color:#ffedf6;padding:10px 14px;font-size:12px;font-weight:700;margin-top:13px;touch-action:manipulation}
+.diagnostic-button:hover:not(:disabled){border-color:#ff9ac9;background:#761348}
+.diagnostic-button:disabled{opacity:.65}
+.diagnostic-panel{border:1px solid #7e3057;background:#1c0a19;border-radius:18px;padding:13px;margin-top:12px}
+.diagnostic-caption{font-size:10px;color:#c8afc3;line-height:1.6;margin:2px 0 12px;overflow-wrap:anywhere}
+.diagnostic-caption:last-child{margin:11px 0 0}
+.diagnostic-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.diagnostic-row{display:flex;align-items:center;justify-content:space-between;gap:7px;min-width:0;background:#320f2a;border:1px solid #5c2343;border-radius:11px;padding:9px 10px}
+.diagnostic-row strong{font-size:11px;font-weight:650;white-space:nowrap}
+.diagnostic-row>span{display:inline-flex;align-items:center;gap:6px;min-width:0;color:#f8c9d6;font-size:10px;text-align:right;line-height:1.3}
+.diagnostic-row>span.good{color:#79f5cd}
+.diagnostic-row>span i{width:6px;height:6px;border-radius:50%;background:#b36e82;flex:none}
+.diagnostic-row>span.good i{background:#00f0ab}
+.diagnostic-error{color:#ffcfaa;font-size:11px;margin-top:10px}
+@media(max-width:600px){.diagnostic-grid{grid-template-columns:1fr}.diagnostic-row{min-height:42px}.diagnostic-button{width:100%}}

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { configuredProviders } from "@/lib/providers";
+import { configuredProviders, gatewayConfigured } from "@/lib/providers";
 
 export const runtime = "nodejs";
 
@@ -19,14 +19,27 @@ export async function GET() {
       openai: configured("OPENAI_API_KEY"),
       deepseek: configured("DEEPSEEK_API_KEY"),
       gemini: configured("GEMINI_API_KEY"),
-      claude: configured("ANTHROPIC_API_KEY") || configured("CLAUDE_API_KEY"),
-      mistral: configured("MISTRAL_API_KEY"),
+      claude: configured("ANTHROPIC_API_KEY") || configured("CLAUDE_API_KEY") || gatewayConfigured(),
+      mistral: configured("MISTRAL_API_KEY") || gatewayConfigured(),
     },
     integrations: {
       github: configured("GITHUB_TOKEN"),
       supabase: configured("SUPABASE_URL") && configured("SUPABASE_SERVICE_ROLE_KEY"),
       vercel: configured("VERCEL_TOKEN"),
     },
-    executionEnabled: process.env.AGENT_EXECUTION_ENABLED === "true",
+    gateway: {
+      configured: gatewayConfigured(),
+      authMode: configured("AI_GATEWAY_API_KEY") ? "key" : gatewayConfigured() ? "oidc" : "none",
+    },
+    capabilities: {
+      publicGithubRead: true,
+      githubWriteConfigured: configured("GITHUB_TOKEN"),
+      githubExecutionReady: configured("GITHUB_TOKEN") && process.env.AGENT_EXECUTION_ENABLED === "true",
+      vercelApiConfigured: configured("VERCEL_TOKEN"),
+      imageGenerationConfigured: configured("OPENAI_API_KEY"),
+      webSearchConfigured: configured("OPENAI_API_KEY"),
+      supabaseConfigured: configured("SUPABASE_URL") && configured("SUPABASE_SERVICE_ROLE_KEY"),
+    },
+    executionEnabled: process.env.AGENT_EXECUTION_ENABLED === "true" && configured("GITHUB_TOKEN"),
   });
 }

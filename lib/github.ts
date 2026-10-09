@@ -1,11 +1,13 @@
 const API = "https://api.github.com";
 const GITHUB_TIMEOUT_MS = 30_000;
 
-function authHeaders() {
-  const token = process.env.GITHUB_TOKEN;
-  if (!token) throw new Error("GITHUB_TOKEN is not configured");
+function authHeaders(method: string) {
+  const token = process.env.GITHUB_TOKEN?.trim();
+  if (!token && method !== "GET") {
+    throw new Error("GitHub write access is unavailable: GITHUB_TOKEN is not configured.");
+  }
   return {
-    Authorization: `Bearer ${token}`,
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
     "Content-Type": "application/json",
@@ -15,12 +17,12 @@ function authHeaders() {
 export async function github(path: string, init: RequestInit = {}) {
   const r = await fetch(API + path, {
     ...init,
-    headers: { ...authHeaders(), ...(init.headers || {}) },
+    headers: { ...authHeaders((init.method || "GET").toUpperCase()), ...(init.headers || {}) },
     cache: "no-store",
     signal: init.signal ?? AbortSignal.timeout(GITHUB_TIMEOUT_MS),
   });
   const text = await r.text();
-  if (!r.ok) throw new Error(`GitHub ${r.status}: ${text.slice(0, 1000)}`);
+  if (!r.ok) throw new Error(`GitHub API HTTP ${r.status} while accessing ${path.split("?")[0]}`);
   return text ? JSON.parse(text) : null;
 }
 
@@ -115,7 +117,7 @@ export async function deployVercel(
     body: JSON.stringify({
       name,
       target,
-      gitSource: { type: "github", repo: process.env.GITHUB_REPO || "cocosend/artssapp-agent", ref },
+      gitSource: { type: "github", repoId: Number(process.env.VERCEL_GITHUB_REPO_ID || "1404333676"), ref },
     }),
     cache: "no-store",
     signal: AbortSignal.timeout(GITHUB_TIMEOUT_MS),
