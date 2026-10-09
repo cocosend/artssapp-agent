@@ -2,7 +2,7 @@
 
 import { forwardRef, memo, useImperativeHandle, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 
-export type ComposerHandle = { fill: (text: string) => void; focus: () => void };
+export type ComposerHandle = { fill: (text: string) => void; focus: () => void; restoreIfEmpty: (text: string) => void };
 
 type Props = {
   model: string;
@@ -27,6 +27,7 @@ export const AgentComposer = memo(forwardRef<ComposerHandle, Props>(function Age
       textarea.current?.scrollIntoView({ block: "nearest", behavior: "auto" });
     },
     focus() { textarea.current?.focus({ preventScroll: true }); },
+    restoreIfEmpty(text: string) { setDraft(previous => previous.trim() ? previous : text); },
   }), []);
 
   function submit(event: FormEvent<HTMLFormElement>) {
