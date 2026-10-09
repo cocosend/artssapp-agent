@@ -1,0 +1,218 @@
+/* ARTSS AI / WHITE BLACK BLUE NIGHT — restrained, functional design. */
+:root{color-scheme:dark;--bg:#050910;--surface:#101825;--surface-alt:#152235;--line:#26384e;--ink:#f7fbff;--sub:#9baec6;--berry:#428dff;--mint:#8bbfff;--yellow:#dceaff;--radius:18px}
+html,body{background:#050910!important;color:#f7fbff;scroll-behavior:auto}
+body{background:#050910!important}
+button,a,summary,select{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button:focus-visible,a:focus-visible,summary:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #8abbff!important;outline-offset:3px}
+.night-shell.studio-layout{grid-template-columns:224px minmax(0,1fr);background:#050910;min-height:100dvh}
+.night-shell.night-sidebar-hidden{grid-template-columns:minmax(0,1fr)}
+.night-shell.night-sidebar-hidden>.night-sidebar{display:none}
+.night-shell .studio-workarea{background:#050910;min-width:0}
+.night-shell .neo-header{max-width:1260px;background:#050910;padding-inline:clamp(12px,2.6vw,27px);border-bottom:1px solid #1b2a3b}
+.night-shell .pm-brand-label,.night-shell .neo-header .pm-brand-label{color:#fff;text-shadow:none}
+.night-shell .pm-brand-label small,.night-shell .neo-header .pm-brand-label small{color:#8197af;letter-spacing:1.2px}
+.night-shell .pm-dot{color:#3f91ff}
+.night-shell .pm-brand-mark.flagship-logo,.night-shell .studio-sidebar-logo{background:#102038!important;border:1px solid #345b86!important;box-shadow:none!important;border-radius:13px!important}
+.night-shell .pm-brand-mark svg{filter:none!important}
+.night-shell .neo-header .pm-round-icon,.night-shell .neo-header .pm-live,.night-shell .studio-mobile-trigger{border:1px solid #283c56;background:#111c2d;color:#e9f4ff;box-shadow:none;border-radius:12px!important;min-height:44px;min-width:44px;height:44px;width:44px}
+.night-shell .neo-header .pm-live{width:auto;min-width:42px;color:#afc3da}
+.night-shell .pm-live.up i,.night-shell .neo-service-dot.active,.night-shell .neo-model-indicator.on{background:#4d99ff;box-shadow:none}
+.night-shell .studio-mobile-trigger{display:grid!important;place-items:center;font-size:22px}
+.night-shell .flagship-alert-dot{background:#529bff;box-shadow:none}
+.night-shell .flagship-header-menu{background:#101a2a;border:1px solid #334c6c;box-shadow:0 12px 32px #0008}
+.night-shell .flagship-header-menu>p{color:#b8c6d7}
+.night-shell .flagship-header-menu>button{background:#15263c;color:#eef6ff;border-color:#334c67}
+.night-shell .flagship-menu-run span{color:#92bdff}
+/* Sidebar staircase: two groups; collapsible even at desktop widths */
+.night-shell .night-sidebar{background:#0a111d;border-right:1px solid #1f3148;box-shadow:none;padding-inline:11px;gap:14px}
+.night-shell .studio-sidebar-brand{border-color:#23354d}
+.night-shell .studio-sidebar-brand strong{color:#f9fcff}
+.night-shell .studio-sidebar-brand small{color:#8da5c0}
+.night-shell .studio-sidebar-logo{background:#111e30;border-color:#314b6b}
+.night-shell .studio-sidebar-caption{color:#7890ab;letter-spacing:1.5px}
+.night-shell .night-stairs{gap:9px}
+.night-stair-group{border:1px solid #26394f;background:#101927;border-radius:15px;overflow:hidden}
+.night-stair-summary{display:flex;align-items:center;gap:9px;min-height:55px;padding:11px 12px;list-style:none;cursor:pointer;color:#ecf4ff;font-size:12px;font-weight:690}
+.night-stair-summary::-webkit-details-marker,.night-fold-summary::-webkit-details-marker{display:none}
+.night-stair-summary>span:first-child{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:#1b304b;color:#94c3ff;font-size:17px;flex:none}
+.night-stair-summary strong{flex:1}
+.night-stair-arrow{color:#87a4c5;transition:transform .12s ease}
+.night-stair-group[open] .night-stair-arrow{transform:rotate(180deg)}
+.night-stair-children{display:flex;flex-direction:column;gap:3px;padding:3px 6px 9px 14px;margin-left:18px;border-left:1px solid #2d4461}
+.night-shell .night-stair-item{min-height:47px;border-radius:10px;padding:6px 7px;gap:7px;background:transparent;color:#bdd0e4}
+.night-shell .night-stair-item.active{border-color:#335e91;background:#173454;color:#fff;box-shadow:none}
+.night-shell .night-stair-item:hover{background:#192d45;border-color:#33506f}
+.night-shell .night-stair-item .studio-nav-symbol{height:29px;width:29px;min-width:29px;border-radius:8px;background:#1c2a3c;color:#a8cbff;font-size:13px}
+.night-shell .night-stair-item.active .studio-nav-symbol{background:#28548a;color:#fff}
+.night-shell .night-stair-item strong{font-size:11px;color:inherit}
+.night-shell .night-stair-item small{font-size:9px;color:#819ab3}
+.night-shell .night-stair-item.active small{color:#a8c8ee}
+.night-shell .studio-nav-arrow{color:#849cbb;font-size:15px}
+.night-shell .night-sidebar-bottom{border-color:#253951}
+.night-shell .night-sidebar-bottom button{background:#132338;border:1px solid #293f5b;border-radius:11px;color:#eaf4ff;min-height:44px}
+.night-shell .night-sidebar-bottom p{color:#8195b0}
+.night-shell .studio-sidebar-close{background:#1a2a40;color:#f9fcff;border-color:#355679}
+/* Main: composer first, remaining dashboards as slim accordion strips */
+.night-shell .neo-main{max-width:1060px;display:flex;flex-direction:column;gap:11px;padding:14px clamp(11px,2.6vw,25px) calc(25px + env(safe-area-inset-bottom))}
+.night-intro{order:0;display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:91px;padding:9px 3px 13px}
+.night-kicker{font-size:10px;letter-spacing:1.6px;font-weight:750;color:#8eaece}
+.night-intro h1{font-size:clamp(23px,4vw,37px);letter-spacing:-1.3px;font-weight:780;line-height:1.18;color:#f8fbff;margin:4px 0}
+.night-intro h1 span{color:#5fa4ff}
+.night-intro p{font-size:clamp(11px,1.25vw,13px);line-height:1.5;color:#9bafc6}
+.night-system-indicator{display:flex;align-items:center;gap:8px;white-space:nowrap;border:1px solid #293d53;background:#101b2c;padding:9px 11px;border-radius:999px;color:#a9bed7;font-size:10px}
+.night-system-indicator i{width:7px;height:7px;border-radius:50%;background:#76869a}
+.night-system-indicator.online i{background:#5aa5ff}
+.night-shell .neo-chat-section{order:1;margin:0!important;padding:12px!important;border:1px solid #2b4667!important;border-radius:18px!important;background:#0e1929!important;box-shadow:none!important}
+.night-shell .neo-chat-section .pm-composer{padding:10px;background:#080f1b!important;border:1px solid #2d405c!important;border-radius:13px!important;box-shadow:none!important}
+.night-shell .neo-chat-section .pm-composer:focus-within{border-color:#5595e2!important}
+.night-shell .neo-chat-section .pm-composer textarea{background:transparent;color:#f5faff;caret-color:#63abff;font-size:16px;min-height:70px}
+.night-shell .neo-chat-section .pm-composer textarea::placeholder{color:#748ca7}
+.night-shell .neo-chat-section .pm-composer-bottom>span{color:#a1b5cb}
+.night-shell .neo-chat-section .pm-submit,.night-shell .neo-chat-section .pm-submit:not(:disabled){background:#f8fbff!important;color:#071323!important;border:1px solid #f8fbff!important;border-radius:10px!important;box-shadow:none!important;font-weight:750}
+.night-shell .neo-chat-section .pm-submit:disabled{background:#263a51!important;color:#98acc4!important;border-color:#263a51!important}
+.night-shell .neo-composer-tools{gap:7px;padding-top:10px}
+.night-shell .neo-composer-tools button,.night-shell .flagship-file-trigger{color:#bdd1e7;background:#14243a;border:1px solid #2a4362;border-radius:10px;font-size:10px;box-shadow:none;min-height:38px}
+.night-shell .neo-composer-tools button.tool-active{background:#1b4578;border-color:#4f94e5;color:#fff;box-shadow:none}
+.night-shell .image-current-options,.night-shell .web-current-options{color:#afcdea}
+.night-shell .image-current-options button{background:#1a385a;border-color:#3b6898;color:#dceeff}
+.night-shell .pm-thinking,.night-shell .engine-state-label{color:#d1e1f3}
+.night-shell .pm-pulse{background:#72b0ff;animation:none}
+.night-shell .skip-request{background:#1e3650;border-color:#6088b3;color:#f9fbff;box-shadow:none}
+.night-shell .pm-bubble,.night-shell .neo-thread .pm-bubble{background:#14243a;border:1px solid #273f58;color:#f8fbff}
+.night-shell .pm-message.user .pm-bubble,.night-shell .neo-thread .pm-message.user .pm-bubble{background:#163657;border-color:#355d89}
+.night-shell .pm-message-label{color:#91c2ff}.night-shell .pm-message.user .pm-message-label{color:#dceaff}
+.night-shell .neo-thread{background:#0a1320;border-color:#263c58}
+.night-shell .pm-copy{color:#a7c9ef}
+.night-shell .web-source-list a{border-color:#315270;background:#112c46;color:#bbdcff}
+.night-shell .pm-notice-error{background:#242337;color:#ffdadb;border-color:#5e5d77}
+/* Four native native folding steps */
+.night-fold{order:2;margin:0;min-width:0;border:1px solid #24364b;border-radius:14px;background:#0d1624;overflow:hidden}
+.night-fold[open]{border-color:#36577b;background:#101c2c}
+.night-fold-summary{list-style:none;display:flex;align-items:center;gap:13px;min-height:61px;padding:11px 16px;cursor:pointer;color:#f2f7ff}
+.night-fold-number{display:grid;place-items:center;flex:none;height:33px;width:33px;border-radius:10px;background:#172b43;color:#82b5fa;font-size:11px;font-weight:800;font-variant-numeric:tabular-nums}
+.night-fold-summary strong{font-size:13px;font-weight:700;letter-spacing:.1px}
+.night-fold-summary small{margin-left:auto;color:#8197b1;font-size:11px}
+.night-fold-chevron{color:#91accb;font-size:21px;transition:transform .12s ease}
+.night-fold[open] .night-fold-chevron{transform:rotate(180deg)}
+.night-shell .night-fold .neo-section{margin:0!important;padding:12px!important;border:0!important;border-top:1px solid #263e58!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+.night-shell .night-fold .neo-section-head{margin:0 0 11px}
+.night-shell .night-fold .neo-section-head h2{display:none}
+.night-shell #fold-tasks .neo-section-head{display:none}
+.night-shell .neo-show-more{color:#a8c8eb}
+.night-shell .neo-model{background:#101c2e;border:1px solid #2c4562;border-radius:14px;box-shadow:none}
+.night-shell .neo-model.chosen{background:#163653;border-color:#569aec;box-shadow:inset 0 0 0 1px #356398}
+.night-shell .neo-model>strong,.night-shell .neo-action strong{color:#f2f8ff}
+.night-shell .neo-model>small,.night-shell .neo-action small,.night-shell .neo-model-state{color:#9fb4ce}
+.night-shell .neo-model-symbol,.night-shell .neo-model-mint .neo-model-symbol,.night-shell .neo-model-sky .neo-model-symbol,.night-shell .neo-model-sun .neo-model-symbol{color:#9ac7ff}
+.night-shell .neo-model-status{color:#9db6d1}
+.night-shell .neo-action,.night-shell .neo-action:first-child,.night-shell .neo-action-image,.night-shell .neo-action-plan{background:#132136;border-color:#2c4564;border-radius:14px;box-shadow:none}
+.night-shell .neo-action-symbol,.night-shell .neo-action-image .neo-action-symbol,.night-shell .neo-action-plan .neo-action-symbol{color:#9fcaff}
+.night-shell .neo-action svg:last-child{color:#9cb9dc}
+.night-shell .neo-service-card{background:#121f31;border:1px solid #2a425d;border-radius:12px;box-shadow:none}
+.night-shell .neo-service-logo,.night-shell .neo-service-github,.night-shell .neo-service-vercel,.night-shell .neo-service-supabase{background:#1b314c;color:#b9d6fc}
+.night-shell .neo-service-text strong{color:#edf6ff}.night-shell .neo-service-text small{color:#91a9c2}
+.night-shell .neo-small-note,.night-shell .diagnostic-caption{color:#91a9c2}
+.night-shell .diagnostic-button{border-color:#4170a8;background:#18395f;color:#eef7ff}
+.night-shell .diagnostic-panel{background:#0b1828;border-color:#284766}
+.night-shell .diagnostic-row{background:#12283f;border-color:#2b4868}
+.night-shell .diagnostic-row>span.good{color:#8cbeff}
+.night-shell .diagnostic-row>span.good i{background:#68aaff}
+.night-shell .neo-runs{border-color:#223954}
+.night-shell .neo-run-row,.night-shell .neo-no-runs{background:#122137;border-bottom-color:#233d59}
+.night-shell .neo-no-runs>span,.night-shell .neo-run-logo,.night-shell .neo-run-logo.done{background:#1b3656;color:#bbd9ff}
+.night-shell .neo-run-pill,.night-shell .neo-run-pill.done{background:#213955;color:#c0dbff}
+.night-shell .pm-toast{order:3;background:#15273b;border-color:#37628f;color:#fff}
+.night-shell .pm-footer{order:4;margin-top:8px;color:#8299b1}
+.night-shell .pm-footer .pm-dot{color:#65a6ff}
+/* Code / file workspace */
+.night-shell .online-code-studio{order:0}
+.night-shell .code-studio-head{background:#101c2c;border-color:#2a425e;border-radius:17px}
+.night-shell .code-studio-kicker{color:#8bbbff}
+.night-shell .code-studio-head h2{color:#f8fbff}
+.night-shell .code-studio-head p,.night-shell .code-editor-disclaimer{color:#a7bbd0}
+.night-shell .code-studio-exit,.night-shell .code-editor-actions button,.night-shell .code-fetch-error button{background:#16304c;border-color:#315374;color:#d9edff;box-shadow:none}
+.night-shell .code-file-list,.night-shell .code-edit-area{background:#0e1a2a;border-color:#2a415b}
+.night-shell .code-file-list button{color:#c0d3e7}
+.night-shell .code-file-list button.active{background:#1b446b;border-color:#598fc6;color:#fff}
+.night-shell .code-file-list button>span:first-child{color:#95c3ff}
+.night-shell .code-editor-toolbar strong{color:#eff7ff}
+.night-shell .code-editor-toolbar small{color:#92abc6}
+.night-shell .online-code-editor{background:#080f1a;border-color:#2b405a;color:#e6f2ff}
+.night-shell .code-editor-actions .code-submit{background:#f6fbff;color:#061121;border-color:#fff}
+.night-shell .code-editor-notice,.night-shell .code-fetch-error{color:#a9ceff}
+/* Dialogs and login are outside the sidebar shell */
+.studio-settings-overlay,.image-lightbox{background:#040913ed}
+.studio-settings-panel,.image-lightbox-content{background:#0e1929;border-color:#35577c;box-shadow:0 14px 35px #0008}
+.settings-head,.settings-footer{border-color:#243d59}
+.settings-eyebrow,.settings-group legend{color:#aecfff}
+.settings-head h2,.settings-group label,.settings-device,.image-lightbox-toolbar{color:#f8fbff}
+.settings-head p,.settings-explain,.settings-footer span,.settings-device small{color:#a3bad1}
+.settings-close,.settings-group,.settings-group select,.settings-buttons button,.image-result-actions button,.image-lightbox-toolbar button,.image-lightbox-save{background:#132740;color:#e9f5ff;border-color:#315477;box-shadow:none}
+.settings-group option{background:#12243b}
+.settings-group select:focus-visible{outline-color:#9ac6ff}
+.settings-toggle{color:#e8f5ff}.settings-toggle small{color:#91abc5}
+.settings-toggle input{accent-color:#428ff2}
+.settings-device span{color:#9dcbff}
+.settings-footer button{background:#f4f9ff;color:#071421;border-color:#fff}
+.image-lightbox-save{background:#194a82;color:#fff}
+.studio-login{background:#050910!important}
+.studio-login .login-glow{display:none}
+.studio-login-card{background:#111e2d;border:1px solid #31516f;box-shadow:0 14px 34px #0008;border-radius:22px}
+.studio-login-top .flagship-login-mark{background:#152b46;border:1px solid #3c6191;box-shadow:none}
+.login-private-badge,.login-eyebrow{color:#98c4ff}
+.studio-login-card h1{color:#fff}
+.studio-login-card h1 span{background:none;color:#89baff;-webkit-text-fill-color:#89baff}
+.studio-login-card>p,.studio-login-card .login-footnote,.login-meta{color:#9eb5cc}
+.studio-login-card label{color:#d4e5f8}
+.login-input-wrap{background:#081322;border-color:#344f6e}
+.login-input-wrap:focus-within{border-color:#70adf5;box-shadow:none}
+.studio-login-card .login-input-wrap input{color:#fff}
+.login-reveal{color:#b2d3ff}
+.studio-login-card .pm-login-submit{background:#f5faff;color:#081525;border-color:#fff;box-shadow:none}
+.studio-login-card .pm-login-submit:disabled{opacity:.45}
+.login-meta{border-color:#2b4562}
+/* Responsiveness and motion */
+@media(max-width:980px){
+ .night-shell.studio-layout,.night-shell.night-sidebar-hidden.studio-layout{display:block}
+ .night-shell .night-sidebar{background:#0b1524}
+ .night-shell.night-sidebar-hidden .night-sidebar.is-open{display:flex!important}
+ .night-shell .studio-sidebar-scrim{background:#030914d9}
+ .night-shell .neo-main{padding-top:8px}
+}
+@media(max-width:550px){
+ .night-shell .neo-header{height:calc(62px + env(safe-area-inset-top))}
+ .night-shell .neo-header .pm-brand-mark.flagship-logo{height:37px!important;width:37px!important}
+ .night-shell .neo-header .pm-brand-mark svg{height:32px;width:32px}
+ .night-shell .neo-header .pm-brand-label{font-size:17px;letter-spacing:-.8px}
+ .night-shell .neo-header .pm-brand-label small{font-size:7px;letter-spacing:.6px}
+ .night-shell .neo-header .pm-live{display:none}
+ .night-shell .neo-header .pm-round-icon,.night-shell .studio-mobile-trigger{height:40px;min-height:40px;width:40px;min-width:40px}
+ .night-shell .neo-main{padding-inline:max(11px,env(safe-area-inset-left));padding-right:max(11px,env(safe-area-inset-right))}
+ .night-intro{min-height:76px;gap:8px;align-items:start}
+ .night-intro h1{font-size:25px}
+ .night-intro p{max-width:280px;font-size:11px}
+ .night-system-indicator{padding:7px;max-width:100px;font-size:9px;white-space:normal}
+ .night-fold-summary{padding:10px 11px;gap:9px;min-height:56px}
+ .night-fold-summary small{font-size:9px;max-width:88px;text-align:right}
+ .night-fold-summary strong{font-size:12px}
+ .night-shell .neo-chat-section{padding:9px!important}
+ .night-shell .neo-chat-section .pm-composer{padding:9px!important}
+ .night-shell .neo-chat-section .pm-submit{min-width:100px}
+}
+@media(max-width:375px){
+ .night-shell .neo-header .pm-brand-label{font-size:15px}
+ .night-shell .neo-header .pm-round-icon{width:37px;min-width:37px}
+ .night-shell .studio-mobile-trigger{width:37px;min-width:37px}
+ .night-system-indicator{display:none}
+ .night-fold-summary small{display:none}
+}
+@media(orientation:landscape) and (max-height:520px){
+ .night-shell .neo-main{padding-top:3px}
+ .night-intro{min-height:0;padding:0 4px 5px}
+ .night-intro h1{font-size:22px}
+ .night-intro p{display:none}
+}
+@media(hover:none),(prefers-reduced-motion:reduce){
+ .night-shell *,.night-shell *::before,.night-shell *::after{animation:none!important;transition:none!important}
+ .night-stair-arrow,.night-fold-chevron{transition:none!important}
+}
