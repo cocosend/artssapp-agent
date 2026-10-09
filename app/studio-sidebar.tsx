@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { ArtssMark } from "./artss-mark";
 
-export type StudioSection = "home" | "code" | "web" | "images" | "models" | "integrations" | "runs";
+export type StudioSection = "team" | "home" | "code" | "web" | "images" | "models" | "integrations" | "runs";
 
 const groups: { id: string; title: string; icon: string; items: { id: StudioSection; icon: string; title: string; subtitle: string }[] }[] = [
   { id: "work", title: "Робочий простір", icon: "▤", items: [
     { id: "home", icon: "⌂", title: "AI студія", subtitle: "Ваші запити" },
+    { id: "team", icon: "✦", title: "Команда агентів", subtitle: "Multi AI · результати" },
     { id: "code", icon: "〈/〉", title: "Онлайн-кодинг", subtitle: "Файли GitHub" },
     { id: "web", icon: "◎", title: "Інтернет", subtitle: "Пошук та джерела" },
     { id: "images", icon: "▧", title: "Зображення", subtitle: "Генерація AI" },
@@ -44,7 +45,7 @@ export function StudioSidebar({ open, active, busy, onClose, onNavigate, onSetti
     <aside className={"studio-sidebar night-sidebar" + (open ? " is-open" : "")} id="studio-nav" aria-label="Навігація ARTSS AI">
       <div className="studio-sidebar-brand">
         <span className="studio-sidebar-logo"><ArtssMark size={30}/></span>
-        <span><strong>ARTSS AI</strong><small>TRASH POLKA STUDIO</small></span>
+        <span><strong>ARTSS AI</strong><small>MULTI-AGENT STUDIO</small></span>
         <button type="button" className="studio-sidebar-close" aria-label="Закрити меню" onClick={onClose}>×</button>
       </div>
       <div className="studio-sidebar-caption">НАВІГАЦІЯ</div>
