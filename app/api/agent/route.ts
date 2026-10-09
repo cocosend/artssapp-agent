@@ -79,6 +79,14 @@ async function inspectRequestedFiles(paths: string[]) {
   return results.join("\n\n");
 }
 
+// Persistence must never turn a completed model response into a failed request.
+async function safeAddEvent(runId: string, type: string, message: string, metadata: Record<string, unknown> = {}) {
+  try { await addEvent(runId, type, message, metadata); } catch { /* Database logging is optional. */ }
+}
+async function safeFinishRun(runId: string, status: "completed" | "failed", result: string) {
+  try { await finishRun(runId, status, result); } catch { /* Database persistence is optional. */ }
+}
+
 export async function POST(req: Request) {
   const serviceKey = req.headers.get("x-agent-service-key");
   const expectedServiceKey = process.env.AGENT_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -113,7 +121,7 @@ export async function POST(req: Request) {
       if (sessionId) {
         const run = await createRun(sessionId, task);
         runId = run?.id;
-        if (runId) await addEvent(runId, "thinking", "Агент аналізує задачу та репозиторій.");
+        if (runId) await safeAddEvent(runId, "thinking", "Агент аналізує задачу та репозиторій.");
         await addMessage(sessionId, "user", task);
       }
     } catch {
@@ -130,7 +138,7 @@ export async function POST(req: Request) {
     let plan = parsePlan(modelResult.text);
 
     if (plan.readFiles?.length) {
-      if (runId) await addEvent(runId, "inspecting", `Читаю ${plan.readFiles.length} додаткових файлів репозиторію.`, { files: plan.readFiles });
+      if (runId) await safeAddEvent(runId, "inspecting", `Читаю ${plan.readFiles.length} додаткових файлів репозиторію.`, { files: plan.readFiles });
       const inspected = await inspectRequestedFiles(plan.readFiles);
       const inspectionMessages: ChatMessage[] = [
         ...messages,
@@ -147,8 +155,8 @@ export async function POST(req: Request) {
 
     if (plan.action !== "change" || !plan.files?.length) {
       if (runId) {
-        await addEvent(runId, "completed", "Задача оброблена без змін у GitHub.");
-        await finishRun(runId, "completed", plan.message);
+        await safeAddEvent(runId, "completed", "Задача оброблена без змін у GitHub.");
+        await safeFinishRun(runId, "completed", plan.message);
       }
       return NextResponse.json({ text: plan.message, provider: activeProvider, contributors: modelResult.contributors, available, action: "answer" });
     }
@@ -158,18 +166,18 @@ export async function POST(req: Request) {
       content: file.content,
     }));
 
-    if (runId) await addEvent(runId, "editing", `Підготовлено ${safeFiles.length} файлів.`, { files: safeFiles.map((f) => f.path) });
+    if (runId) await safeAddEvent(runId, "editing", `Підготовлено ${safeFiles.length} файлів.`, { files: safeFiles.map((f) => f.path) });
 
-    const executionEnabled = process.env.AGENT_EXECUTION_ENABLED === "true";
+    const executionEnabled = process.env.AGENT_EXECUTION_ENABLED === "true" && Boolean(process.env.GITHUB_TOKEN?.trim());
     if (!executionEnabled || plan.commit !== true) {
-      const text = `${plan.message}\n\nПідготовлено файли: ${safeFiles.map((f) => f.path).join(", ")}.\n\nРежим preview: зміни не записані в GitHub.`;
-      if (runId) await finishRun(runId, "completed", text);
+      const text = `${plan.message}\n\nПідготовлено файли: ${safeFiles.map((f) => f.path).join(", ")}.\n\nРежим preview: зміни не записані в GitHub.${!process.env.GITHUB_TOKEN ? "\\nВідсутній токен GitHub для запису." : ""}`;
+      if (runId) await safeFinishRun(runId, "completed", text);
       return NextResponse.json({ text, provider: activeProvider, contributors: modelResult.contributors, available, action: "preview", files: safeFiles.map((f) => f.path) });
     }
 
     const branch = `agent/${Date.now()}`;
     await createBranch(REPO, branch, "main");
-    if (runId) await addEvent(runId, "branch", `Створено гілку ${branch}.`, { branch });
+    if (runId) await safeAddEvent(runId, "branch", `Створено гілку ${branch}.`, { branch });
 
     const commit = await commitFiles(
       REPO,
@@ -177,7 +185,7 @@ export async function POST(req: Request) {
       plan.commitMessage || "chore(agent): apply requested changes",
       branch,
     );
-    if (runId) await addEvent(runId, "commit", `Створено atomic commit ${commit.sha}.`, { branch, commit: commit.sha });
+    if (runId) await safeAddEvent(runId, "commit", `Створено atomic commit ${commit.sha}.`, { branch, commit: commit.sha });
 
     let prUrl: string | undefined;
     if (plan.createPr) {
@@ -189,7 +197,7 @@ export async function POST(req: Request) {
         plan.message,
       );
       prUrl = pr?.html_url;
-      if (runId) await addEvent(runId, "pr", prUrl || "Pull request created.", { branch });
+      if (runId) await safeAddEvent(runId, "pr", prUrl || "Pull request created.", { branch });
     }
 
     let deploymentUrl: string | undefined;
@@ -198,14 +206,14 @@ export async function POST(req: Request) {
       if (target === "production") {
         throw new Error("Production deployment is blocked until the agent branch is merged. Request a preview deployment or merge the PR first.");
       }
-      if (runId) await addEvent(runId, "deploying", `Запускаю Vercel ${target} deployment для ${branch}.`);
+      if (runId) await safeAddEvent(runId, "deploying", `Запускаю Vercel ${target} deployment для ${branch}.`);
       const deployment = await deployVercel(undefined, target, branch);
       deploymentUrl = deployment?.url ? `https://${deployment.url}` : deployment?.inspectorUrl;
-      if (runId) await addEvent(runId, "deployed", deploymentUrl || "Vercel deployment started.", { branch, target });
+      if (runId) await safeAddEvent(runId, "deployed", deploymentUrl || "Vercel deployment started.", { branch, target });
     }
 
     const result = `${plan.message}\n\nCommit: ${commit.sha}\nBranch: ${branch}${prUrl ? `\nPR: ${prUrl}` : ""}${deploymentUrl ? `\nDeploy: ${deploymentUrl}` : ""}`;
-    if (runId) await finishRun(runId, "completed", result);
+    if (runId) await safeFinishRun(runId, "completed", result);
 
     return NextResponse.json({
       text: result,
@@ -222,8 +230,8 @@ export async function POST(req: Request) {
     const message = error instanceof Error ? error.message : "Agent request failed";
     if (runId) {
       try {
-        await addEvent(runId, "failed", message);
-        await finishRun(runId, "failed", message);
+        await safeAddEvent(runId, "failed", message);
+        await safeFinishRun(runId, "failed", message);
       } catch {}
     }
     return NextResponse.json({ error: message }, { status: 500 });
