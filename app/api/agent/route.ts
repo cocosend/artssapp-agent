@@ -133,18 +133,22 @@ export async function POST(req: Request) {
       // Persistence is optional; the agent can continue without Supabase.
     }
 
+    if (req.signal.aborted) return NextResponse.json({ error: "Request cancelled." }, { status: 499 });
     const context = await repoContext();
+    if (req.signal.aborted) return NextResponse.json({ error: "Request cancelled." }, { status: 499 });
     const baseMessages: ChatMessage[] = [
       ...messages,
       { role: "system", content: `You have repository context below. ${SYSTEM_APPEND}\n\n${context}` },
     ];
 
-    let modelResult = await runModelWithFallback(provider, baseMessages);
+    let modelResult = await runModelWithFallback(provider, baseMessages, req.signal);
+    if (req.signal.aborted) return NextResponse.json({ error: "Request cancelled." }, { status: 499 });
     let plan = parsePlan(modelResult.text);
 
     if (plan.readFiles?.length) {
       if (runId) await safeAddEvent(runId, "inspecting", `Читаю ${plan.readFiles.length} додаткових файлів репозиторію.`, { files: plan.readFiles });
       const inspected = await inspectRequestedFiles(plan.readFiles);
+      if (req.signal.aborted) return NextResponse.json({ error: "Request cancelled during inspection." }, { status: 499 });
       const inspectionMessages: ChatMessage[] = [
         ...messages,
         {
@@ -152,10 +156,11 @@ export async function POST(req: Request) {
           content: `You already inspected the base repository context. Here are the additional requested files. Produce the FINAL JSON plan now. Do not request more files unless absolutely necessary.\n\n${SYSTEM_APPEND}\n\nADDITIONAL FILES:\n${inspected}`,
         },
       ];
-      modelResult = await runModelWithFallback(modelResult.provider, inspectionMessages);
+      modelResult = await runModelWithFallback(modelResult.provider, inspectionMessages, req.signal);
       plan = parsePlan(modelResult.text);
     }
 
+    if (req.signal.aborted) return NextResponse.json({ error: "Request cancelled." }, { status: 499 });
     const activeProvider = modelResult.provider;
 
     if (plan.action !== "change" || !plan.files?.length) {
@@ -182,13 +187,11 @@ export async function POST(req: Request) {
 
     // A skipped HTTP request must not start a new GitHub write after the model finishes.
     if (req.signal.aborted) return NextResponse.json({ error: "Request cancelled before GitHub execution." }, { status: 499 });
-    if (req.signal.aborted) return NextResponse.json({ error: "Request was cancelled before code changes." }, { status: 499 });
     const branch = `agent/${Date.now()}`;
     await createBranch(REPO, branch, "main");
     if (runId) await safeAddEvent(runId, "branch", `Створено гілку ${branch}.`, { branch });
 
     if (req.signal.aborted) return NextResponse.json({ error: "Request cancelled before commit." }, { status: 499 });
-    if (req.signal.aborted) return NextResponse.json({ error: "Request was cancelled before commit." }, { status: 499 });
 
     const commit = await commitFiles(
       REPO,
@@ -241,6 +244,10 @@ export async function POST(req: Request) {
       deploymentUrl,
     });
   } catch (error) {
+    if (req.signal.aborted) {
+      if (runId) await safeFinishRun(runId, "failed", "Client cancelled request.");
+      return NextResponse.json({ error: "Request cancelled." }, { status: 499 });
+    }
     const message = error instanceof Error ? error.message : "Agent request failed";
     if (runId) {
       try {
