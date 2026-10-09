@@ -1,1 +1,29 @@
-{"name":"Arts Agent","short_name":"Arts Agent","start_url":"/","display":"standalone","background_color":"#07080d","theme_color":"#07080d","icons":[]}
+{
+  "name": "ARTSS AI — Blood Dreams",
+  "short_name": "ARTSS AI",
+  "description": "Приватний мультимодельний AI-агент ARTSS для iPhone.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "background_color": "#120a17",
+  "theme_color": "#120a17",
+  "lang": "uk",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-icon",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
