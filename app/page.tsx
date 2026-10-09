@@ -126,15 +126,18 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem("artss-studio-settings-v1");
-      if (stored) {
-        const next = sanitizeSettings(JSON.parse(stored));
-        setPreferences(next);
-        setSelected(next.model);
-      }
-    } catch { /* Private browsing or invalid old settings: use defaults. */ }
-    setPreferencesLoaded(true);
+    const task = window.setTimeout(() => {
+      try {
+        const stored = window.localStorage.getItem("artss-studio-settings-v1");
+        if (stored) {
+          const next = sanitizeSettings(JSON.parse(stored));
+          setPreferences(next);
+          setSelected(next.model);
+        }
+      } catch { /* Invalid or inaccessible preference storage. */ }
+      setPreferencesLoaded(true);
+    }, 0);
+    return () => window.clearTimeout(task);
   }, []);
 
   useEffect(() => {
