@@ -167,7 +167,7 @@ export default function Home() {
   async function saveImage(data: string) {
     try {
       const blob = await (await fetch(data)).blob();
-      const file = new File([blob], "ARTSS-AI-" + Date.now() + ".png", { type: "image/png" });
+      const file = new File([blob], "ARTSS-AI-image.png", { type: "image/png" });
       if (navigator.canShare?.({ files: [file] }) && navigator.share) {
         await navigator.share({ files: [file], title: "ARTSS AI — зображення" });
         return;
