@@ -385,11 +385,11 @@ export default function Home() {
       if (modeForRequest === "agent" && result.orchestration) {
         setLastTeam({
           task, mode: selected, provider: result.provider || selected,
-          duration: (performance.now() - started) / 1000, report: result.orchestration,
+          duration: elapsedRunSeconds(started), report: result.orchestration,
         });
       }
       setRuns(previous => previous.map(run => run.id === id ? {
-        ...run, status: "done", model, seconds: (performance.now() - started) / 1000,
+        ...run, status: "done", model, seconds: elapsedRunSeconds(started),
         prUrl: result.prUrl, deploymentUrl: result.deploymentUrl, note: description,
       } : run));
     } catch (error) {
@@ -397,7 +397,7 @@ export default function Home() {
       const description = error instanceof Error ? error.message : "Невідома помилка.";
       composerRef.current?.restoreIfEmpty(task);
       setMessages(previous => [...previous.slice(-39), { role: "assistant", content: description, meta: "Помилка" }]);
-      setRuns(previous => previous.map(run => run.id === id ? { ...run, status: "error", seconds: (performance.now() - started) / 1000, note: description } : run));
+      setRuns(previous => previous.map(run => run.id === id ? { ...run, status: "error", seconds: elapsedRunSeconds(started), note: description } : run));
     } finally {
       if (requestController.current === controller) {
         requestController.current = null;
