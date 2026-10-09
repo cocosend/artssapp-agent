@@ -97,7 +97,7 @@ export function CodeWorkspace({ onSendToAgent, onClose, githubWrite }: Props) {
         <div className="code-editor-actions">
           <button type="button" onClick={() => { setDraft(original); setNotice("Чернетку скинуто."); }} disabled={status !== "ready" || !changed}>Скинути зміни</button>
           <button type="button" onClick={() => { void copy(); }} disabled={status !== "ready"}>Скопіювати</button>
-          <button className="code-submit" type="button" onClick={send} disabled={status !== "ready" || !changed}>Перевірити через AI ↗</button>
+          <button className="code-submit" type="button" onClick={send} disabled={status !== "ready" || !changed}>Передати в AI-чат ↗</button>
         </div>
         {notice ? <p className="code-editor-notice" role="status">{notice}</p> : null}
         <p className="code-editor-disclaimer">Жодного виконання довільного коду на сервері. Запис у GitHub: {githubWrite ? "ключ налаштовано; залежить від дозволу виконання" : "недоступний без GITHUB_TOKEN"}. Передача агенту не означає автоматичний commit.</p>
