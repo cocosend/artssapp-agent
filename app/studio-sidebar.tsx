@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ArtssMark } from "./artss-mark";
 
 export type StudioSection = "home" | "code" | "web" | "images" | "models" | "integrations" | "runs";
@@ -31,6 +31,7 @@ type Props = {
 };
 
 export function StudioSidebar({ open, active, busy, onClose, onNavigate, onSettings, onNewChat, onCollapse }: Props) {
+  const [expandedGroup, setExpandedGroup] = useState<string | null>("work");
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -48,8 +49,8 @@ export function StudioSidebar({ open, active, busy, onClose, onNavigate, onSetti
       </div>
       <div className="studio-sidebar-caption">НАВІГАЦІЯ</div>
       <nav className="studio-nav-links night-stairs" aria-label="Розділи">
-        {groups.map((group, index) => <details key={group.id} className="night-stair-group" defaultOpen={index === 0}>
-          <summary className="night-stair-summary">
+        {groups.map(group => <details key={group.id} className="night-stair-group" open={expandedGroup === group.id}>
+          <summary className="night-stair-summary" onClick={event => { event.preventDefault(); setExpandedGroup(previous => previous === group.id ? null : group.id); }}>
             <span aria-hidden="true">{group.icon}</span><strong>{group.title}</strong><span className="night-stair-arrow" aria-hidden="true">⌄</span>
           </summary>
           <div className="night-stair-children">
