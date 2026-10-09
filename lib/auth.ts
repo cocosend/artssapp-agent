@@ -19,7 +19,7 @@ function configuredPasswordDigest(): Buffer | null {
 }
 
 function signingKey(): string | null {
-  return process.env.AGENT_SESSION_SECRET || process.env.AGENT_SERVICE_KEY || null;
+  return process.env.AGENT_SESSION_SECRET || process.env.AGENT_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || null;
 }
 
 function signature(expiresAt: number, passwordDigest: Buffer, key: string): Buffer {
