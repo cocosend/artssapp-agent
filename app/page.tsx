@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type Provider = "openai" | "deepseek" | "gemini" | "claude" | "mistral";
 type Mode = Provider | "multi";
@@ -171,7 +172,7 @@ export default function Home() {
 
   return <div className="pm-shell">
     <header className="pm-header">
-      <a className="pm-brand" href="/" aria-label="ARTSS AI — головна"><span className="pm-brand-mark">a<span>✦</span></span><span className="pm-brand-label">ARTSS<span className="pm-dot">●</span>AI<small>PRIVATE AGENT STUDIO</small></span></a>
+      <Link className="pm-brand" href="/" aria-label="ARTSS AI — головна"><span className="pm-brand-mark">a<span>✦</span></span><span className="pm-brand-label">ARTSS<span className="pm-dot">●</span>AI<small>PRIVATE AGENT STUDIO</small></span></Link>
       <div className="pm-header-right">
         <span className={"pm-live " + (health ? "up" : "")}><i />{loading ? "Перевірка" : health ? "Система працює" : "Немає зв'язку"}</span>
         <button type="button" className="pm-round-icon" onClick={() => { setLoading(true); void refresh(); }} title="Оновити стан" aria-label="Оновити стан"><Icon name="refresh" size={17} /></button>
