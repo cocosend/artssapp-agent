@@ -10,6 +10,7 @@ import { type ChangeEvent } from "react";
 import { StudioSettingsPanel, DEFAULT_SETTINGS, sanitizeSettings, type StudioSettings } from "./studio-settings";
 import { StudioSidebar, type StudioSection } from "./studio-sidebar";
 import { CodeWorkspace } from "./code-workspace";
+import { MultiAgentBoard, type TeamLastRun, type TeamMode, type AgentRunReport } from "./multi-agent-board";
 
 type Provider = "openai" | "deepseek" | "gemini" | "claude" | "mistral";
 type Mode = Provider | "multi";
@@ -21,7 +22,7 @@ type Health = {
   integrations: { github: boolean; vercel: boolean; supabase: boolean };
   executionEnabled: boolean;
 };
-type AgentReply = { text?: string; error?: string; provider?: string; contributors?: string[]; action?: string; prUrl?: string; deploymentUrl?: string; image?: string; size?: string; quality?: string; sources?: { title: string; url: string }[] };
+type AgentReply = { text?: string; error?: string; provider?: string; contributors?: string[]; action?: string; prUrl?: string; deploymentUrl?: string; image?: string; size?: string; quality?: string; sources?: { title: string; url: string }[]; orchestration?: AgentRunReport };
 type ProbeStatus = { state: "ok" | "missing_key" | "http_error" | "timeout"; status?: number; via?: "direct" | "gateway" };
 type Diagnostics = { checkedAt: string; results: Record<string, ProbeStatus>; githubRead: boolean; githubWrite: string; agentExecution: string; vercelDeploy: string };
 const diagLabels: Record<string, string> = {
@@ -92,6 +93,8 @@ export default function Home() {
   const [runs, setRuns] = useState<Run[]>([]);
   const [storedRuns, setStoredRuns] = useState<Run[]>([]);
   const [busy, setBusy] = useState(false);
+  const [workingMode, setWorkingMode] = useState<TeamMode | null>(null);
+  const [lastTeam, setLastTeam] = useState<TeamLastRun | null>(null);
   const [notice, setNotice] = useState("");
   const [showAllModels, setShowAllModels] = useState(false);
   const [showAllRuns, setShowAllRuns] = useState(false);
@@ -275,6 +278,7 @@ export default function Home() {
   function goToSection(section: StudioSection) {
     setSidebarOpen(false);
     if (section === "code") { setActiveSection("code"); return; }
+    if (section === "team") { setToolMode("agent"); chooseModel("multi"); }
     setActiveSection(section);
     if (section === "models" || section === "integrations" || section === "runs") {
       const fold = document.getElementById("fold-" + section) as HTMLDetailsElement | null;
@@ -284,6 +288,7 @@ export default function Home() {
     if (section === "images") setToolMode("image");
     window.setTimeout(() => {
       const target = section === "home" ? null :
+        section === "team" ? document.getElementById("team-status") :
         section === "models" ? modelRef.current :
         section === "integrations" ? servicesRef.current :
         section === "runs" ? document.getElementById("runs-title") :
@@ -313,6 +318,7 @@ export default function Home() {
     activeRunId.current = null;
     if (id !== null) setRuns(prev => prev.map(r => r.id === id ? { ...r, status: "skipped", note: "Зупинено в інтерфейсі" } : r));
     setBusy(false);
+    setWorkingMode(null);
     setNotice("Запит пропущено. Уже розпочаті серверні дії можуть завершитися.");
   }
 
@@ -330,6 +336,7 @@ export default function Home() {
     const runModel = modeForRequest === "image" ? "Генерація зображення" : modeForRequest === "web" ? "Веб-пошук" : selected;
     setRuns(previous => [{ id, title: task, model: runModel, status: "running" as const }, ...previous].slice(0, 40));
     setBusy(true);
+    setWorkingMode(modeForRequest === "agent" ? selected : null);
     setNotice("");
     try {
       const endpoint = modeForRequest === "image" ? "/api/images" : modeForRequest === "web" ? "/api/web-search" : "/api/agent";
@@ -369,6 +376,12 @@ export default function Home() {
           sources: modeForRequest === "web" && Array.isArray(result.sources) ? result.sources.filter(x => typeof x?.url === "string" && x.url.startsWith("https://")).slice(0, 8) : undefined,
         }];
       });
+      if (modeForRequest === "agent" && result.orchestration) {
+        setLastTeam({
+          task, mode: selected, provider: result.provider || selected,
+          duration: (performance.now() - started) / 1000, report: result.orchestration,
+        });
+      }
       setRuns(previous => previous.map(run => run.id === id ? {
         ...run, status: "done", model, seconds: (performance.now() - started) / 1000,
         prUrl: result.prUrl, deploymentUrl: result.deploymentUrl, note: description,
@@ -383,6 +396,7 @@ export default function Home() {
         requestController.current = null;
         activeRunId.current = null;
         setBusy(false);
+        setWorkingMode(null);
       }
     }
   }
@@ -429,7 +443,7 @@ export default function Home() {
         aria-label={sidebarOpen ? "Закрити бічне меню" : "Відкрити бічне меню"} onClick={() => { if (window.matchMedia("(min-width: 981px)").matches) setSidebarCollapsed(x => !x); else setSidebarOpen(x => !x); }}>☰</button>
       <Link className="pm-brand" href="/" aria-label="ARTSS AI — головна">
         <span className="pm-brand-mark flagship-logo"><ArtssMark size={48}/></span>
-        <span className="pm-brand-label">ARTSS<span className="pm-dot">●</span>AI<small>PRIVATE AGENT STUDIO</small></span>
+        <span className="pm-brand-label">ARTSS<span className="pm-dot">●</span>AI<small>MULTI-AGENT STUDIO</small></span>
       </Link>
       <div className="pm-header-right">
         <span className={"pm-live " + (health ? "up" : "")} title={health ? "API відповідає" : "API не перевірено"}><i /><span className="neo-status-caption">{loading ? "Перевірка" : health ? "API онлайн" : "Офлайн"}</span></span>
@@ -453,7 +467,7 @@ export default function Home() {
           githubWrite={Boolean(health?.integrations.github && health?.executionEnabled)}/> :
       <>
       <section className="night-intro" aria-labelledby="neo-title">
-        <div><span className="night-kicker">ARTSS AI / PRIVATE STUDIO</span><h1 id="neo-title">Ваш AI-простір<span>.</span></h1><p>Код, пошук та моделі — в одному місці. Інструменти згорнуті ліворуч.</p></div>
+        <div><span className="night-kicker">ARTSS AI / AGENT WORKSPACE</span><h1 id="neo-title">Працюйте з командою AI<span> ✦</span></h1><p>Одна задача. Кілька моделей. Перевірений спільний результат.</p></div>
         <span className={"night-system-indicator" + (health?.ok ? " online" : "")}><i/>{loading ? "Перевірка" : health?.ok ? "Система активна" : "Немає зв'язку"}</span>
       </section>
 
@@ -547,7 +561,12 @@ export default function Home() {
       </section>
       </details>
 
+      <div className="multi-workbench">
       <section className="neo-chat-section" id="agent-composer" aria-label="AI-чат">
+        <div className="multi-chat-heading">
+          <div><span>СТУДІЯ ARTSS</span><h2>{toolMode === "agent" ? selected === "multi" ? "Multi-agent чат" : "Чат із " + (models.find(m => m.id === selected)?.title || selected) : toolMode === "web" ? "Інтернет-дослідження" : "Генерація зображень"}</h2></div>
+          <button type="button" onClick={() => goToSection("team")} aria-label="Показати команду агентів">Команда <span aria-hidden="true">↗</span></button>
+        </div>
         {messages.length ? <div className="pm-thread neo-thread" ref={threadRef} role="log" aria-live="polite">
           {messages.map((message, index) => <article className={"pm-message " + message.role} key={index}>
             <span className="pm-message-label">{message.role === "user" ? "ВИ" : "ARTSS AI"} <small>{message.meta || ""}</small></span>
@@ -573,6 +592,12 @@ export default function Home() {
         {healthError ? <div className="pm-notice-error" role="alert">{healthError}<button type="button" onClick={() => { void refresh(); }}>Повторити</button></div> : null}
         {!loading && health && !configured.length ? <div className="pm-notice-error">Жоден AI-провайдер не має налаштованого ключа.</div> : null}
       </section>
+      <MultiAgentBoard configured={configured} selected={selected} working={busy && toolMode === "agent"}
+        workingMode={workingMode} last={lastTeam}
+        onSelect={mode => { chooseModel(mode); setToolMode("agent"); }}
+        onCompose={() => { setActiveSection("home"); window.setTimeout(() => composerRef.current?.focus(), 0); }}
+        onStop={skipRequest} onNewChat={() => { newChat(); setActiveSection("home"); }}/>
+      </div>
 
       </>}
       {notice ? <div className="pm-toast" role="status"><Icon name="check" size={16}/><span>{notice}</span><button type="button" onClick={() => setNotice("")} aria-label="Закрити">×</button></div> : null}
