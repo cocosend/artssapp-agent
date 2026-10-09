@@ -72,6 +72,31 @@ async function callGemini(messages: ChatMessage[], model: string) {
 }
 
 
+/** Supports gateway-issued OIDC on Vercel deployments. No secret is persisted in source. */
+export function gatewayConfigured() {
+  return Boolean(process.env.AI_GATEWAY_API_KEY?.trim() || process.env.VERCEL_OIDC_TOKEN?.trim());
+}
+
+async function callGateway(messages: ChatMessage[], model: string) {
+  const token = process.env.AI_GATEWAY_API_KEY?.trim() || process.env.VERCEL_OIDC_TOKEN?.trim();
+  if (!token) throw new Error("AI Gateway authentication is unavailable");
+  const response = await fetchWithTimeout("https://ai-gateway.vercel.sh/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model, stream: false,
+      messages: [{ role: "system", content: SYSTEM }, ...messages],
+      max_tokens: 4000,
+    }),
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error("AI Gateway request failed (" + response.status + ")");
+  const data = await response.json();
+  const output = data?.choices?.[0]?.message?.content;
+  if (typeof output !== "string" || !output.trim()) throw new Error("AI Gateway returned no text");
+  return output;
+}
+
 async function callClaude(messages: ChatMessage[], model: string) {
   const key = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
   if (!key) throw new Error("ANTHROPIC_API_KEY is not configured");
@@ -110,8 +135,12 @@ async function callMistral(messages: ChatMessage[], model: string) {
 export async function runModel(provider: ProviderId, messages: ChatMessage[]) {
   if (provider === "deepseek") return callDeepSeek(messages, process.env.DEEPSEEK_MODEL || "deepseek-flash");
   if (provider === "gemini") return callGemini(messages, process.env.GEMINI_MODEL || "gemini-3.8-flash");
-  if (provider === "claude") return callClaude(messages, process.env.CLAUDE_MODEL || "claude-sonnet-5-5");
-  if (provider === "mistral") return callMistral(messages, process.env.MISTRAL_MODEL || "mistral-large-latest");
+  if (provider === "claude") return (process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY)
+    ? callClaude(messages, process.env.CLAUDE_MODEL || "claude-sonnet-5-5")
+    : callGateway(messages, process.env.GATEWAY_CLAUDE_MODEL || "anthropic/claude-sonnet-5.5");
+  if (provider === "mistral") return process.env.MISTRAL_API_KEY
+    ? callMistral(messages, process.env.MISTRAL_MODEL || "mistral-large-latest")
+    : callGateway(messages, process.env.GATEWAY_MISTRAL_MODEL || "mistral/mistral-large-4");
   return callOpenAI(messages, process.env.OPENAI_MODEL || "gpt-5.6-luna");
 }
 
@@ -120,8 +149,8 @@ export function configuredProviders(): ProviderId[] {
   if (process.env.OPENAI_API_KEY) out.push("openai");
   if (process.env.DEEPSEEK_API_KEY) out.push("deepseek");
   if (process.env.GEMINI_API_KEY) out.push("gemini");
-  if (process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY) out.push("claude");
-  if (process.env.MISTRAL_API_KEY) out.push("mistral");
+  if (process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY || gatewayConfigured()) out.push("claude");
+  if (process.env.MISTRAL_API_KEY || gatewayConfigured()) out.push("mistral");
   return out;
 }
 
@@ -130,11 +159,13 @@ export async function runModelWithFallback(preferred: AgentMode, messages: ChatM
   if (!configured.length) throw new Error("No AI providers are configured.");
 
   if (preferred === "multi" && configured.length > 1) {
-    // Independent providers run concurrently; one failing must not cancel the others.
-    const settled = await Promise.allSettled(configured.map(provider => runModel(provider, messages)));
+    // Cap parallel requests to 3 models to reduce cost, latency and rate limits.
+    // Gateway-only providers are accessible by explicit selection or single-model fallback.
+    const selected = configured.slice(0, 3);
+    const settled = await Promise.allSettled(selected.map(provider => runModel(provider, messages)));
     const successes = settled.flatMap((result, index) =>
       result.status === "fulfilled" && result.value.trim()
-        ? [{ provider: configured[index], text: result.value }]
+        ? [{ provider: selected[index], text: result.value }]
         : []
     );
     if (!successes.length) throw new Error("All configured AI providers failed.");
