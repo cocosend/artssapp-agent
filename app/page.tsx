@@ -169,8 +169,13 @@ export default function Home() {
   }
   async function saveImage(data: string) {
     try {
-      const blob = await (await fetch(data)).blob();
-      const file = new File([blob], "ARTSS-AI-image.png", { type: "image/png" });
+      if (!data.startsWith("data:image/png;base64,") || data.length > 20_000_000) {
+        throw new Error("Invalid or oversized image data.");
+      }
+      const binary = window.atob(data.slice("data:image/png;base64,".length));
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const file = new File([bytes], "ARTSS-AI-image.png", { type: "image/png" });
       if (navigator.canShare?.({ files: [file] }) && navigator.share) {
         await navigator.share({ files: [file], title: "ARTSS AI — зображення" });
         return;
