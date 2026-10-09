@@ -7,7 +7,7 @@ import { AgentComposer, type ComposerHandle } from "./agent-composer";
 import { ArtssMark } from "./artss-mark";
 import Image from "next/image";
 import { type ChangeEvent } from "react";
-import { StudioSettingsPanel, DEFAULT_SETTINGS, sanitizeSettings, type StudioSettings, type StudioModel } from "./studio-settings";
+import { StudioSettingsPanel, DEFAULT_SETTINGS, sanitizeSettings, type StudioSettings } from "./studio-settings";
 
 type Provider = "openai" | "deepseek" | "gemini" | "claude" | "mistral";
 type Mode = Provider | "multi";
@@ -196,6 +196,14 @@ export default function Home() {
   useEffect(() => {
     if (messages.length) threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "auto" });
   }, [messages]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch("/api/auth/session", { cache: "no-store", signal: controller.signal })
+      .then(response => { if (response.status === 401 && !controller.signal.aborted) router.replace("/login"); })
+      .catch(() => { /* No false redirects on network interruptions. */ });
+    return () => controller.abort();
+  }, [router]);
 
   useEffect(() => {
     let active = true;
