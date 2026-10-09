@@ -129,3 +129,93 @@ textarea,input{-webkit-user-select:text;user-select:text}
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 }
+
+/* iPhone 12 → future Pro sizing: design in CSS points, not hardware pixels.
+ * Covers 320–480pt portrait viewports, tall Dynamic Island areas, and short landscape windows.
+ * Preserve browser pinch-zoom and native vertical scrolling on horizontal carousels. */
+html{width:100%;overflow-x:clip;scroll-padding-top:calc(12px + env(safe-area-inset-top));scroll-padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+body{width:100%;min-width:0;overflow-wrap:break-word}
+.pm-shell{width:100%;max-width:100%;min-height:100svh;min-height:100dvh}
+.pm-main,.pm-primary,.pm-secondary,.pm-layout,.pm-panel,.pm-section-heading{min-width:0}
+.pm-header{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+.pm-main{padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right))}
+.pm-hero-copy,.pm-brand,.pm-brand-label,.pm-header-right,.pm-section-heading>div{min-width:0}
+.pm-hero h1{overflow-wrap:normal;text-wrap:balance}
+.pm-composer{scroll-margin-block-start:calc(12px + env(safe-area-inset-top));scroll-margin-block-end:calc(24px + env(safe-area-inset-bottom))}
+.pm-composer textarea,.pm-login-card input{font-size:16px!important}
+.pm-carousel,.pm-carousel button{touch-action:manipulation}
+.pm-carousel{overscroll-behavior-x:contain;scroll-snap-type:x proximity}
+.pm-carousel button{flex-shrink:0}
+.pm-stack summary{touch-action:manipulation}
+.pm-thread{max-width:100%;overflow-x:hidden;overflow-y:auto}
+.pm-bubble{max-width:100%;overflow-wrap:anywhere}
+.pm-login{min-height:100svh;min-height:100dvh}
+.pm-login-card{max-width:min(430px,100%)}
+@media(hover:none) and (pointer:coarse){
+  .pm-round-icon,.pm-minor-button,.pm-submit,.pm-login-submit,.pm-action,.pm-model,.pm-arrows button,.pm-copy,.pm-refresh{touch-action:manipulation}
+  .pm-carousel{touch-action:pan-x pan-y}
+}
+@media (max-width:480px){
+  .pm-header{gap:8px}
+  .pm-main{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+  .pm-header-right{gap:6px;flex:none}
+  .pm-brand{gap:8px}
+  .pm-brand-label{white-space:nowrap}
+  .pm-hero{min-height:0;padding:clamp(21px,5.6vw,28px) clamp(17px,4.8vw,22px);border-radius:clamp(22px,6vw,28px)}
+  .pm-hero h1{font-size:clamp(30px,8.8vw,41px);line-height:1.11;letter-spacing:-1.3px}
+  .pm-hero-copy>p{max-width:100%;font-size:clamp(12px,3vw,14px)}
+  .pm-kicker{font-size:10px;letter-spacing:1px}
+  .pm-hero-chips{max-width:100%}
+  .pm-hero-chips span{font-size:10px;line-height:1.35}
+  .pm-panel{padding:clamp(14px,3.8vw,19px)}
+  .pm-section-heading h2{font-size:clamp(18px,4.8vw,22px)}
+  .pm-overline{font-size:10px;letter-spacing:1.2px}
+  .pm-composer-bottom{min-width:0}
+  .pm-composer-bottom>span{min-width:0;flex:1;font-size:11px;line-height:1.3}
+  .pm-submit{flex-shrink:0}
+  .pm-action{width:clamp(146px,41vw,180px)}
+  .pm-action small,.pm-model>small{font-size:11px}
+  .pm-model{width:clamp(148px,40vw,176px)}
+  .pm-model-state{font-size:10px;white-space:normal}
+  .pm-model strong{font-size:15px}
+  .pm-stack strong,.pm-service strong{font-size:12px}
+  .pm-stack summary small,.pm-service small,.pm-service-state{font-size:10px}
+  .pm-empty-chat p{font-size:12px}
+  .pm-footer{font-size:10px;flex-wrap:wrap;gap:7px}
+}
+@media (max-width:374px){
+  .pm-brand-mark{width:36px;height:36px;font-size:26px}
+  .pm-brand-label{font-size:16px}
+  .pm-brand-label small{font-size:7px;letter-spacing:1px}
+  .pm-round-icon{min-width:42px;min-height:42px;width:42px;height:42px}
+  .pm-live{min-width:28px;height:40px;padding:7px}
+  .pm-header-right{gap:4px}
+  .pm-hero h1{font-size:clamp(27px,8.7vw,32px)}
+  .pm-kicker{font-size:9px}
+  .pm-minor-button{padding:6px 9px}
+  .pm-composer-bottom>span{font-size:9px}
+  .pm-submit{min-width:104px;padding:9px}
+}
+@media (min-width:390px) and (max-width:480px){
+  .pm-hero{min-height:235px}
+  .pm-action{width:clamp(160px,41vw,185px)}
+  .pm-model{width:clamp(160px,40vw,188px)}
+}
+@media (orientation:landscape) and (max-height:500px){
+  .pm-header{height:calc(53px + env(safe-area-inset-top));padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right))}
+  .pm-main{padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right))}
+  .pm-hero{padding:15px 22px;min-height:0}
+  .pm-hero h1{font-size:clamp(26px,4vw,35px);margin:6px 0}
+  .pm-hero-copy>p{max-width:480px}
+  .pm-hero-chips{margin-top:8px}
+  .pm-hero-art{display:none}
+  .pm-layout{grid-template-columns:minmax(0,1fr);display:flex;flex-direction:column}
+  .pm-primary,.pm-secondary{width:100%}
+  .pm-empty-chat{padding:10px}
+  .pm-thread{max-height:55dvh}
+  .pm-login{padding-top:calc(12px + env(safe-area-inset-top));padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+}
+@media(prefers-contrast:more){
+  .pm-panel,.pm-composer,.pm-stack,.pm-model{border-color:#a978a0}
+  .pm-submit{border-color:#c8ffef}
+}
