@@ -8,18 +8,20 @@ import { ArtssMark } from "./artss-mark";
 import Image from "next/image";
 import { type ChangeEvent } from "react";
 import { StudioSettingsPanel, DEFAULT_SETTINGS, sanitizeSettings, type StudioSettings } from "./studio-settings";
+import { StudioSidebar, type StudioSection } from "./studio-sidebar";
+import { CodeWorkspace } from "./code-workspace";
 
 type Provider = "openai" | "deepseek" | "gemini" | "claude" | "mistral";
 type Mode = Provider | "multi";
-type Message = { role: "user" | "assistant"; content: string; meta?: string; imageUrl?: string };
-type Run = { id: number; title: string; model: string; status: "running" | "done" | "error"; seconds?: number; note?: string; prUrl?: string; deploymentUrl?: string };
+type Message = { role: "user" | "assistant"; content: string; meta?: string; imageUrl?: string; sources?: { url: string; title: string }[] };
+type Run = { id: number; title: string; model: string; status: "running" | "done" | "error" | "skipped"; seconds?: number; note?: string; prUrl?: string; deploymentUrl?: string };
 type Health = {
   ok: boolean;
   providers: { configured: Provider[] };
   integrations: { github: boolean; vercel: boolean; supabase: boolean };
   executionEnabled: boolean;
 };
-type AgentReply = { text?: string; error?: string; provider?: string; contributors?: string[]; action?: string; prUrl?: string; deploymentUrl?: string; image?: string; size?: string; quality?: string };
+type AgentReply = { text?: string; error?: string; provider?: string; contributors?: string[]; action?: string; prUrl?: string; deploymentUrl?: string; image?: string; size?: string; quality?: string; sources?: { title: string; url: string }[] };
 type ProbeStatus = { state: "ok" | "missing_key" | "http_error" | "timeout"; status?: number; via?: "direct" | "gateway" };
 type Diagnostics = { checkedAt: string; results: Record<string, ProbeStatus>; githubRead: boolean; githubWrite: string; agentExecution: string; vercelDeploy: string };
 const diagLabels: Record<string, string> = {
@@ -82,6 +84,8 @@ export default function Home() {
   const [preferences, setPreferences] = useState<StudioSettings>(DEFAULT_SETTINGS);
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<StudioSection>("home");
   const [openedImage, setOpenedImage] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
@@ -101,6 +105,8 @@ export default function Home() {
   const threadRef = useRef<HTMLDivElement>(null);
   const servicesRef = useRef<HTMLElement>(null);
   const inFlightHealth = useRef(false);
+  const requestController = useRef<AbortController | null>(null);
+  const activeRunId = useRef<number | null>(null);
   const recentRuns = runs.length ? runs : storedRuns;
   const configured = health?.providers.configured ?? [];
   const ready = selected === "multi" ? configured.length > 0 : configured.includes(selected);
@@ -257,11 +263,54 @@ export default function Home() {
     target?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
   }
 
+  function goToSection(section: StudioSection) {
+    setSidebarOpen(false);
+    if (section === "code") { setActiveSection("code"); return; }
+    setActiveSection(section);
+    if (section === "web") setToolMode("web");
+    if (section === "images") setToolMode("image");
+    window.setTimeout(() => {
+      const target = section === "home" ? null :
+        section === "models" ? modelRef.current :
+        section === "integrations" ? servicesRef.current :
+        section === "runs" ? document.getElementById("runs-title") :
+        document.getElementById("agent-composer");
+      if (!target) { window.scrollTo({ top: 0, behavior: "auto" }); return; }
+      target.scrollIntoView({ block: "center", behavior: "auto" });
+      if (section === "web" || section === "images") composerRef.current?.focus();
+    }, 0);
+  }
+
+  function sendEditorDraft(text: string) {
+    setActiveSection("home");
+    setToolMode("agent");
+    setSidebarOpen(false);
+    window.setTimeout(() => {
+      composerRef.current?.fill(text);
+      document.getElementById("agent-composer")?.scrollIntoView({ block: "center", behavior: "auto" });
+      setNotice("Код додано до запиту. Перевірте текст та натисніть Надіслати.");
+    }, 0);
+  }
+
+  function skipRequest() {
+    if (!requestController.current) return;
+    requestController.current.abort();
+    requestController.current = null;
+    const id = activeRunId.current;
+    activeRunId.current = null;
+    if (id !== null) setRuns(prev => prev.map(r => r.id === id ? { ...r, status: "skipped", note: "Зупинено в інтерфейсі" } : r));
+    setBusy(false);
+    setNotice("Запит пропущено. Уже розпочаті серверні дії можуть завершитися.");
+  }
+
   async function submit(text: string) {
     const task = text.trim();
     if (!task || busy || (toolMode === "agent" && health && !ready)) return;
     const started = performance.now();
     const id = Date.now();
+    const controller = new AbortController();
+    requestController.current = controller;
+    activeRunId.current = id;
     const conversation: Message[] = [...messages.slice(-18), { role: "user", content: task }];
     setMessages(conversation);
     const modeForRequest = toolMode;
@@ -276,8 +325,10 @@ export default function Home() {
       const response = await fetch(endpoint, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
       const result: AgentReply = await response.json().catch(() => ({}));
+      if (controller.signal.aborted) return;
       if (response.status === 401) {
         setRuns(previous => previous.map(run => run.id === id ? { ...run, status: "error" } : run));
         router.push("/login");
@@ -302,6 +353,7 @@ export default function Home() {
           content: modeForRequest === "image" ? "Згенероване зображення: " + task : result.text || "Агент не повернув текст.",
           meta: modeForRequest === "image" ? description + " · " + (result.size || preferences.imageAspect) + " · " + (result.quality || preferences.imageQuality) : description,
           imageUrl: modeForRequest === "image" ? result.image : undefined,
+          sources: modeForRequest === "web" && Array.isArray(result.sources) ? result.sources.filter(x => typeof x?.url === "string" && x.url.startsWith("https://")).slice(0, 8) : undefined,
         }];
       });
       setRuns(previous => previous.map(run => run.id === id ? {
@@ -309,11 +361,16 @@ export default function Home() {
         prUrl: result.prUrl, deploymentUrl: result.deploymentUrl, note: description,
       } : run));
     } catch (error) {
+      if (controller.signal.aborted) return;
       const description = error instanceof Error ? error.message : "Невідома помилка.";
       setMessages(previous => [...previous.slice(-39), { role: "assistant", content: description, meta: "Помилка" }]);
       setRuns(previous => previous.map(run => run.id === id ? { ...run, status: "error", seconds: (performance.now() - started) / 1000, note: description } : run));
     } finally {
-      setBusy(false);
+      if (requestController.current === controller) {
+        requestController.current = null;
+        activeRunId.current = null;
+        setBusy(false);
+      }
     }
   }
 
