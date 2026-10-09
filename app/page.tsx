@@ -8,18 +8,20 @@ import { ArtssMark } from "./artss-mark";
 import Image from "next/image";
 import { type ChangeEvent } from "react";
 import { StudioSettingsPanel, DEFAULT_SETTINGS, sanitizeSettings, type StudioSettings } from "./studio-settings";
+import { StudioSidebar, type StudioSection } from "./studio-sidebar";
+import { CodeWorkspace } from "./code-workspace";
 
 type Provider = "openai" | "deepseek" | "gemini" | "claude" | "mistral";
 type Mode = Provider | "multi";
-type Message = { role: "user" | "assistant"; content: string; meta?: string; imageUrl?: string };
-type Run = { id: number; title: string; model: string; status: "running" | "done" | "error"; seconds?: number; note?: string; prUrl?: string; deploymentUrl?: string };
+type Message = { role: "user" | "assistant"; content: string; meta?: string; imageUrl?: string; sources?: { url: string; title: string }[] };
+type Run = { id: number; title: string; model: string; status: "running" | "done" | "error" | "skipped"; seconds?: number; note?: string; prUrl?: string; deploymentUrl?: string };
 type Health = {
   ok: boolean;
   providers: { configured: Provider[] };
   integrations: { github: boolean; vercel: boolean; supabase: boolean };
   executionEnabled: boolean;
 };
-type AgentReply = { text?: string; error?: string; provider?: string; contributors?: string[]; action?: string; prUrl?: string; deploymentUrl?: string; image?: string; size?: string; quality?: string };
+type AgentReply = { text?: string; error?: string; provider?: string; contributors?: string[]; action?: string; prUrl?: string; deploymentUrl?: string; image?: string; size?: string; quality?: string; sources?: { title: string; url: string }[] };
 type ProbeStatus = { state: "ok" | "missing_key" | "http_error" | "timeout"; status?: number; via?: "direct" | "gateway" };
 type Diagnostics = { checkedAt: string; results: Record<string, ProbeStatus>; githubRead: boolean; githubWrite: string; agentExecution: string; vercelDeploy: string };
 const diagLabels: Record<string, string> = {
@@ -82,6 +84,8 @@ export default function Home() {
   const [preferences, setPreferences] = useState<StudioSettings>(DEFAULT_SETTINGS);
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<StudioSection>("home");
   const [openedImage, setOpenedImage] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
@@ -101,6 +105,8 @@ export default function Home() {
   const threadRef = useRef<HTMLDivElement>(null);
   const servicesRef = useRef<HTMLElement>(null);
   const inFlightHealth = useRef(false);
+  const requestController = useRef<AbortController | null>(null);
+  const activeRunId = useRef<number | null>(null);
   const recentRuns = runs.length ? runs : storedRuns;
   const configured = health?.providers.configured ?? [];
   const ready = selected === "multi" ? configured.length > 0 : configured.includes(selected);
@@ -257,11 +263,54 @@ export default function Home() {
     target?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
   }
 
+  function goToSection(section: StudioSection) {
+    setSidebarOpen(false);
+    if (section === "code") { setActiveSection("code"); return; }
+    setActiveSection(section);
+    if (section === "web") setToolMode("web");
+    if (section === "images") setToolMode("image");
+    window.setTimeout(() => {
+      const target = section === "home" ? null :
+        section === "models" ? modelRef.current :
+        section === "integrations" ? servicesRef.current :
+        section === "runs" ? document.getElementById("runs-title") :
+        document.getElementById("agent-composer");
+      if (!target) { window.scrollTo({ top: 0, behavior: "auto" }); return; }
+      target.scrollIntoView({ block: "center", behavior: "auto" });
+      if (section === "web" || section === "images") composerRef.current?.focus();
+    }, 0);
+  }
+
+  function sendEditorDraft(text: string) {
+    setActiveSection("home");
+    setToolMode("agent");
+    setSidebarOpen(false);
+    window.setTimeout(() => {
+      composerRef.current?.fill(text);
+      document.getElementById("agent-composer")?.scrollIntoView({ block: "center", behavior: "auto" });
+      setNotice("Код додано до запиту. Перевірте текст та натисніть Надіслати.");
+    }, 0);
+  }
+
+  function skipRequest() {
+    if (!requestController.current) return;
+    requestController.current.abort();
+    requestController.current = null;
+    const id = activeRunId.current;
+    activeRunId.current = null;
+    if (id !== null) setRuns(prev => prev.map(r => r.id === id ? { ...r, status: "skipped", note: "Зупинено в інтерфейсі" } : r));
+    setBusy(false);
+    setNotice("Запит пропущено. Уже розпочаті серверні дії можуть завершитися.");
+  }
+
   async function submit(text: string) {
     const task = text.trim();
     if (!task || busy || (toolMode === "agent" && health && !ready)) return;
     const started = performance.now();
     const id = Date.now();
+    const controller = new AbortController();
+    requestController.current = controller;
+    activeRunId.current = id;
     const conversation: Message[] = [...messages.slice(-18), { role: "user", content: task }];
     setMessages(conversation);
     const modeForRequest = toolMode;
@@ -276,8 +325,10 @@ export default function Home() {
       const response = await fetch(endpoint, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
       const result: AgentReply = await response.json().catch(() => ({}));
+      if (controller.signal.aborted) return;
       if (response.status === 401) {
         setRuns(previous => previous.map(run => run.id === id ? { ...run, status: "error" } : run));
         router.push("/login");
@@ -302,6 +353,7 @@ export default function Home() {
           content: modeForRequest === "image" ? "Згенероване зображення: " + task : result.text || "Агент не повернув текст.",
           meta: modeForRequest === "image" ? description + " · " + (result.size || preferences.imageAspect) + " · " + (result.quality || preferences.imageQuality) : description,
           imageUrl: modeForRequest === "image" ? result.image : undefined,
+          sources: modeForRequest === "web" && Array.isArray(result.sources) ? result.sources.filter(x => typeof x?.url === "string" && x.url.startsWith("https://")).slice(0, 8) : undefined,
         }];
       });
       setRuns(previous => previous.map(run => run.id === id ? {
@@ -309,11 +361,16 @@ export default function Home() {
         prUrl: result.prUrl, deploymentUrl: result.deploymentUrl, note: description,
       } : run));
     } catch (error) {
+      if (controller.signal.aborted) return;
       const description = error instanceof Error ? error.message : "Невідома помилка.";
       setMessages(previous => [...previous.slice(-39), { role: "assistant", content: description, meta: "Помилка" }]);
       setRuns(previous => previous.map(run => run.id === id ? { ...run, status: "error", seconds: (performance.now() - started) / 1000, note: description } : run));
     } finally {
-      setBusy(false);
+      if (requestController.current === controller) {
+        requestController.current = null;
+        activeRunId.current = null;
+        setBusy(false);
+      }
     }
   }
 
@@ -349,8 +406,14 @@ export default function Home() {
     catch { setNotice("Копіювання недоступне у цьому браузері."); }
   }
 
-  return <div className="pm-shell neo-app flagship-app" data-density={preferences.density} data-effects={preferences.effects ? "on" : "off"} data-motion={preferences.motion} data-textsize={preferences.textSize}>
+  return <div className="pm-shell neo-app flagship-app studio-layout" data-density={preferences.density} data-effects={preferences.effects ? "on" : "off"} data-motion={preferences.motion} data-textsize={preferences.textSize}>
+    <StudioSidebar open={sidebarOpen} active={activeSection} busy={busy} onClose={() => setSidebarOpen(false)}
+      onNavigate={goToSection} onSettings={() => { setSidebarOpen(false); setSettingsOpen(true); }}
+      onNewChat={() => { setSidebarOpen(false); newChat(); goToSection("home"); }}/>
+    <div className="studio-workarea">
     <header className="pm-header neo-header">
+      <button type="button" className="studio-mobile-trigger" aria-controls="studio-nav" aria-expanded={sidebarOpen}
+        aria-label={sidebarOpen ? "Закрити бічне меню" : "Відкрити бічне меню"} onClick={() => setSidebarOpen(x => !x)}>☰</button>
       <Link className="pm-brand" href="/" aria-label="ARTSS AI — головна">
         <span className="pm-brand-mark flagship-logo"><ArtssMark size={48}/></span>
         <span className="pm-brand-label">ARTSS<span className="pm-dot">●</span>AI<small>PRIVATE AGENT STUDIO</small></span>
@@ -372,6 +435,10 @@ export default function Home() {
       </div>
     </header>
     <main className="pm-main neo-main">
+      {activeSection === "code" ?
+        <CodeWorkspace onSendToAgent={sendEditorDraft} onClose={() => goToSection("home")}
+          githubWrite={Boolean(health?.integrations.github && health?.executionEnabled)}/> :
+      <>
       <section className="pm-hero neo-hero" aria-labelledby="neo-title">
         <div className="pm-hero-copy">
           <span className="pm-kicker"><span className="pm-kicker-mark">✦</span> НОВИЙ РІВЕНЬ ВАШИХ ІДЕЙ</span>
@@ -457,9 +524,9 @@ export default function Home() {
         <div className="neo-runs">
           {!recentRuns.length ? <div className="neo-no-runs"><span>◎</span><div><strong>Поки що немає запусків</strong><p>Результати реальних задач з&apos;являться тут після першого запиту.</p></div></div> :
             recentRuns.slice(0,showAllRuns ? 40 : 3).map(r => <div className="neo-run-row" key={r.id}>
-              <span className={"neo-run-logo " + r.status}>{r.status === "done" ? "✓" : r.status === "error" ? "!" : "⌘"}</span>
+              <span className={"neo-run-logo " + r.status}>{r.status === "done" ? "✓" : r.status === "error" ? "!" : r.status === "skipped" ? "⏭" : "⌘"}</span>
               <span className="neo-run-info"><strong>{r.title}</strong><small>{r.model} · {r.id > 0 ? displayTime(r.id) : "—"} {r.seconds ? "· " + r.seconds.toFixed(1) + " c" : ""}</small>{r.prUrl?.startsWith("https://github.com/") ? <a href={r.prUrl} target="_blank" rel="noreferrer">Відкрити PR ↗</a> : null}</span>
-              <span className={"neo-run-pill " + r.status}>{r.status === "done" ? "✓ Готово" : r.status === "error" ? "Помилка" : "Виконується"}</span>
+              <span className={"neo-run-pill " + r.status}>{r.status === "done" ? "✓ Готово" : r.status === "error" ? "Помилка" : r.status === "skipped" ? "Пропущено" : "Виконується"}</span>
             </div>)}
         </div>
       </section>
@@ -469,9 +536,13 @@ export default function Home() {
           {messages.map((message, index) => <article className={"pm-message " + message.role} key={index}>
             <span className="pm-message-label">{message.role === "user" ? "ВИ" : "ARTSS AI"} <small>{message.meta || ""}</small></span>
             <div className="pm-bubble">{message.content}{message.imageUrl ? <div className="image-result"><Image className="flagship-generated-image" src={message.imageUrl} alt="Зображення, створене агентом" width={1024} height={1024} unoptimized/><div className="image-result-actions"><button type="button" onClick={() => setOpenedImage(message.imageUrl!)}>Переглянути</button><button type="button" onClick={() => { void saveImage(message.imageUrl!); }}>Зберегти / Поділитися</button></div></div> : null}</div>
+            {message.sources?.length ? <div className="web-source-list">{message.sources.map((src,i) => <a key={i} href={src.url} rel="noopener noreferrer" target="_blank">↗ {src.title || "Джерело " + (i+1)}</a>)}</div> : null}
             {message.role === "assistant" ? <button type="button" className="pm-copy" onClick={() => { void copy(message.content); }}><Icon name="copy" size={14}/> Копіювати</button> : null}
           </article>)}</div> : null}
-        {busy ? <p className="pm-thinking" role="status"><span className="pm-pulse"/>Агент обробляє запит…</p> : null}
+        {busy ? <div className="engine-running"><p className="pm-thinking" role="status"><span className="pm-pulse"/>Агент обробляє запит…</p>
+          <button type="button" className="skip-request" onClick={skipRequest} aria-label="Пропустити поточний запит">⏭ Скип / Зупинити</button>
+          <p className="engine-state-label">Скип зупинить очікування в застосунку. Якщо сервер уже почав запис або деплой, операція може завершитися.</p></div> : null}
+        {toolMode === "web" ? <div className="web-current-options" role="status">◎ Інтернет-пошук через OpenAI. Результати показують посилання на використані джерела.</div> : null}
         {toolMode === "image" ? <div className="image-current-options" aria-live="polite"><span>Зображення · {preferences.imageAspect === "square" ? "1:1" : preferences.imageAspect === "landscape" ? "3:2" : "2:3"} · {preferences.imageQuality === "low" ? "швидка" : preferences.imageQuality === "medium" ? "збалансована" : "детальна"}</span><button type="button" onClick={() => setSettingsOpen(true)}>Змінити параметри</button></div> : null}
         <AgentComposer ref={composerRef} model={toolMode === "image" ? "Генерація зображень" : toolMode === "web" ? "Веб-пошук" : models.find(x=>x.id===selected)?.title || selected} busy={busy} unavailable={toolMode === "agent" && health !== null && !ready} onSend={submit}/>
         <div className="neo-composer-tools">
@@ -479,7 +550,7 @@ export default function Home() {
           <button type="button" className={toolMode === "web" ? "tool-active" : ""} onClick={() => setTool("web")}>◎ Веб-пошук</button>
           <label className="flagship-file-trigger">▤ Файли<input type="file" accept=".txt,.md,.json,.ts,.tsx,.js,.jsx,.css,.html,.yaml,.yml,.sql,.log,.py,.go,.rs,text/*" onChange={e => { void attachFile(e); }}/></label>
           <button type="button" className={toolMode === "image" ? "tool-active" : ""} onClick={() => setTool("image")}>▧ Зображення</button>
-          <button type="button" onClick={() => { chooseTask(shortcuts[1].value); }}>〈/〉 Код</button>
+          <button type="button" onClick={() => goToSection("code")}>〈/〉 Код</button>
           <button type="button" onClick={() => { chooseTask(shortcuts[2].value); }}>⊞ Аудит</button>
           <button type="button" onClick={() => { chooseTask(shortcuts[0].value); }}>✧ План</button>
         </div>
@@ -487,9 +558,11 @@ export default function Home() {
         {!loading && health && !configured.length ? <div className="pm-notice-error">Жоден AI-провайдер не має налаштованого ключа.</div> : null}
       </section>
 
+      </>}
       {notice ? <div className="pm-toast" role="status"><Icon name="check" size={16}/><span>{notice}</span><button type="button" onClick={() => setNotice("")} aria-label="Закрити">×</button></div> : null}
       <footer className="pm-footer"><span>ARTSS AI <span className="pm-dot">●</span> PRIVATE AGENT STUDIO</span><span>Зв&apos;язок перевірено: {lastCheck || "—"}</span></footer>
     </main>
+    </div>
     <StudioSettingsPanel open={settingsOpen} value={preferences} onChange={setStudioSettings} onClose={() => setSettingsOpen(false)}
       onNewChat={newChat} onRefresh={() => { setLoading(true); void refresh(); }} busy={busy}/>
     {openedImage ? <div className="image-lightbox" role="presentation" onClick={e => { if (e.currentTarget === e.target) setOpenedImage(null); }}>

@@ -180,10 +180,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ text, provider: activeProvider, contributors: modelResult.contributors, available, action: "preview", files: safeFiles.map((f) => f.path) });
     }
 
+    // A skipped HTTP request must not start a new GitHub write after the model finishes.
+    if (req.signal.aborted) return NextResponse.json({ error: "Request cancelled before GitHub execution." }, { status: 499 });
     const branch = `agent/${Date.now()}`;
     await createBranch(REPO, branch, "main");
     if (runId) await safeAddEvent(runId, "branch", `Створено гілку ${branch}.`, { branch });
 
+    if (req.signal.aborted) return NextResponse.json({ error: "Request cancelled before commit." }, { status: 499 });
     const commit = await commitFiles(
       REPO,
       safeFiles,

@@ -4,6 +4,7 @@ import "./blood-dreams.css";
 import "./neon-dashboard.css";
 import "./flagship.css";
 import "./ios-detail.css";
+import "./sidebar-code.css";
 
 export const metadata: Metadata = {
   title: "ARTSS AI — Flagship Studio",
