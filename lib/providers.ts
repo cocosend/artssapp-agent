@@ -168,7 +168,16 @@ export async function runModelWithFallback(preferred: AgentMode, messages: ChatM
         ? [{ provider: selected[index], text: result.value }]
         : []
     );
-    if (!successes.length) throw new Error("All configured AI providers failed.");
+    if (!successes.length) {
+      // Only if every primary parallel call fails, try remaining models in order.
+      for (const provider of configured.slice(3)) {
+        try {
+          const text = await runModel(provider, messages);
+          if (text.trim()) return { provider, text, contributors: [provider] };
+        } catch { /* Continue to the next fallback. */ }
+      }
+      throw new Error("All configured AI providers failed.");
+    }
 
     if (successes.length > 1) {
       // Prefer the primary provider to synthesize the final answer or edit plan.
