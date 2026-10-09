@@ -166,13 +166,23 @@ export function configuredProviders(): ProviderId[] {
   return out;
 }
 
-export async function runModelWithFallback(preferred: AgentMode, messages: ChatMessage[]) {
+export type OrchestrationReport = {
+  strategy: "parallel" | "sequential";
+  attempted: ProviderId[];
+  contributors: ProviderId[];
+  failed: ProviderId[];
+  synthesized: boolean;
+  judge?: ProviderId;
+};
+
+export async function runModelWithFallback(preferred: AgentMode, messages: ChatMessage[]): Promise<{
+  provider: AgentMode; text: string; contributors: ProviderId[]; orchestration: OrchestrationReport
+}> {
   const configured = configuredProviders();
   if (!configured.length) throw new Error("No AI providers are configured.");
 
   if (preferred === "multi" && configured.length > 1) {
-    // Cap parallel requests to 3 models to reduce cost, latency and rate limits.
-    // Gateway-only providers are accessible by explicit selection or single-model fallback.
+    // Max 3 actual primary calls. Only count models that really returned text.
     const selected = configured.slice(0, 3);
     const settled = await Promise.allSettled(selected.map(provider => runModel(provider, messages)));
     const successes = settled.flatMap((result, index) =>
@@ -180,22 +190,27 @@ export async function runModelWithFallback(preferred: AgentMode, messages: ChatM
         ? [{ provider: selected[index], text: result.value }]
         : []
     );
+    const failed = selected.filter(p => !successes.some(s => s.provider === p));
+    const attempted = [...selected];
     if (!successes.length) {
-      // Only if every primary parallel call fails, try remaining models in order.
       for (const provider of configured.slice(3)) {
+        attempted.push(provider);
         try {
           const text = await runModel(provider, messages);
-          if (text.trim()) return { provider, text, contributors: [provider] };
-        } catch { /* Continue to the next fallback. */ }
+          if (text.trim()) return {
+            provider, text, contributors: [provider],
+            orchestration: { strategy: "parallel", attempted, contributors: [provider], failed, synthesized: false },
+          };
+        } catch { failed.push(provider); }
       }
       throw new Error("All configured AI providers failed.");
     }
 
+    const contributors = successes.map(r => r.provider);
     if (successes.length > 1) {
-      // Prefer the primary provider to synthesize the final answer or edit plan.
-      const judge = successes.find(result => result.provider === "openai") || successes[0];
-      const candidates = successes.map((result, i) =>
-        "CANDIDATE " + (i + 1) + " (" + result.provider + "):\n" + result.text.slice(0, 16000)
+      const judge = successes.find(r => r.provider === "openai") || successes[0];
+      const candidates = successes.map((result, index) =>
+        "CANDIDATE " + (index + 1) + " (" + result.provider + "):\n" + result.text.slice(0, 16000)
       ).join("\n\n");
       try {
         const synthesis: ChatMessage[] = [
@@ -203,23 +218,36 @@ export async function runModelWithFallback(preferred: AgentMode, messages: ChatM
           { role: "system", content: "Combine and critically evaluate these independent AI outputs for the original request. Preserve valid structured JSON required by the calling application; do not expose provider internals or secrets. Return one complete final answer or one safe coherent JSON edit plan.\n\n" + candidates },
         ];
         const text = await runModel(judge.provider, synthesis);
-        if (text.trim()) return { provider: "multi" as const, text, contributors: successes.map(result => result.provider) };
+        if (text.trim()) return {
+          provider: "multi", text, contributors,
+          orchestration: { strategy: "parallel", attempted, contributors, failed, synthesized: true, judge: judge.provider },
+        };
       } catch {
-        // A failed judge must not discard a valid result.
+        // Keep the independent output if synthesis fails, but never claim a synthesis occurred.
       }
     }
-    return { provider: successes[0].provider, text: successes[0].text, contributors: successes.map(result => result.provider) };
+    return {
+      provider: successes[0].provider, text: successes[0].text, contributors,
+      orchestration: { strategy: "parallel", attempted, contributors, failed, synthesized: false },
+    };
   }
 
   const order = preferred === "multi" ? configured : [preferred, ...configured.filter(p => p !== preferred)];
+  const attempted: ProviderId[] = [];
+  const failed: ProviderId[] = [];
   let lastError: unknown;
   for (const provider of order) {
     if (!configured.includes(provider)) continue;
+    attempted.push(provider);
     try {
       const text = await runModel(provider, messages);
       if (!text.trim()) throw new Error(provider + " returned an empty response.");
-      return { provider, text, contributors: [provider] };
+      return {
+        provider, text, contributors: [provider],
+        orchestration: { strategy: "sequential", attempted, contributors: [provider], failed, synthesized: false },
+      };
     } catch (error) {
+      failed.push(provider);
       lastError = error;
     }
   }
