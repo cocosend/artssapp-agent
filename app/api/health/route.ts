@@ -29,7 +29,7 @@ export async function GET() {
     },
     gateway: {
       configured: gatewayConfigured(),
-      authMode: configured("AI_GATEWAY_API_KEY") ? "key" : configured("VERCEL_OIDC_TOKEN") ? "oidc" : "none",
+      authMode: configured("AI_GATEWAY_API_KEY") ? "key" : gatewayConfigured() ? "oidc" : "none",
     },
     capabilities: {
       publicGithubRead: true,
