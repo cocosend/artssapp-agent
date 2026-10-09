@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAgentAuthenticated } from "@/lib/auth";
+import { getGatewayToken } from "@/lib/providers";
 
 export const runtime = "nodejs";
 export const maxDuration = 25;
@@ -24,7 +25,7 @@ export async function GET() {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   }
   const github = process.env.GITHUB_TOKEN?.trim();
-  const gatewayToken = process.env.AI_GATEWAY_API_KEY?.trim() || process.env.VERCEL_OIDC_TOKEN?.trim();
+  const gatewayToken = getGatewayToken();
   const claudeKey = process.env.ANTHROPIC_API_KEY?.trim() || process.env.CLAUDE_API_KEY?.trim();
   const mistralKey = process.env.MISTRAL_API_KEY?.trim();
   const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
