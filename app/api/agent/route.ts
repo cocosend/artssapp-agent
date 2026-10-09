@@ -182,11 +182,14 @@ export async function POST(req: Request) {
 
     // A skipped HTTP request must not start a new GitHub write after the model finishes.
     if (req.signal.aborted) return NextResponse.json({ error: "Request cancelled before GitHub execution." }, { status: 499 });
+    if (req.signal.aborted) return NextResponse.json({ error: "Request was cancelled before code changes." }, { status: 499 });
     const branch = `agent/${Date.now()}`;
     await createBranch(REPO, branch, "main");
     if (runId) await safeAddEvent(runId, "branch", `Створено гілку ${branch}.`, { branch });
 
     if (req.signal.aborted) return NextResponse.json({ error: "Request cancelled before commit." }, { status: 499 });
+    if (req.signal.aborted) return NextResponse.json({ error: "Request was cancelled before commit." }, { status: 499 });
+
     const commit = await commitFiles(
       REPO,
       safeFiles,
@@ -196,6 +199,7 @@ export async function POST(req: Request) {
     if (runId) await safeAddEvent(runId, "commit", `Створено atomic commit ${commit.sha}.`, { branch, commit: commit.sha });
 
     let prUrl: string | undefined;
+    if (req.signal.aborted) return NextResponse.json({ error: "Request cancelled after commit; branch preserved." }, { status: 499 });
     if (plan.createPr) {
       const pr = await createPullRequest(
         REPO,
@@ -209,6 +213,7 @@ export async function POST(req: Request) {
     }
 
     let deploymentUrl: string | undefined;
+    if (req.signal.aborted) return NextResponse.json({ error: "Request cancelled before deployment." }, { status: 499 });
     if (plan.deploy) {
       const target = plan.deployTarget === "production" ? "production" : "preview";
       if (target === "production") {
