@@ -1,36 +1,33 @@
 import { cookies } from "next/headers";
-import { createHash, timingSafeEqual } from "node:crypto";
+import { issueSignedSession, verifyAccessPassword, verifySignedSession } from "./auth-crypto";
 
 const COOKIE = "arts_agent_session";
+const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 
-function digest(value: string) {
-  return createHash("sha256").update(value).digest();
+function secret() {
+  // An independent server-only secret is required: never sign cookies with the user password.
+  return process.env.AGENT_SESSION_SECRET?.trim() || process.env.AGENT_SERVICE_KEY?.trim();
 }
 
 export async function isAgentAuthenticated() {
-  const expected = process.env.AGENT_ACCESS_PASSWORD;
-  if (!expected) return false;
+  const key = secret();
+  if (!key || !process.env.AGENT_ACCESS_PASSWORD) return false;
   const token = (await cookies()).get(COOKIE)?.value;
-  if (!token) return false;
-  const expectedDigest = digest(expected);
-  const tokenDigest = Buffer.from(token, "hex");
-  return tokenDigest.length === expectedDigest.length && timingSafeEqual(tokenDigest, expectedDigest);
+  return verifySignedSession(token, key);
 }
 
 export async function setAgentSession(password: string) {
   const expected = process.env.AGENT_ACCESS_PASSWORD;
-  if (!expected) return false;
-
-  const suppliedDigest = digest(password);
-  const expectedDigest = digest(expected);
-  if (!timingSafeEqual(suppliedDigest, expectedDigest)) return false;
-
-  (await cookies()).set(COOKIE, expectedDigest.toString("hex"), {
+  const key = secret();
+  if (!expected || !key) return false;
+  const matches = await verifyAccessPassword(password, expected, key);
+  if (!matches) return false;
+  (await cookies()).set(COOKIE, issueSignedSession(key), {
     httpOnly: true,
     secure: true,
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: SESSION_TTL_SECONDS,
   });
   return true;
 }
