@@ -6,13 +6,14 @@ import "./flagship.css";
 import "./ios-detail.css";
 import "./sidebar-code.css";
 import "./blue-night.css";
+import "./trash-polka.css";
 
 export const metadata: Metadata = {
-  title: "ARTSS AI — Blue Night Studio",
+  title: "ARTSS AI — Trash Polka",
   description: "Приватний мультимодельний AI-агент для розробки, автоматизації, GitHub, Vercel та Supabase.",
   applicationName: "ARTSS AI",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "ARTSS AI", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "ARTSS AI", statusBarStyle: "default" },
   formatDetection: { telephone: false },
 };
 
@@ -20,7 +21,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#050910",
+  themeColor: "#f7f6f2",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

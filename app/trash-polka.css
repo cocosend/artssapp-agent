@@ -1,0 +1,232 @@
+/* ARTSS / TRASH POLKA. White paper, raw black ink, signal red.
+   CSS-only printed texture + cuts; no shaders, blur layers or infinite animations.
+   Keeps the established accordion + safe-area iPhone behavior intact. */
+:root{
+ color-scheme:light;--bg:#f7f6f2;--surface:#fff;--surface-alt:#f0efeb;
+ --line:#171717;--ink:#111;--sub:#5f5f5f;--berry:#eb102b;
+ --mint:#cd0c26;--yellow:#ece9e3;--radius:13px;
+ --tp-paper:#f7f6f2;--tp-red:#ed102d;--tp-dark:#0b0b0d;--tp-stroke:#161616;
+}
+html,body{background:var(--tp-paper)!important;color:#111;scroll-behavior:auto}
+body{background:var(--tp-paper)!important}
+::selection{background:#ed102d;color:#fff}
+button,a,summary,input,select,textarea{-webkit-tap-highlight-color:transparent}
+button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #e6142d!important;outline-offset:3px}
+.night-shell.studio-layout,.night-shell .studio-workarea{background:var(--tp-paper)!important;color:#131313}
+.night-shell .neo-header{background:#fff!important;border-bottom:2px solid #161616;box-shadow:none!important}
+.night-shell .pm-brand-label,.night-shell .neo-header .pm-brand-label{color:#0b0b0b;text-shadow:none!important;font-weight:900;letter-spacing:-1px}
+.night-shell .neo-header .pm-brand-label small{color:#666!important;font-weight:800;letter-spacing:1.3px}
+.night-shell .pm-dot{color:#ed102d}
+.night-shell .pm-brand-mark.flagship-logo,.night-shell .studio-sidebar-logo{background:#fff!important;border:2px solid #111!important;border-radius:5px!important;box-shadow:4px 4px 0 #ed102d!important}
+.night-shell .neo-header .pm-round-icon,.night-shell .neo-header .pm-live,.night-shell .studio-mobile-trigger{
+ background:#fff!important;border:2px solid #141414!important;color:#111!important;border-radius:7px!important;box-shadow:3px 3px 0 #1c1c1c!important;
+}
+.night-shell .neo-header .pm-round-icon:active,.night-shell .studio-mobile-trigger:active{background:#e5122c!important;color:#fff!important;box-shadow:1px 1px 0 #111!important}
+.night-shell .neo-header .pm-live{color:#161616}
+.night-shell .pm-live.up i,.night-shell .neo-model-indicator.on,.night-shell .neo-service-dot.active{background:#eb112d!important;box-shadow:none!important}
+.night-shell .flagship-alert-dot{background:#ec102d;box-shadow:none}
+.night-shell .flagship-header-menu{background:#fff;border:2px solid #181818;border-radius:10px;box-shadow:5px 5px 0 #111}
+.night-shell .flagship-header-menu>strong,.night-shell .flagship-header-menu>p{color:#171717}
+.night-shell .flagship-header-menu>button{background:#fff;color:#151515;border:1px solid #111;border-radius:6px}
+.night-shell .flagship-header-menu>button:active{background:#ef102e;color:#fff}
+.night-shell .flagship-menu-run span{color:#ec102d}
+/* Carbon side panel with rough typographic steps */
+.night-shell .night-sidebar,.night-shell .night-sidebar.is-open{background:#101012!important;color:#fff;border-right:4px solid #ed112b;box-shadow:none!important}
+.night-shell .studio-sidebar-brand{border-color:#4c4c4c}
+.night-shell .studio-sidebar-brand strong{color:#fff;font-weight:900;letter-spacing:.3px}
+.night-shell .studio-sidebar-brand small{color:#b7b7b7!important}
+.night-shell .studio-sidebar-logo{background:#fff!important;border-color:#fff!important;border-radius:4px;box-shadow:3px 3px 0 #e91933!important}
+.night-shell .studio-sidebar-caption{color:#ff697c;font-weight:900;letter-spacing:2px}
+.night-stair-group{background:#19191b!important;border:1px solid #555!important;border-radius:5px;box-shadow:3px 3px 0 #000}
+.night-stair-summary{color:#fff!important;font-weight:900;letter-spacing:.2px;text-transform:uppercase}
+.night-stair-summary>span:first-child{background:#ed102d;color:#fff;border-radius:2px}
+.night-stair-arrow{color:#fff}
+.night-stair-children{border-left:2px solid #ee1730}
+.night-shell .night-stair-item{color:#ececec;background:transparent;border-radius:3px}
+.night-shell .night-stair-item.active{background:#ec102e!important;border-color:#ec102e!important;color:#fff!important;box-shadow:none!important}
+.night-shell .night-stair-item:hover{background:#38383b;border-color:#ee1730}
+.night-shell .night-stair-item .studio-nav-symbol{background:#2b2b2d;color:#fff;border-radius:3px}
+.night-shell .night-stair-item.active .studio-nav-symbol{background:#fff;color:#d9102b}
+.night-shell .night-stair-item strong{color:inherit}
+.night-shell .night-stair-item small{color:#aaa}
+.night-shell .night-stair-item.active small{color:#fff}
+.night-shell .studio-nav-arrow{color:#f5f5f5}
+.night-shell .night-sidebar-bottom{border-color:#595959}
+.night-shell .night-sidebar-bottom button{background:#19191b;border:1px solid #999;color:#fff;border-radius:4px}
+.night-shell .night-sidebar-bottom button:hover{border-color:#fa2943}
+.night-shell .night-sidebar-bottom button:active{background:#e71431}
+.night-shell .night-sidebar-bottom p{color:#aeaeae}
+.night-shell .studio-sidebar-close{background:#ef102d;color:#fff;border:1px solid #fff;border-radius:3px}
+/* A light, inexpensive red ink print, confined to the introduction */
+.night-shell .neo-main{background:var(--tp-paper)!important;gap:13px}
+.night-intro{
+ position:relative;isolation:isolate;overflow:hidden;
+ padding:18px 22px 18px!important;min-height:120px!important;
+ border:2px solid #141414;background:#fff;
+ box-shadow:6px 6px 0 #161616;
+}
+.night-intro::before{
+ content:"";position:absolute;right:-45px;top:-100px;height:290px;width:160px;
+ transform:rotate(31deg);background:#ed102d;z-index:-1;pointer-events:none;
+}
+.night-intro::after{
+ content:"";position:absolute;right:8%;top:8px;width:84px;height:78px;z-index:-1;opacity:.19;pointer-events:none;
+ background-image:radial-gradient(#151515 1.55px,transparent 1.7px);background-size:8px 8px;
+}
+.night-intro>div{max-width:75%;position:relative}
+.night-kicker{color:#d40d27!important;font-weight:900;letter-spacing:2px;font-size:10px}
+.night-intro h1{font-weight:950;color:#080808!important;letter-spacing:-1.4px;text-transform:uppercase}
+.night-intro h1 span{color:#e9102c}
+.night-intro p{color:#292929!important;line-height:1.45;font-weight:550}
+.night-system-indicator{position:relative;z-index:1;background:#101010!important;border:1px solid #111!important;color:#fff!important;border-radius:4px;font-weight:800}
+.night-system-indicator i,.night-system-indicator.online i{background:#f5223e}
+/* Work console: white and crisp black edges, with a visible crimson seam */
+.night-shell .neo-chat-section{background:#fff!important;border:2px solid #141414!important;border-left:6px solid #ed102d!important;border-radius:8px!important;box-shadow:5px 5px 0 #151515!important}
+.night-shell .neo-chat-section .pm-composer{background:#fafafa!important;border:2px solid #151515!important;border-radius:5px!important;box-shadow:none!important}
+.night-shell .neo-chat-section .pm-composer:focus-within{border-color:#ec102d!important}
+.night-shell .neo-chat-section .pm-composer textarea{background:transparent;color:#101010;caret-color:#ee122e}
+.night-shell .neo-chat-section .pm-composer textarea::placeholder{color:#646464}
+.night-shell .neo-chat-section .pm-composer-bottom>span{color:#555}
+.night-shell .neo-chat-section .pm-submit,.night-shell .neo-chat-section .pm-submit:not(:disabled){background:#ed102d!important;color:#fff!important;border:2px solid #111!important;border-radius:4px!important;box-shadow:3px 3px 0 #111!important}
+.night-shell .neo-chat-section .pm-submit:disabled{background:#eee!important;color:#555!important;border-color:#bbb!important;box-shadow:none!important}
+.night-shell .neo-composer-tools{gap:7px}
+.night-shell .neo-composer-tools button,.night-shell .flagship-file-trigger{color:#181818;background:#fff;border:1px solid #202020;border-radius:3px;font-weight:650;box-shadow:none}
+.night-shell .neo-composer-tools button.tool-active{background:#171717;color:#fff;border-color:#171717;box-shadow:inset 3px 0 0 #ee102d}
+.night-shell .image-current-options,.night-shell .web-current-options{color:#191919}
+.night-shell .image-current-options button{background:#111;border-color:#111;color:#fff;border-radius:3px}
+.night-shell .pm-thinking,.night-shell .engine-state-label{color:#272727}
+.night-shell .pm-pulse{background:#ed102d;animation:none}
+.night-shell .skip-request{background:#fff;border:2px solid #ed102d;color:#bd0c23;border-radius:4px;box-shadow:none}
+.night-shell .pm-bubble,.night-shell .neo-thread .pm-bubble{background:#fff;border:1px solid #131313;color:#111;border-radius:5px}
+.night-shell .pm-message.user .pm-bubble,.night-shell .neo-thread .pm-message.user .pm-bubble{background:#f4f2ed;border-color:#111}
+.night-shell .pm-message-label{color:#cc0e27;font-weight:850}
+.night-shell .pm-message.user .pm-message-label{color:#141414}
+.night-shell .neo-thread{background:#f6f6f4;border:1px solid #121212;border-radius:5px}
+.night-shell .pm-copy{color:#d10f29}
+.night-shell .web-source-list a{background:#fff;color:#aa0b24;border-color:#111}
+.night-shell .pm-notice-error{background:#ffe6e9;color:#7f0b18;border-color:#e12039}
+/* Accordion steps: letterpress numbered white strips */
+.night-fold{background:#fff!important;border:2px solid #181818!important;border-radius:6px!important;box-shadow:3px 3px 0 #1b1b1b!important}
+.night-fold[open]{background:#fff!important;border-color:#df102b!important}
+.night-fold-summary{background:#fff;color:#151515!important;min-height:62px}
+.night-fold-number{background:#ea112d;color:#fff;border-radius:3px;font-weight:900}
+.night-fold-summary strong{color:#0d0d0d;letter-spacing:.5px;font-weight:900;text-transform:uppercase}
+.night-fold-summary small{color:#5b5b5b;font-size:10px}
+.night-fold-chevron{color:#ec102d}
+.night-shell .night-fold .neo-section{background:#fff!important;border-top:1px solid #333!important;box-shadow:none!important}
+.night-shell .night-fold .neo-section-head h2{color:#111}
+.night-shell .neo-show-more{color:#ca0b25;font-weight:700}
+.night-shell .neo-model,.night-shell .neo-model.chosen{background:#fff;border:1px solid #1b1b1b;border-radius:4px;box-shadow:none}
+.night-shell .neo-model.chosen{border:2px solid #e81130;background:#fff5f6;box-shadow:inset 4px 0 0 #ec102d}
+.night-shell .neo-model>strong,.night-shell .neo-action strong{color:#141414}
+.night-shell .neo-model>small,.night-shell .neo-action small,.night-shell .neo-model-state{color:#515151}
+.night-shell .neo-model-symbol,.night-shell .neo-model-mint .neo-model-symbol,.night-shell .neo-model-sky .neo-model-symbol,.night-shell .neo-model-sun .neo-model-symbol{color:#de102c}
+.night-shell .neo-model-status{color:#555}
+.night-shell .neo-action,.night-shell .neo-action:first-child,.night-shell .neo-action-image,.night-shell .neo-action-plan{background:#fff;border:1px solid #111;border-radius:4px;box-shadow:3px 3px 0 #ddd}
+.night-shell .neo-action:active,.night-shell .neo-model:active{background:#fff1f3}
+.night-shell .neo-action-symbol,.night-shell .neo-action-image .neo-action-symbol,.night-shell .neo-action-plan .neo-action-symbol{color:#de102b}
+.night-shell .neo-action svg:last-child{color:#d20c27}
+.night-shell .neo-service-card{background:#fff;border:1px solid #111;border-radius:4px;box-shadow:none}
+.night-shell .neo-service-logo,.night-shell .neo-service-github,.night-shell .neo-service-vercel,.night-shell .neo-service-supabase{background:#141414;color:#fff}
+.night-shell .neo-service-text strong{color:#151515}
+.night-shell .neo-service-text small{color:#666}
+.night-shell .neo-small-note,.night-shell .diagnostic-caption{color:#5b5b5b}
+.night-shell .diagnostic-button{background:#ed102d;color:#fff;border:1px solid #111;border-radius:3px}
+.night-shell .diagnostic-panel{background:#fff;border-color:#1c1c1c}
+.night-shell .diagnostic-row{background:#f9f8f5;border-color:#b6b6b6}
+.night-shell .diagnostic-row strong{color:#161616}
+.night-shell .diagnostic-row>span.good{color:#c00d27}
+.night-shell .diagnostic-row>span.good i{background:#e41532}
+.night-shell .neo-runs{border-color:#111}
+.night-shell .neo-run-row,.night-shell .neo-no-runs{background:#fff;border-bottom:1px solid #c8c8c8;color:#111}
+.night-shell .neo-no-runs>span,.night-shell .neo-run-logo,.night-shell .neo-run-logo.done{background:#161616;color:#fff}
+.night-shell .neo-run-pill,.night-shell .neo-run-pill.done{background:#e51530;color:#fff}
+.night-shell .neo-run-info small{color:#555}
+.night-shell .pm-toast{background:#141414;border:1px solid #e1122c;color:#fff}
+.night-shell .pm-footer,.night-shell .pm-footer span{color:#525252}
+.night-shell .pm-footer .pm-dot{color:#ee122f}
+/* Online coding workspace */
+.night-shell .code-studio-head{background:#fff;border:2px solid #111;border-radius:6px;color:#111;box-shadow:5px 5px 0 #111}
+.night-shell .code-studio-kicker{color:#dd112b}
+.night-shell .code-studio-head h2{color:#101010}
+.night-shell .code-studio-head p,.night-shell .code-editor-disclaimer{color:#494949}
+.night-shell .code-studio-exit,.night-shell .code-editor-actions button,.night-shell .code-fetch-error button{background:#fff;border:1px solid #111;border-radius:4px;color:#111;box-shadow:none}
+.night-shell .code-file-list,.night-shell .code-edit-area{background:#fff;border:1px solid #111;border-radius:4px}
+.night-shell .code-file-list button{color:#111}
+.night-shell .code-file-list button.active{background:#e8102c;border-color:#e8102c;color:#fff}
+.night-shell .code-file-list button>span:first-child{color:#d80c27}
+.night-shell .code-file-list button.active>span:first-child{color:#fff}
+.night-shell .code-editor-toolbar strong{color:#161616}
+.night-shell .code-editor-toolbar small{color:#666}
+.night-shell .online-code-editor{background:#151515;border:1px solid #151515;color:#fafafa;border-radius:3px}
+.night-shell .code-editor-actions .code-submit{background:#ed102d;border-color:#141414;color:#fff}
+.night-shell .code-editor-notice,.night-shell .code-fetch-error{color:#ad0822}
+/* Settings and lightbox: paper / black borders */
+.studio-settings-overlay,.image-lightbox{background:#100508d9}
+.studio-settings-panel,.image-lightbox-content{background:#fff;color:#111;border:2px solid #141414;border-radius:10px;box-shadow:8px 8px 0 #e5102b}
+.settings-head,.settings-footer{border-color:#222}
+.settings-eyebrow,.settings-group legend{color:#d40e27}
+.settings-head h2,.settings-group label,.settings-device,.image-lightbox-toolbar{color:#111}
+.settings-head p,.settings-explain,.settings-footer span,.settings-device small{color:#555}
+.settings-close,.settings-group,.settings-group select,.settings-buttons button,.image-result-actions button,.image-lightbox-toolbar button,.image-lightbox-save{background:#fff;color:#111;border:1px solid #111;border-radius:4px;box-shadow:none}
+.settings-group option{background:#fff;color:#111}
+.settings-group select:focus-visible{outline-color:#ed102d}
+.settings-toggle{color:#111}.settings-toggle small{color:#555}
+.settings-toggle input{accent-color:#eb102d}
+.settings-device span{color:#bb1028}
+.settings-footer button,.image-lightbox-save{background:#eb102d;color:#fff;border:1px solid #141414}
+.settings-group{background:#f6f5f1}
+.image-result-actions button{color:#141414}
+.image-lightbox-content img{border:2px solid #141414}
+/* Auth screen as paper-and-ink poster, no heavy visual media */
+.studio-login{background:#f7f6f2!important}
+.studio-login .login-glow{display:none}
+.studio-login-card{background:#fff;border:3px solid #111;box-shadow:8px 8px 0 #141414;border-radius:6px;position:relative;isolation:isolate;overflow:hidden}
+.studio-login-card::before{content:"";position:absolute;right:-31px;top:9px;transform:rotate(32deg);width:86px;height:105px;background:#ed102d;z-index:-1}
+.studio-login-top .flagship-login-mark{background:#fff;border:2px solid #111;border-radius:3px;box-shadow:3px 3px 0 #ed102d}
+.login-private-badge,.login-eyebrow{color:#c00e25;font-weight:900}
+.studio-login-card h1{color:#111;font-weight:950}
+.studio-login-card h1 span{background:none;color:#e3122d;-webkit-text-fill-color:#e3122d}
+.studio-login-card>p,.studio-login-card .login-footnote,.login-meta{color:#444}
+.studio-login-card label{color:#171717}
+.login-input-wrap{background:#fff;border:2px solid #111;border-radius:4px}
+.login-input-wrap:focus-within{border-color:#ec102d;box-shadow:none}
+.studio-login-card .login-input-wrap input{color:#111!important}
+.login-reveal{color:#bd0d27}
+.studio-login-card .pm-login-submit{background:#ed102d;color:#fff;border:2px solid #111;box-shadow:3px 3px 0 #111;border-radius:4px}
+.studio-login-card .pm-login-submit:disabled{opacity:.45}
+.studio-login-card .pm-login-error{color:#c30b25}
+.login-meta{border-color:#333}
+/* Small displays: no accidental horizontal overflow. */
+@media(max-width:980px){
+ .night-shell .night-sidebar,.night-shell .night-sidebar.is-open{background:#111!important}
+ .night-shell .studio-sidebar-scrim{background:#080808ab}
+}
+@media(max-width:550px){
+ .night-shell .neo-main{padding-block:11px}
+ .night-intro{padding:14px 12px!important;min-height:95px!important;box-shadow:4px 4px 0 #111}
+ .night-intro>div{max-width:81%}
+ .night-intro::before{width:86px;right:-24px;top:-70px;height:170px}
+ .night-intro::after{width:53px;height:48px;right:5%;opacity:.13}
+ .night-intro h1{font-size:clamp(21px,6.2vw,27px)}
+ .night-intro p{max-width:280px;font-size:10px}
+ .night-system-indicator{font-size:9px;max-width:90px;padding:6px}
+ .night-shell .neo-chat-section{box-shadow:3px 3px 0 #111!important}
+ .night-fold-summary{padding:10px;min-height:56px}
+ .night-fold-summary small{color:#606060}
+ .night-shell .neo-header .pm-round-icon,.night-shell .studio-mobile-trigger{box-shadow:2px 2px 0 #111!important}
+ .studio-login-card{box-shadow:5px 5px 0 #111}
+}
+@media(max-width:375px){
+ .night-intro::before{opacity:.78}
+ .night-fold-summary small{display:none}
+ .night-intro p{max-width:225px}
+}
+@media(orientation:landscape) and (max-height:520px){
+ .night-intro{min-height:0!important;padding:10px 14px!important}
+ .night-intro::before{height:180px}
+ .night-shell .neo-main{padding-top:7px}
+}
+@media(hover:none),(prefers-reduced-motion:reduce){
+ .night-shell *,.night-shell *::before,.night-shell *::after{animation:none!important;transition:none!important}
+}
