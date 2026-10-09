@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { AgentComposer, type ComposerHandle } from "./agent-composer";
 
 type Provider = "openai" | "deepseek" | "gemini" | "claude" | "mistral";
 type Mode = Provider | "multi";
@@ -64,31 +65,34 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [lastCheck, setLastCheck] = useState("");
   const [selected, setSelected] = useState<Mode>("multi");
-  const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const composerRef = useRef<ComposerHandle>(null);
   const modelRef = useRef<HTMLDivElement>(null);
   const shortcutRef = useRef<HTMLDivElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
+  const inFlightHealth = useRef(false);
   const configured = health?.providers.configured ?? [];
   const ready = selected === "multi" ? configured.length > 0 : configured.includes(selected);
 
   const refresh = useCallback(async () => {
+    if (inFlightHealth.current) return;
+    inFlightHealth.current = true;
     try {
       const response = await fetch("/api/health", { cache: "no-store" });
       if (!response.ok) throw new Error("Немає відповіді від сервера.");
       const data: Health = await response.json();
       if (!Array.isArray(data.providers?.configured) || !data.integrations) throw new Error("Невідомий формат стану сервера.");
-      setHealth(data);
+      setHealth(previous => JSON.stringify(previous) === JSON.stringify(data) ? previous : data);
       setHealthError("");
       setLastCheck(displayTime(Date.now()));
     } catch (error) {
       setHealth(null);
       setHealthError(error instanceof Error ? error.message : "Сервіс недоступний.");
     } finally {
+      inFlightHealth.current = false;
       setLoading(false);
     }
   }, []);
@@ -104,22 +108,18 @@ export default function Home() {
   }, [messages]);
 
   function chooseTask(text: string) {
-    setInput(text);
-    inputRef.current?.focus();
-    inputRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    composerRef.current?.fill(text);
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const text = input.trim();
-    if (!text || busy || (health && !ready)) return;
+  async function submit(text: string) {
+    const task = text.trim();
+    if (!task || busy || (health && !ready)) return;
     const started = performance.now();
     const id = Date.now();
-    const conversation: Message[] = [...messages, { role: "user", content: text }];
+    const conversation: Message[] = [...messages.slice(-18), { role: "user", content: task }];
     setMessages(conversation);
-    setRuns(previous => [{ id, title: text, model: selected, status: "running" }, ...previous]);
+    setRuns(previous => [{ id, title: task, model: selected, status: "running" }, ...previous].slice(0, 40));
     setBusy(true);
-    setInput("");
     setNotice("");
     try {
       const response = await fetch("/api/agent", {
@@ -135,29 +135,22 @@ export default function Home() {
       if (!response.ok) throw new Error(result.error || "Запит завершився помилкою.");
       const model = result.provider || selected;
       const description = [model, result.action === "executed" ? "Зміни збережено" : result.action === "preview" ? "Підготовлено зміни" : "Відповідь"].join(" · ");
-      setMessages(previous => [...previous, { role: "assistant", content: result.text || "Агент не повернув текст.", meta: description }]);
+      setMessages(previous => [...previous.slice(-39), { role: "assistant", content: result.text || "Агент не повернув текст.", meta: description }]);
       setRuns(previous => previous.map(run => run.id === id ? {
         ...run, status: "done", model, seconds: (performance.now() - started) / 1000,
         prUrl: result.prUrl, deploymentUrl: result.deploymentUrl, note: description,
       } : run));
     } catch (error) {
       const description = error instanceof Error ? error.message : "Невідома помилка.";
-      setMessages(previous => [...previous, { role: "assistant", content: description, meta: "Помилка" }]);
+      setMessages(previous => [...previous.slice(-39), { role: "assistant", content: description, meta: "Помилка" }]);
       setRuns(previous => previous.map(run => run.id === id ? { ...run, status: "error", seconds: (performance.now() - started) / 1000, note: description } : run));
     } finally {
       setBusy(false);
     }
   }
 
-  function onInputKey(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
-      event.preventDefault();
-      event.currentTarget.form?.requestSubmit();
-    }
-  }
-
   function move(ref: { current: HTMLDivElement | null }, step: number) {
-    ref.current?.scrollBy({ left: step * 260, behavior: "smooth" });
+    ref.current?.scrollBy({ left: step * 260, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   }
 
   async function logout() {
@@ -197,11 +190,7 @@ export default function Home() {
             <div className="pm-section-heading"><div><span className="pm-overline">01 / WORKSPACE</span><h2 id="studio-title">Ваш AI-агент</h2></div><button type="button" className="pm-minor-button" disabled={busy || !messages.length} onClick={() => { setMessages([]); setNotice("Нова розмова відкрита."); }}><Icon name="plus" size={16}/> Нова розмова</button></div>
             {messages.length ? <div className="pm-thread" ref={threadRef} role="log" aria-live="polite">{messages.map((message, index) => <article className={"pm-message " + message.role} key={index}><span className="pm-message-label">{message.role === "user" ? "ВИ" : "ARTSS AI"} <small>{message.meta || ""}</small></span><div className="pm-bubble">{message.content}</div>{message.role === "assistant" ? <button type="button" className="pm-copy" onClick={() => { void copy(message.content); }}><Icon name="copy" size={13}/> Копіювати</button> : null}</article>)}</div> : <div className="pm-empty-chat"><span className="pm-small-orb">✳</span><strong>Що зробимо сьогодні?</strong><p>Пишіть як звичайно. Моделі працюватимуть через налаштовані серверні інтеграції.</p></div>}
             {busy ? <p className="pm-thinking" role="status"><span className="pm-pulse"/>Агент працює над завданням…</p> : null}
-            <form className="pm-composer" onSubmit={submit}>
-              <label className="pm-sr-only" htmlFor="pm-task">Завдання для агента</label>
-              <textarea ref={inputRef} id="pm-task" value={input} maxLength={12000} onChange={e => setInput(e.target.value)} onKeyDown={onInputKey} rows={3} disabled={busy} placeholder="Напишіть, що потрібно зробити…" />
-              <div className="pm-composer-bottom"><span><Icon name="shield" size={15}/> Приватна сесія · {models.find(x => x.id === selected)?.title}</span><button className="pm-submit" type="submit" disabled={busy || !input.trim() || (health !== null && !ready)}>{busy ? "Обробка…" : "Надіслати"}<Icon name="send" size={17}/></button></div>
-            </form>
+            <AgentComposer ref={composerRef} model={models.find(x => x.id === selected)?.title || selected} busy={busy} unavailable={health !== null && !ready} onSend={submit} />
             {healthError ? <div className="pm-notice-error" role="alert">{healthError} <button type="button" onClick={() => { void refresh(); }}>Повторити</button></div> : null}
             {!loading && health && !configured.length ? <div className="pm-notice-error">Потрібен серверний ключ хоча б одного AI-провайдера.</div> : null}
             {!loading && health && !ready ? <div className="pm-notice-error">У вибраної моделі немає налаштованого ключа. Виберіть іншу модель.</div> : null}
