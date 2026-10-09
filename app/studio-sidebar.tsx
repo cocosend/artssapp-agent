@@ -5,14 +5,18 @@ import { ArtssMark } from "./artss-mark";
 
 export type StudioSection = "home" | "code" | "web" | "images" | "models" | "integrations" | "runs";
 
-const navigation: { id: StudioSection; icon: string; title: string; subtitle: string }[] = [
-  { id: "home", icon: "⌂", title: "Студія", subtitle: "Робочий простір" },
-  { id: "code", icon: "〈/〉", title: "Онлайн-кодинг", subtitle: "GitHub файли" },
-  { id: "web", icon: "◎", title: "Інтернет", subtitle: "Пошук із джерелами" },
-  { id: "images", icon: "▧", title: "Зображення", subtitle: "Створення AI" },
-  { id: "models", icon: "✳", title: "AI моделі", subtitle: "Маршрутизація" },
-  { id: "integrations", icon: "⬡", title: "Підключення", subtitle: "Стан сервісів" },
-  { id: "runs", icon: "◷", title: "Запуски", subtitle: "Результати роботи" },
+const groups: { id: string; title: string; icon: string; items: { id: StudioSection; icon: string; title: string; subtitle: string }[] }[] = [
+  { id: "work", title: "Робочий простір", icon: "▤", items: [
+    { id: "home", icon: "⌂", title: "AI студія", subtitle: "Ваші запити" },
+    { id: "code", icon: "〈/〉", title: "Онлайн-кодинг", subtitle: "Файли GitHub" },
+    { id: "web", icon: "◎", title: "Інтернет", subtitle: "Пошук та джерела" },
+    { id: "images", icon: "▧", title: "Зображення", subtitle: "Генерація AI" },
+  ]},
+  { id: "systems", title: "Моделі та система", icon: "◫", items: [
+    { id: "models", icon: "✳", title: "AI-моделі", subtitle: "Вибір провайдера" },
+    { id: "integrations", icon: "⬡", title: "Інтеграції", subtitle: "Статус підключень" },
+    { id: "runs", icon: "◷", title: "Запуски", subtitle: "Історія задач" },
+  ]},
 ];
 
 type Props = {
@@ -23,9 +27,10 @@ type Props = {
   onNavigate: (id: StudioSection) => void;
   onSettings: () => void;
   onNewChat: () => void;
+  onCollapse: () => void;
 };
 
-export function StudioSidebar({ open, active, busy, onClose, onNavigate, onSettings, onNewChat }: Props) {
+export function StudioSidebar({ open, active, busy, onClose, onNavigate, onSettings, onNewChat, onCollapse }: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -35,26 +40,35 @@ export function StudioSidebar({ open, active, busy, onClose, onNavigate, onSetti
 
   return <>
     {open ? <button type="button" className="studio-sidebar-scrim" onClick={onClose} aria-label="Закрити меню"/> : null}
-    <aside className={"studio-sidebar" + (open ? " is-open" : "")} id="studio-nav" aria-label="Головна навігація">
-      <div className="studio-sidebar-brand"><span className="studio-sidebar-logo"><ArtssMark size={31}/></span>
-        <span><strong>ARTSS AI</strong><small>PRIVATE AGENT STUDIO</small></span>
+    <aside className={"studio-sidebar night-sidebar" + (open ? " is-open" : "")} id="studio-nav" aria-label="Навігація ARTSS AI">
+      <div className="studio-sidebar-brand">
+        <span className="studio-sidebar-logo"><ArtssMark size={30}/></span>
+        <span><strong>ARTSS AI</strong><small>BLUE NIGHT STUDIO</small></span>
         <button type="button" className="studio-sidebar-close" aria-label="Закрити меню" onClick={onClose}>×</button>
       </div>
-      <div className="studio-sidebar-caption">РОБОЧІ ІНСТРУМЕНТИ</div>
-      <nav className="studio-nav-links">
-        {navigation.map(item => <button type="button" key={item.id}
-          className={"studio-nav-item" + (active === item.id ? " active" : "")}
-          aria-current={active === item.id ? "page" : undefined}
-          onClick={() => onNavigate(item.id)}>
-          <span className="studio-nav-symbol" aria-hidden="true">{item.icon}</span>
-          <span><strong>{item.title}</strong><small>{item.subtitle}</small></span>
-          <span className="studio-nav-arrow" aria-hidden="true">›</span>
-        </button>)}
+      <div className="studio-sidebar-caption">НАВІГАЦІЯ</div>
+      <nav className="studio-nav-links night-stairs" aria-label="Розділи">
+        {groups.map((group, index) => <details key={group.id} className="night-stair-group" defaultOpen={index === 0}>
+          <summary className="night-stair-summary">
+            <span aria-hidden="true">{group.icon}</span><strong>{group.title}</strong><span className="night-stair-arrow" aria-hidden="true">⌄</span>
+          </summary>
+          <div className="night-stair-children">
+            {group.items.map(item => <button type="button" key={item.id}
+              className={"studio-nav-item night-stair-item" + (active === item.id ? " active" : "")}
+              aria-current={active === item.id ? "page" : undefined}
+              onClick={() => onNavigate(item.id)}>
+              <span className="studio-nav-symbol" aria-hidden="true">{item.icon}</span>
+              <span><strong>{item.title}</strong><small>{item.subtitle}</small></span>
+              <span className="studio-nav-arrow" aria-hidden="true">›</span>
+            </button>)}
+          </div>
+        </details>)}
       </nav>
-      <div className="studio-sidebar-bottom">
-        <button type="button" onClick={onSettings}>⚙ <span>Налаштування</span></button>
-        <button type="button" onClick={onNewChat} disabled={busy}>＋ <span>Новий запит</span></button>
-        <p>Онлайн-кодинг редагує локальну чернетку. Запис у GitHub потребує дозволу сервера.</p>
+      <div className="studio-sidebar-bottom night-sidebar-bottom">
+        <button type="button" onClick={onSettings}><span aria-hidden="true">⚙</span> Налаштування</button>
+        <button type="button" onClick={onNewChat} disabled={busy}><span aria-hidden="true">＋</span> Новий запит</button>
+        <button type="button" className="night-sidebar-collapse" onClick={onCollapse}><span aria-hidden="true">←</span> Згорнути панель</button>
+        <p>Робочі інструменти згруповано в бічному меню. Натисніть на групу, щоб розгорнути її.</p>
       </div>
     </aside>
   </>;
