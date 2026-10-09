@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./premium.css";
 import "./blood-dreams.css";
+import "./neon-dashboard.css";
 
 export const metadata: Metadata = {
-  title: "ARTSS AI — Blood Dreams",
+  title: "ARTSS AI — Neon Studio",
   description: "Приватний мультимодельний AI-агент для розробки, автоматизації, GitHub, Vercel та Supabase.",
   applicationName: "ARTSS AI",
   manifest: "/manifest.webmanifest",
@@ -15,7 +16,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#120a17",
+  themeColor: "#110516",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
