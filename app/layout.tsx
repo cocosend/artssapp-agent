@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./aurora.css";
 
 export const metadata: Metadata = {
   title: "ARTSS AI — Agent Control Center",
@@ -13,7 +14,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#080d11",
+  themeColor: "#05091a",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

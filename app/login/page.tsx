@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { AuroraLandscape, AuroraMark } from "../aurora-landscape";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,8 +36,8 @@ export default function LoginPage() {
   }
 
   return <main className="login-shell">
-    <section className="login-showcase">
-      <div className="login-brand"><span><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m12 2 2.1 6 6 2.1-6 2.1-2.1 6-2.1-6-6-2.1 6-2.1 2.1-6Z" /></svg></span><div><strong>ARTSS <em>/ AI</em></strong><small>AGENT CONTROL CENTER</small></div></div>
+    <section className="login-showcase"><AuroraLandscape compact />
+      <div className="login-brand"><span><AuroraMark /></span><div><strong>ARTSS <em>/ AI</em></strong><small>AGENT CONTROL CENTER</small></div></div>
       <div className="login-showcase-content"><span>PRIVATE INTELLIGENCE SYSTEM / V2.0</span><h1>Ваші ідеї.<br /><span>Ваш AI-агент.</span></h1><p>Розробка, автоматизація та мультимодельний інтелект в одному особистому робочому просторі.</p><div className="login-tags"><span>OPENAI</span><span>DEEPSEEK</span><span>GEMINI</span><span>GITHUB + VERCEL + SUPABASE</span></div></div>
       <div className="login-showcase-footer">© 2026 ARTSS · PRIVATE WORKSPACE</div>
     </section>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { AuroraLandscape, AuroraMark } from "./aurora-landscape";
 
 type Provider = "openai" | "deepseek" | "gemini";
 type Mode = Provider | "multi";
@@ -197,7 +198,7 @@ export default function Home() {
     <aside className={"sidebar " + (menuOpen ? "sidebar-open" : "")}>
       <div className="sidebar-head">
         <Link href="/" onClick={() => go("workspace")} className="brand-lockup" aria-label="ARTSS — робочий простір">
-          <span className="brand-icon"><Icon name="spark" size={25} /></span>
+          <span className="brand-icon aurora-brand-icon"><AuroraMark /></span>
           <span className="brand-copy"><strong>ARTSS<span> / AI</span></strong><small>AGENT CONTROL CENTER</small></span>
         </Link>
         <button className="mobile-close icon-button" aria-label="Закрити меню" onClick={() => setMenuOpen(false)}><Icon name="close" /></button>
@@ -236,16 +237,24 @@ export default function Home() {
 
       <main className="main-content">
         {view === "workspace" ? <>
-          <section className="hero">
-            <div className="hero-glow" aria-hidden="true" /><div className="hero-grid" aria-hidden="true" />
+          <section className="hero aurora-hero">
+            <div className="hero-glow" aria-hidden="true" /><div className="hero-grid" aria-hidden="true" /><AuroraLandscape />
             <div className="hero-content">
               <div className="hero-eyebrow"><span className="eyebrow-line" /> ПЕРСОНАЛЬНА AI-СИСТЕМА <span className="hero-beta">V2 / WORKSPACE</span></div>
               <h1>Ідеї у дії.<br /><span>Код під контролем.</span></h1>
               <p>Один простір для AI-агентів, розробки, автоматизації та інфраструктури. Від запиту — до результату.</p>
               <div className="hero-actions"><button type="button" className="hero-primary" onClick={() => { inputRef.current?.focus(); inputRef.current?.scrollIntoView({ block: "center", behavior: "smooth" }); }}>Почати роботу <Icon name="arrow" size={18} /></button><button type="button" className="hero-secondary" onClick={() => go("connections")}><Icon name="plug" size={16} /> Перевірити сервіси</button></div>
             </div>
-            <div className="hero-orbit" aria-hidden="true"><span className="orbit-ring orbit-one" /><span className="orbit-ring orbit-two" /><span className="orbit-core"><Icon name="spark" size={49} strokeWidth={1.25} /></span><span className="orbit-node n-one" /><span className="orbit-node n-two" /><span className="orbit-node n-three" /></div>
+            <div className="hero-orbit" aria-hidden="true"><span className="orbit-ring orbit-one" /><span className="orbit-ring orbit-two" /><span className="orbit-core"><AuroraMark /></span><span className="orbit-node n-one" /><span className="orbit-node n-two" /><span className="orbit-node n-three" /></div>
             <div className="hero-footer"><span><span className="status-light online" /> PRIVATE WORKSPACE</span><span>DESIGNED FOR EXECUTION / NOT JUST CHAT</span></div>
+          </section>
+
+
+          <section className="aurora-actions" aria-label="Швидкі сценарії агента">
+            <button type="button" className="aurora-action" onClick={() => choose("Склади структурований план проєкту з етапами, оцінкою ризиків та наступними кроками.")}><span className="action-glyph">✧</span><span><strong>Планувати</strong><small>Від ідеї до дій</small></span><Icon name="arrow" size={16} /></button>
+            <button type="button" className="aurora-action" onClick={() => choose("Проаналізуй мій застосунок ARTSS AI, запропонуй та підготуй конкретні покращення коду з безпечними тестами.")}><span className="action-glyph">⌘</span><span><strong>Розробляти</strong><small>Код та AI-агенти</small></span><Icon name="arrow" size={16} /></button>
+            <button type="button" className="aurora-action" onClick={() => choose("Досліди архітектуру проєкту, порівняй альтернативи, визнач ризики і надай технічні висновки без вигаданих джерел.")}><span className="action-glyph">◎</span><span><strong>Досліджувати</strong><small>Глибокий аналіз</small></span><Icon name="arrow" size={16} /></button>
+            <button type="button" className="aurora-action" onClick={() => choose("Спроєктуй новий інтерфейс для ARTSS AI. Підготуй готові компоненти, стилі та поясни як інтегрувати їх у застосунок.")}><span className="action-glyph">◈</span><span><strong>Створювати</strong><small>Дизайн та рішення</small></span><Icon name="arrow" size={16} /></button>
           </section>
 
           <section className="overview-grid" aria-label="Огляд системи">
