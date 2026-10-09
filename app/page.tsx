@@ -240,7 +240,7 @@ export default function Home() {
           <button type="button" onClick={() => { void logout(); }}><Icon name="logout" size={16}/> Вийти</button></> :
           <><strong>Запуски та сповіщення</strong>{recentRuns.length ? recentRuns.slice(0,4).map(run =>
             <p key={run.id} className="flagship-menu-run"><span>{run.status === "done" ? "✓" : run.status === "error" ? "!" : "◷"}</span>{run.title.slice(0,78)}</p>) :
-            <p>Нових запусків немає. Завдання з'являться після запиту.</p>}
+            <p>Нових запусків немає. Завдання з&apos;являться після запиту.</p>}
           <button type="button" onClick={() => { setMenu(null); document.getElementById("runs-title")?.scrollIntoView({ block: "center", behavior: "smooth" }); }}>Переглянути запуски <Icon name="chevron" size={16}/></button></>}
         </div> : null}
       </div>
