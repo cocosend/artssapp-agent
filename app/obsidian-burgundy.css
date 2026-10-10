@@ -1,0 +1,390 @@
+/* ARTSS / OBSIDIAN BURGUNDY — 2026.10.
+   Real UI skin, not a mockup. Static metal highlights, no animated glows.
+   Black-first surfaces; lacquer burgundy as action signal, snow white content,
+   polished graphite chrome; violet/orange reserved for specialized tools. */
+:root{
+  color-scheme:dark;
+  --bg:#050408;--surface:#15111a;--surface-alt:#201824;
+  --line:#40313f;--ink:#fbfcff;--sub:#b6aebb;
+  --berry:#eb1955;--mint:#aa69ff;--yellow:#ffa95c;
+  --radius:17px;--tp-paper:#08060b;--tp-red:#e51b53;
+  --tp-dark:#050408;--tp-stroke:#514150;
+  --obsidian:#060408;--velvet:#170a17;--burgundy:#af0e3e;
+  --crimson:#f42d67;--snow:#fbfcff;--silver:#c6cbd5;
+  --metal:#808793;--violet:#a465f9;--orange:#ff9442;
+}
+html,body{background:#050408!important;color:#f8f9ff!important;scroll-behavior:auto}
+body{background:radial-gradient(ellipse at 80% 0%,#2b0820 0%,transparent 44%),#050408!important}
+::selection{background:#e91a57;color:white}
+button,a,summary,select,input,textarea{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button:focus-visible,a:focus-visible,summary:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{
+  outline:2px solid #fff!important;outline-offset:3px;
+}
+/* Durable layout — previous skins in cascade deliberately overridden */
+.night-shell.studio-layout,.night-shell .studio-workarea{background:#07050a!important;color:var(--snow)!important}
+.night-shell .neo-header{
+  background:linear-gradient(115deg,#120912 0%,#09070e 62%,#200a19 100%)!important;
+  border-bottom:1px solid #573247!important;box-shadow:0 8px 28px #0008!important;
+}
+.night-shell .pm-brand-label,.night-shell .neo-header .pm-brand-label{
+  color:#fff!important;font-weight:860!important;letter-spacing:-.8px!important;text-shadow:0 1px 10px #000b!important
+}
+.night-shell .neo-header .pm-brand-label small{color:#b6b6c2!important;font-weight:720!important;letter-spacing:1.35px!important}
+.night-shell .pm-dot{color:#f72c66!important}
+.night-shell .pm-brand-mark.flagship-logo,.night-shell .studio-sidebar-logo{
+  background:linear-gradient(145deg,#430b2b 0%,#180c1d 58%,#07070b 100%)!important;
+  border:1px solid #a33862!important;box-shadow:inset 0 1px #ffc6e64c,0 2px 12px #8d0b4666!important;border-radius:14px!important
+}
+.night-shell .pm-brand-mark svg{filter:drop-shadow(0 1px 5px #f02a6452)!important}
+.night-shell .neo-header .pm-round-icon,.night-shell .neo-header .pm-live,.night-shell .studio-mobile-trigger{
+  background:linear-gradient(150deg,#302535,#11111a)!important;
+  border:1px solid #665469!important;color:#f4f5fa!important;
+  border-radius:12px!important;box-shadow:inset 0 1px #fff3,0 3px 9px #0009!important
+}
+.night-shell .neo-header .pm-round-icon:active,.night-shell .studio-mobile-trigger:active{
+  background:#9b1547!important;color:#fff!important;box-shadow:none!important
+}
+.night-shell .neo-header .pm-live{color:#d6d6df!important}
+.night-shell .pm-live.up i,.night-shell .neo-model-indicator.on,.night-shell .neo-service-dot.active{
+  background:#f32c66!important;box-shadow:0 0 6px #f32c665c!important
+}
+.night-shell .flagship-alert-dot{background:#f53472;box-shadow:0 0 8px #f42f6f66}
+.night-shell .flagship-header-menu{background:#1a121d!important;border:1px solid #79546f!important;border-radius:17px!important;box-shadow:0 12px 35px #000b!important}
+.night-shell .flagship-header-menu>strong,.night-shell .flagship-header-menu>p{color:#f9f9fd!important}
+.night-shell .flagship-header-menu>button{background:#29202d!important;border-color:#68566b!important;color:#fff!important;border-radius:11px!important}
+.night-shell .flagship-menu-run span{color:#ff648e}
+/* Left accordion — highly readable high-performance graphite */
+.night-shell .night-sidebar,.night-shell .night-sidebar.is-open{
+  background:linear-gradient(180deg,#0b0910 0%,#120c15 60%,#08070c 100%)!important;
+  color:#f7f7fc!important;border-right:1px solid #4c2e41!important;box-shadow:none!important
+}
+.night-shell .studio-sidebar-brand{border-color:#372a3a!important}
+.night-shell .studio-sidebar-brand strong{color:#fff!important;font-weight:870!important}
+.night-shell .studio-sidebar-brand small{color:#b0a9b7!important}
+.night-shell .studio-sidebar-caption{color:#e9a2b9!important;font-weight:770!important;letter-spacing:1.6px!important}
+.night-stair-group{
+  background:linear-gradient(135deg,#231523,#120e17)!important;
+  border:1px solid #594055!important;border-radius:13px!important;box-shadow:inset 0 1px #fff1!important
+}
+.night-stair-summary{color:#f6f6fc!important;font-weight:800!important;text-transform:none!important;letter-spacing:0!important}
+.night-stair-summary>span:first-child{
+  background:linear-gradient(145deg,#9d1344,#e62a63)!important;color:#fff!important;border-radius:9px!important
+}
+.night-stair-arrow{color:#c5b4c7!important}
+.night-stair-children{border-left:1px solid #86506d!important}
+.night-shell .night-stair-item{color:#e3dce7!important;background:transparent!important;border-radius:10px!important}
+.night-shell .night-stair-item.active{
+  background:linear-gradient(105deg,#6e1239,#9b1a4c)!important;border-color:#b64c75!important;color:#fff!important;box-shadow:inset 0 1px #ffffff38!important
+}
+.night-shell .night-stair-item:hover:not(.active){background:#342031!important;border-color:#865577!important}
+.night-shell .night-stair-item .studio-nav-symbol{background:#332337!important;color:#eee7f4!important;border-radius:9px!important}
+.night-shell .night-stair-item.active .studio-nav-symbol{background:#e83872!important;color:#fff!important}
+.night-shell .night-stair-item strong{color:inherit!important}
+.night-shell .night-stair-item small{color:#b2a2b5!important}
+.night-shell .night-stair-item.active small{color:#f5c7da!important}
+.night-shell .studio-nav-arrow{color:#d4b6cc!important}
+.night-shell .night-sidebar-bottom{border-color:#433047!important}
+.night-shell .night-sidebar-bottom button{
+  background:linear-gradient(130deg,#2b202e,#19121e)!important;
+  border:1px solid #66516b!important;color:#f5f5fc!important;border-radius:11px!important
+}
+.night-shell .night-sidebar-bottom button:active{background:#78143f!important}
+.night-shell .night-sidebar-bottom p{color:#a99cae!important}
+.night-shell .studio-sidebar-close{background:#422038!important;border:1px solid #885570!important;color:#fff!important;border-radius:10px!important}
+/* Intro: deep black with stationary jewel and metallic silver text */
+.night-shell .neo-main{background:#07050a!important;gap:15px!important}
+.night-intro{
+  position:relative;isolation:isolate;overflow:hidden;
+  background:radial-gradient(ellipse at 89% 8%,#8a1549b8,transparent 48%),
+  linear-gradient(112deg,#190c1b 0%,#250b20 57%,#420b2b 100%)!important;
+  border:1px solid #a53a65!important;border-radius:23px!important;
+  box-shadow:inset 0 1px #ffc8e14d,0 9px 22px #0007!important;min-height:130px!important
+}
+.night-intro::before{
+  content:"";position:absolute;right:2.5%;top:-52%;
+  width:175px;height:215px;transform:rotate(31deg);
+  background:linear-gradient(106deg,transparent 0 24%,#4f1939 29%,#e44a7e 44%,#fbecf4 49%,#712145 56%,transparent 65%);
+  opacity:.42;border-radius:28px;pointer-events:none;z-index:-1
+}
+.night-intro::after{
+  content:"";position:absolute;right:6%;bottom:5%;width:80px;height:80px;
+  background:radial-gradient(circle,#ff8f4d 0 3px,transparent 5px),
+  radial-gradient(ellipse at 70% 30%,#a65bff52,transparent 65%);
+  opacity:.75;pointer-events:none;z-index:-1
+}
+.night-intro>div{max-width:79%}
+.night-kicker{color:#ffbdcb!important;letter-spacing:1.6px!important;font-weight:790!important}
+.night-intro h1{color:#fff!important;font-weight:830!important;text-transform:none!important;letter-spacing:-1.25px!important;text-shadow:0 3px 13px #000a!important}
+.night-intro h1 span{color:#ff5b8e!important}
+.night-intro p{color:#e0d4e0!important;font-weight:470!important}
+.night-system-indicator{
+  background:#1c111d!important;border:1px solid #9e496d!important;
+  color:#f8edf5!important;border-radius:999px!important;box-shadow:inset 0 1px #ffffff25!important;font-weight:620!important
+}
+.night-system-indicator i,.night-system-indicator.online i{background:#e93270!important}
+/* Main chat desk */
+.multi-workbench{gap:15px!important}
+.night-shell .multi-workbench>.neo-chat-section{
+  background:linear-gradient(158deg,#19131c 0%,#100e16 68%,#18121d 100%)!important;
+  border:1px solid #564255!important;border-radius:22px!important;
+  box-shadow:inset 0 1px #ffffff14,0 8px 23px #0008!important
+}
+.multi-chat-heading>div>span{color:#d89cb5!important;font-weight:750!important;letter-spacing:1.6px!important}
+.multi-chat-heading h2{color:#fff!important;font-weight:800!important}
+.multi-chat-heading>button{
+  background:linear-gradient(118deg,#29202e,#3a1b33)!important;
+  border:1px solid #714a69!important;color:#f2e4f0!important;border-radius:11px!important
+}
+.night-shell .neo-chat-section .pm-composer{
+  background:#0a0a11!important;border:1px solid #6e526e!important;
+  border-radius:15px!important;box-shadow:inset 0 1px #ffffff16!important
+}
+.night-shell .neo-chat-section .pm-composer:focus-within{
+  border-color:#e8447b!important;box-shadow:0 0 0 2px #a51b5252,inset 0 1px #ffffff24!important
+}
+.night-shell .neo-chat-section .pm-composer textarea{color:#fff!important;caret-color:#fa3e76!important;font-size:16px!important}
+.night-shell .neo-chat-section .pm-composer textarea::placeholder{color:#948998!important}
+.night-shell .neo-chat-section .pm-composer-bottom>span{color:#b5a6ba!important}
+.night-shell .neo-chat-section .pm-submit,.night-shell .neo-chat-section .pm-submit:not(:disabled){
+  background:linear-gradient(112deg,#930f3b 0%,#e31d5b 57%,#ff658f 100%)!important;
+  border:1px solid #f189aa!important;border-radius:12px!important;color:#fff!important;
+  box-shadow:inset 0 1px #ffffff72,0 3px 13px #9a134c5f!important
+}
+.night-shell .neo-chat-section .pm-submit:disabled{
+  background:#332635!important;border-color:#4e4051!important;color:#b5a4b7!important;box-shadow:none!important
+}
+.night-shell .neo-composer-tools button,.night-shell .flagship-file-trigger{
+  background:#241b28!important;border:1px solid #554458!important;
+  color:#dad0dc!important;border-radius:999px!important;font-weight:600!important
+}
+.night-shell .neo-composer-tools button.tool-active{
+  background:#65203f!important;border:1px solid #df477a!important;
+  color:#fff!important;box-shadow:inset 0 1px #fff3!important
+}
+.night-shell .image-current-options,.night-shell .web-current-options{color:#e4d1e3!important}
+.night-shell .image-current-options button{background:#44223b!important;border-color:#7b4d70!important;color:#fff!important;border-radius:9px!important}
+.night-shell .pm-thinking,.night-shell .engine-state-label{color:#e0d1e3!important}
+.night-shell .pm-pulse{background:#fb4b85!important;animation:none!important}
+.night-shell .skip-request{background:#2d1f30!important;border:1px solid #b35e7f!important;color:#fff!important;border-radius:11px!important}
+.night-shell .pm-bubble,.night-shell .neo-thread .pm-bubble{
+  background:#211a25!important;border:1px solid #4b3a50!important;color:#f5f3fa!important;border-radius:15px!important
+}
+.night-shell .pm-message.user .pm-bubble,.night-shell .neo-thread .pm-message.user .pm-bubble{background:#41172c!important;border-color:#984166!important}
+.night-shell .pm-message-label{color:#ff8cad!important}
+.night-shell .pm-message.user .pm-message-label{color:#f0dbe4!important}
+.night-shell .neo-thread{background:#100d15!important;border-color:#47354a!important;border-radius:15px!important}
+.night-shell .pm-copy{color:#f9a6bd!important}
+.night-shell .web-source-list a{background:#251c2e!important;border-color:#65506b!important;color:#e9b7fb!important}
+.night-shell .pm-notice-error{background:#3e1a2d!important;color:#ffd0d8!important;border-color:#a83d60!important}
+/* Agent control: glossy black, snow-white labels, small focused violet/orange nodes */
+.multi-team-panel{
+  background:linear-gradient(160deg,#1a151f 0%,#100e16 100%)!important;
+  border:1px solid #58465c!important;border-radius:21px!important;
+  box-shadow:inset 0 1px #ffffff1a,0 7px 18px #0006!important
+}
+.multi-team-eyebrow{color:#cba5ce!important}
+.multi-team-heading h2{color:#fff!important;font-weight:830!important}
+.multi-team-live{background:#241d29!important;color:#ddd2e2!important;border:1px solid #54425a!important}
+.multi-team-live>span{background:#bd658c!important}
+.multi-team-live>span.pulse{background:#f65d94!important}
+.multi-team-desc{color:#bfb0c4!important}
+.multi-mode-switch{background:#100c15!important;border:1px solid #433349!important}
+.multi-mode-switch button{color:#b9aebe!important}
+.multi-mode-switch button.active{
+  background:linear-gradient(110deg,#7d1139,#bb1a50)!important;
+  color:#fff!important;box-shadow:inset 0 1px #ffd1e450!important
+}
+.multi-team-flow{background:#100d16!important;border:1px solid #4a384d!important}
+.multi-team-flow>span:not(.multi-flow-arrow){color:#bba4c3!important}
+.multi-team-flow strong{color:#f4eef8!important}
+.multi-flow-arrow{color:#d879ab!important}
+.multi-agents-title strong{color:#f5f5fa!important}
+.multi-agents-title span{color:#b4a5bd!important}
+.multi-agent-card{
+  background:#17141d!important;border:1px solid #4a3b51!important;
+  border-radius:13px!important;color:#f4f3f8!important
+}
+.multi-agent-card:hover:not(:disabled){background:#241b29!important}
+.multi-agent-card.is-selected{background:#391c31!important;border-color:#eb4b83!important;box-shadow:inset 3px 0 #f75a8d!important}
+.multi-agent-card:disabled{opacity:.63}
+.multi-agent-icon{background:#291d30!important;color:#faeafa!important}
+.multi-icon-openai{background:#1b393a!important;color:#9ce5d9!important}
+.multi-icon-deepseek{background:#222a45!important;color:#b9c8ff!important}
+.multi-icon-gemini{background:linear-gradient(135deg,#462351,#58215b)!important;color:#ebafff!important}
+.multi-icon-claude{background:#482d24!important;color:#ffc499!important}
+.multi-icon-mistral{background:#513024!important;color:#ffc68f!important}
+.multi-agent-copy strong{color:#fff!important}
+.multi-agent-copy small{color:#aca1b2!important}
+.multi-agent-state{color:#c1aabd!important}
+.multi-agent-state i{background:#6a5c71!important}
+.multi-agent-state.success{color:#d4baff!important}
+.multi-agent-state.success i{background:#ac6cff!important}
+.multi-agent-state.error{color:#ffacb6!important}
+.multi-agent-state.error i{background:#ff6f8a!important}
+.multi-agent-state.ready{color:#dab6cb!important}
+.multi-agent-state.ready i{background:#d24d80!important}
+.multi-last-run,.multi-no-report{background:#15111c!important;border:1px solid #4e3c54!important;border-radius:13px!important}
+.multi-last-title strong,.multi-no-report strong{color:#fff!important}
+.multi-last-title>span,.multi-last-run>p,.multi-last-run>small,.multi-no-report>p{color:#bdb2c4!important}
+.multi-last-details>span{background:#382039!important;color:#f0c7e6!important}
+.multi-team-actions button{border-radius:11px!important}
+.multi-run-button{
+  background:linear-gradient(115deg,#a90c41,#dd225d 60%,#fa4c80)!important;
+  border:1px solid #f184a9!important;color:#fff!important;box-shadow:inset 0 1px #fff5!important
+}
+.multi-secondary-button{background:#2c222e!important;border:1px solid #584659!important;color:#e5dfeb!important}
+.multi-stop-button{background:#4e2338!important;border:1px solid #ae4668!important;color:#ffdbe4!important}
+.multi-team-disclaimer{color:#b19eb7!important}
+/* Native accordion steps */
+.night-fold{
+  background:linear-gradient(110deg,#19131c,#100f17)!important;
+  border:1px solid #58445a!important;border-radius:16px!important;
+  box-shadow:inset 0 1px #ffffff17,0 6px 16px #0007!important
+}
+.night-fold[open]{background:#18121d!important;border-color:#a94977!important}
+.night-fold-summary{background:transparent!important;color:#f9f9ff!important}
+.night-fold-number{background:linear-gradient(145deg,#8e1846,#da1f5d)!important;color:#fff!important;border-radius:10px!important}
+.night-fold-summary strong{color:#fff!important;font-weight:760!important}
+.night-fold-summary small{color:#b6a8b9!important}
+.night-fold-chevron{color:#e8b9cc!important}
+.night-shell .night-fold .neo-section{background:transparent!important;border-top:1px solid #4b394d!important}
+.night-shell .night-fold .neo-section-head h2{color:#fff!important}
+.night-shell .neo-show-more{color:#e8a9cc!important}
+.night-shell .neo-model,.night-shell .neo-model.chosen{
+  background:#1e1822!important;border:1px solid #534052!important;border-radius:13px!important;box-shadow:none!important
+}
+.night-shell .neo-model.chosen{background:#401b32!important;border-color:#ea5a8c!important;box-shadow:inset 3px 0 #ff588f!important}
+.night-shell .neo-model>strong,.night-shell .neo-action strong{color:#fdf9ff!important}
+.night-shell .neo-model>small,.night-shell .neo-action small,.night-shell .neo-model-state{color:#bbb0c1!important}
+.night-shell .neo-model-symbol,.night-shell .neo-model-mint .neo-model-symbol,.night-shell .neo-model-sky .neo-model-symbol,.night-shell .neo-model-sun .neo-model-symbol{color:#e69fc6!important}
+.night-shell .neo-model-status{color:#baa9c0!important}
+.night-shell .neo-action,.night-shell .neo-action:first-child{
+  background:#211925!important;border:1px solid #544256!important;border-radius:13px!important;box-shadow:none!important
+}
+.night-shell .neo-action-image{background:linear-gradient(130deg,#241a35,#19131f)!important;border-color:#8754bd!important}
+.night-shell .neo-action-plan{background:linear-gradient(130deg,#382019,#20141c)!important;border-color:#a45d3e!important}
+.night-shell .neo-action-symbol{color:#ff85ac!important}
+.night-shell .neo-action-image .neo-action-symbol{color:#c18bff!important}
+.night-shell .neo-action-plan .neo-action-symbol{color:#ff9a56!important}
+.night-shell .neo-action svg:last-child{color:#d3a3c1!important}
+.night-shell .neo-service-card{background:#1c1721!important;border:1px solid #504051!important;border-radius:13px!important}
+.night-shell .neo-service-logo,.night-shell .neo-service-github,.night-shell .neo-service-vercel,.night-shell .neo-service-supabase{background:#2e2233!important;color:#ebdfe9!important}
+.night-shell .neo-service-text strong{color:#fff!important}
+.night-shell .neo-service-text small{color:#b4a7b8!important}
+.night-shell .neo-small-note,.night-shell .diagnostic-caption{color:#beb0c1!important}
+.night-shell .diagnostic-button{background:#a21a4a!important;border:1px solid #d65b8a!important;color:#fff!important;border-radius:11px!important}
+.night-shell .diagnostic-panel{background:#110f17!important;border:1px solid #6a4d65!important}
+.night-shell .diagnostic-row{background:#211926!important;border:1px solid #534459!important}
+.night-shell .diagnostic-row strong{color:#fff!important}
+.night-shell .diagnostic-row>span{color:#dec6db!important}
+.night-shell .diagnostic-row>span.good{color:#eec0d6!important}
+.night-shell .diagnostic-row>span.good i{background:#dd4075!important}
+.night-shell .neo-runs{border-color:#4b3c51!important}
+.night-shell .neo-run-row,.night-shell .neo-no-runs{background:#1b1720!important;border-bottom:1px solid #423246!important;color:#fff!important}
+.night-shell .neo-run-logo,.night-shell .neo-run-logo.done{background:#5c2343!important;color:#fff!important}
+.night-shell .neo-no-runs>span{background:#312436!important;color:#fff!important}
+.night-shell .neo-run-pill,.night-shell .neo-run-pill.done{background:#63314a!important;color:#ffe4f1!important}
+.night-shell .neo-run-info small{color:#b6a7b9!important}
+.night-shell .pm-toast{background:#471d38!important;border-color:#c04c74!important;color:#fff!important}
+.night-shell .pm-footer,.night-shell .pm-footer span{color:#afa3b3!important}
+.night-shell .pm-footer .pm-dot{color:#fa527f!important}
+/* Code editor: graphite metal; purple and orange reserved for syntax/tools */
+.night-shell .code-studio-head{
+  background:linear-gradient(125deg,#2c192b,#100e15)!important;border:1px solid #6c4a64!important;
+  border-radius:18px!important;color:#fff!important;box-shadow:inset 0 1px #fff2!important
+}
+.night-shell .code-studio-kicker{color:#ba8bff!important}
+.night-shell .code-studio-head h2{color:#fff!important}
+.night-shell .code-studio-head p,.night-shell .code-editor-disclaimer{color:#c7b8c6!important}
+.night-shell .code-studio-exit,.night-shell .code-editor-actions button,.night-shell .code-fetch-error button{
+  background:#2a202c!important;border:1px solid #675269!important;border-radius:11px!important;color:#f0e9f1!important
+}
+.night-shell .code-file-list,.night-shell .code-edit-area{background:#17121b!important;border:1px solid #544356!important;border-radius:14px!important}
+.night-shell .code-file-list button{color:#e0d9e5!important}
+.night-shell .code-file-list button.active{background:#462c55!important;border-color:#a26acc!important;color:#fff!important}
+.night-shell .code-file-list button>span:first-child{color:#c8a1e7!important}
+.night-shell .code-file-list button.active>span:first-child{color:#fff!important}
+.night-shell .code-editor-toolbar strong{color:#fff!important}
+.night-shell .code-editor-toolbar small{color:#b6a9c4!important}
+.night-shell .online-code-editor{background:#080a10!important;border:1px solid #51445a!important;color:#f5f8ff!important;border-radius:11px!important}
+.night-shell .code-editor-actions .code-submit{background:#aa234e!important;color:#fff!important;border-color:#e26a95!important}
+.night-shell .code-editor-notice,.night-shell .code-fetch-error{color:#d1acfc!important}
+/* Login, settings and image preview do not live inside .night-shell */
+.studio-login{background:radial-gradient(ellipse at 65% 5%,#4b102c 0%,transparent 50%),#050408!important}
+.studio-login .login-glow{display:none!important}
+.studio-login-card{
+  background:linear-gradient(145deg,#251526 0%,#120e18 70%,#1f1320)!important;
+  border:1px solid #a24b6b!important;border-radius:22px!important;
+  box-shadow:inset 0 1px #fff2,0 15px 45px #000b!important;color:#fff!important
+}
+.studio-login-card::before{display:none!important}
+.studio-login-top .flagship-login-mark{background:#3c1a31!important;border:1px solid #a35273!important;border-radius:14px!important;box-shadow:inset 0 1px #ffffff3a!important}
+.login-private-badge{color:#d3c6d5!important}.login-eyebrow{color:#ff9abb!important}
+.studio-login-card h1{color:#fff!important;font-weight:850!important}
+.studio-login-card h1 span{background:linear-gradient(95deg,#ff5f92,#ffc8db)!important;background-clip:text!important;-webkit-background-clip:text!important;-webkit-text-fill-color:transparent!important}
+.studio-login-card>p,.studio-login-card .login-footnote,.login-meta{color:#c4b4c7!important}
+.studio-login-card label{color:#f1e7f0!important}
+.login-input-wrap{background:#100d17!important;border:1px solid #77536f!important;border-radius:13px!important}
+.login-input-wrap:focus-within{border-color:#f0719b!important;box-shadow:0 0 0 2px #8e2b573d!important}
+.studio-login-card .login-input-wrap input{color:#fff!important}
+.login-reveal{color:#ffc2dc!important}
+.studio-login-card .pm-login-submit{
+  background:linear-gradient(114deg,#9b1342,#e22c65 70%,#f95c8c)!important;
+  color:#fff!important;border:1px solid #f089ab!important;border-radius:13px!important;
+  box-shadow:inset 0 1px #ffffff62!important
+}
+.studio-login-card .pm-login-submit:disabled{opacity:.45}
+.studio-login-card .pm-login-error{color:#ffb6c5!important}.login-meta{border-color:#493146!important}
+.studio-settings-overlay,.image-lightbox{background:#030206eb!important}
+.studio-settings-panel,.image-lightbox-content{
+  background:#18121e!important;color:#fdfbff!important;
+  border:1px solid #74536c!important;border-radius:20px!important;box-shadow:0 19px 55px #000b!important
+}
+.settings-head,.settings-footer{border-color:#48364a!important}
+.settings-eyebrow,.settings-group legend{color:#fe8cb1!important}
+.settings-head h2,.settings-group label,.settings-device,.image-lightbox-toolbar{color:#fff!important}
+.settings-head p,.settings-explain,.settings-footer span,.settings-device small{color:#c2b5c8!important}
+.settings-close,.settings-group,.settings-group select,.settings-buttons button,.image-result-actions button,.image-lightbox-toolbar button,.image-lightbox-save{
+  background:#251b2a!important;color:#f4f0f8!important;border:1px solid #67536e!important;border-radius:11px!important;box-shadow:none!important
+}
+.settings-group option{background:#251b2a!important;color:#fff!important}
+.settings-group select:focus-visible{outline-color:#f57ba8!important}
+.settings-toggle{color:#fff!important}.settings-toggle small{color:#bcb0c2!important}
+.settings-toggle input{accent-color:#e13b74!important}
+.settings-device span{color:#c0a1ff!important}
+.settings-footer button,.image-lightbox-save{background:#a92254!important;color:#fff!important;border:1px solid #dc7098!important}
+/* Smart horizontal/vertical mobile widths */
+@media(max-width:980px){
+ .night-shell .night-sidebar,.night-shell .night-sidebar.is-open{background:#0b0810!important}
+ .night-shell .studio-sidebar-scrim{background:#000b!important}
+ .multi-workbench{grid-template-columns:minmax(0,1fr)!important}
+}
+@media(max-width:550px){
+ .night-shell .neo-main{padding-inline:max(11px,env(safe-area-inset-left));padding-right:max(11px,env(safe-area-inset-right));gap:12px!important}
+ .night-intro{padding:17px!important;min-height:110px!important;border-radius:18px!important}
+ .night-intro::before{width:98px;height:144px;top:-43%;right:0}
+ .night-intro>div{max-width:83%}
+ .night-intro h1{font-size:clamp(21px,5.4vw,30px)!important;line-height:1.18}
+ .night-intro p{max-width:275px;font-size:11px!important}
+ .night-system-indicator{font-size:9px;padding:7px;white-space:normal}
+ .night-shell .multi-workbench>.neo-chat-section{padding:12px!important;border-radius:18px!important}
+ .multi-team-panel{padding:13px!important;border-radius:18px!important}
+ .multi-agent-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .multi-agent-card{padding:9px;min-height:60px}
+ .night-shell .neo-composer-tools button,.night-shell .flagship-file-trigger{min-height:40px}
+ .night-fold-summary{min-height:55px}
+}
+@media(max-width:360px){
+ .night-intro>div{max-width:94%}
+ .night-system-indicator{display:none!important}
+ .multi-agent-cards{grid-template-columns:minmax(0,1fr)}
+ .night-fold-summary small{display:none}
+}
+@media(orientation:landscape) and (max-height:520px){
+ .night-intro{min-height:0!important;padding:11px 16px!important}
+ .night-intro p{display:none!important}
+ .night-shell .neo-main{padding-top:8px}
+}
+@media(hover:none),(prefers-reduced-motion:reduce){
+ .night-shell *,.night-shell *::before,.night-shell *::after,.multi-team-panel *{animation:none!important;transition:none!important}
+}
