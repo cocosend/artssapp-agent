@@ -45,7 +45,7 @@ export function StudioSidebar({ open, active, busy, onClose, onNavigate, onSetti
     <aside className={"studio-sidebar night-sidebar" + (open ? " is-open" : "")} id="studio-nav" aria-label="Навігація ARTSS AI">
       <div className="studio-sidebar-brand">
         <span className="studio-sidebar-logo"><ArtssMark size={30}/></span>
-        <span><strong>ARTSS AI</strong><small>MULTI-AGENT STUDIO</small></span>
+        <span><strong>ARTSS AI</strong><small>OBSIDIAN AGENT STUDIO</small></span>
         <button type="button" className="studio-sidebar-close" aria-label="Закрити меню" onClick={onClose}>×</button>
       </div>
       <div className="studio-sidebar-caption">НАВІГАЦІЯ</div>
