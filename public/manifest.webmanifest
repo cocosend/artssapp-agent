@@ -1,5 +1,5 @@
 {
-  "name": "ARTSS AI — Multi-Agent Studio",
+  "name": "ARTSS AI — Obsidian Studio",
   "short_name": "ARTSS AI",
   "description": "Приватний мультимодельний AI-агент ARTSS для iPhone.",
   "start_url": "/",
@@ -9,8 +9,8 @@
     "standalone",
     "minimal-ui"
   ],
-  "background_color": "#f8f9fd",
-  "theme_color": "#f8f9fd",
+  "background_color": "#060408",
+  "theme_color": "#060408",
   "lang": "uk",
   "icons": [
     {
