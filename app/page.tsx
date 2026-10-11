@@ -88,6 +88,7 @@ export default function Home() {
   const [selected, setSelected] = useState<Mode>("multi");
   const [preferences, setPreferences] = useState<StudioSettings>(DEFAULT_SETTINGS);
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -148,10 +149,6 @@ export default function Home() {
           const next = sanitizeSettings(JSON.parse(stored));
           setPreferences(next);
           setSelected(next.model);
-          if (next.rememberChat) {
-            const recovered = decodeLocalChat(window.sessionStorage.getItem("artss-chat-session-v1"));
-            if (recovered.length) setMessages(recovered);
-          }
         }
       } catch { /* Invalid or inaccessible preference storage. */ }
       setPreferencesLoaded(true);
@@ -166,7 +163,7 @@ export default function Home() {
   }, [preferences, preferencesLoaded]);
 
   useEffect(() => {
-    if (!preferencesLoaded) return;
+    if (!preferencesLoaded || !sessionReady) return;
     try {
       if (preferences.rememberChat) {
         if (messages.length) window.sessionStorage.setItem("artss-chat-session-v1", encodeLocalChat(messages));
@@ -175,7 +172,7 @@ export default function Home() {
         window.sessionStorage.removeItem("artss-chat-session-v1");
       }
     } catch { /* Browser storage is optional and may be disabled. */ }
-  }, [messages, preferences.rememberChat, preferencesLoaded]);
+  }, [messages, preferences.rememberChat, preferencesLoaded, sessionReady]);
 
   useEffect(() => {
     if (!openedImage) return;
@@ -263,12 +260,28 @@ export default function Home() {
   }, [messages]);
 
   useEffect(() => {
+    if (!preferencesLoaded) return;
     const controller = new AbortController();
     void fetch("/api/auth/session", { cache: "no-store", signal: controller.signal })
-      .then(response => { if (response.status === 401 && !controller.signal.aborted) router.replace("/login"); })
-      .catch(() => { /* No false redirects on network interruptions. */ });
+      .then(response => {
+        if (controller.signal.aborted) return;
+        if (response.status === 401) {
+          try { window.sessionStorage.removeItem("artss-chat-session-v1"); } catch { /* Optional storage. */ }
+          router.replace("/login");
+          return;
+        }
+        if (!response.ok) return;
+        if (preferences.rememberChat) {
+          try {
+            const recovered = decodeLocalChat(window.sessionStorage.getItem("artss-chat-session-v1"));
+            if (recovered.length) setMessages(previous => previous.length ? previous : recovered);
+          } catch { /* Optional browser storage. */ }
+        }
+        setSessionReady(true);
+      })
+      .catch(() => { /* Do not treat a network failure as successful authentication. */ });
     return () => controller.abort();
-  }, [router]);
+  }, [router, preferencesLoaded, preferences.rememberChat]);
 
   useEffect(() => {
     let active = true;
