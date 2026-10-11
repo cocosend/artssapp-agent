@@ -40,7 +40,6 @@ type Props = {
 
 export function MultiAgentBoard({ configured, selected, working, workingMode, last, onSelect, onCompose, onStop, onNewChat }: Props) {
   const parallel = configured.slice(0, 3);
-  const hasTeam = configured.length > 1;
   return <aside className="multi-team-panel" id="team-status" aria-labelledby="team-heading">
     <div className="multi-team-heading">
       <div><span className="multi-team-eyebrow">ОРКЕСТРАЦІЯ МОДЕЛЕЙ</span><h2 id="team-heading">Команда агентів</h2></div>
@@ -65,24 +64,25 @@ export function MultiAgentBoard({ configured, selected, working, workingMode, la
     <div className="multi-agent-cards">
       {providers.map(p => {
         const enabled = configured.includes(p.id);
-        const contribution = last?.report.contributors.includes(p.id);
-        const failed = last?.report.failed.includes(p.id);
-        const attempted = last?.report.attempted.includes(p.id);
+        const contribution = !working && Boolean(last?.report.contributors.includes(p.id));
+        const failed = !working && Boolean(last?.report.failed.includes(p.id));
+        const attempted = !working && Boolean(last?.report.attempted.includes(p.id));
+        const waiting = enabled && working && (workingMode === "multi" ? parallel.includes(p.id) : workingMode === p.id);
         let state = !enabled ? "Ключ недоступний" : "Налаштовано";
         if (enabled && last && attempted) state = contribution ? "Відповів" : failed ? "Помилка запиту" : "Був запущений";
         // A pending HTTP call cannot reveal individual provider progress: label it honestly.
-        if (enabled && working && (workingMode === "multi" ? parallel.includes(p.id) : workingMode === p.id)) state = "Очікування результату";
+        if (working && enabled) state = waiting ? "Очікування результату" : "Резерв / не запускається";
         return <button className={"multi-agent-card" + (selected === p.id ? " is-selected" : "")}
           type="button" key={p.id} disabled={!enabled || working} aria-pressed={selected === p.id}
           onClick={() => { onSelect(p.id); onCompose(); }}>
           <span className={"multi-agent-icon multi-icon-" + p.id} aria-hidden="true">{p.symbol}</span>
           <span className="multi-agent-copy"><strong>{p.name}</strong><small>{p.focus}</small></span>
-          <span className={"multi-agent-state " + (contribution ? "success" : failed ? "error" : enabled ? "ready" : "missing")}><i/>{state}</span>
+          <span className={"multi-agent-state " + (contribution ? "success" : failed ? "error" : waiting ? "pending" : enabled ? "ready" : "missing")}><i/>{state}</span>
         </button>;
       })}
     </div>
     {last ? <div className="multi-last-run" role="status">
-      <div className="multi-last-title"><strong>Останній результат</strong><span>{last.duration.toFixed(1)} с</span></div>
+      <div className="multi-last-title"><strong>Останній завершений результат</strong><span>{last.duration.toFixed(1)} с</span></div>
       <p title={last.task}>{last.task}</p>
       <div className="multi-last-details"><span>{last.report.strategy === "parallel" ? "Паралельно" : "Послідовно"}</span>
         <span>{last.report.contributors.length} відповіли</span>
