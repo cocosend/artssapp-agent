@@ -16,6 +16,8 @@ export function sanitizeLocalChat(input: unknown): LocalChatTurn[] {
         typeof candidate.content !== "string") continue;
     const content = candidate.content.slice(0, Math.min(MAX_TURN_CHARS, budget)).trim();
     if (!content) continue;
+    // The text-file importer puts file contents into the composer. Never cache these locally.
+    if (candidate.role === "user" && /^(?:Файл:|File:)\s*[^\n]+\n/i.test(content)) continue;
     budget -= content.length;
     const meta = typeof candidate.meta === "string" ? candidate.meta.slice(0, 100) : undefined;
     result.push({ role: candidate.role, content, ...(meta ? { meta } : {}) });
