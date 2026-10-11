@@ -36,7 +36,7 @@ async function callOpenAI(messages: ChatMessage[], model: string, signal?: Abort
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({ model, instructions: SYSTEM, input: messages, store: false }),
   });
-  if (!r.ok) throw new Error(`OpenAI ${r.status}: ${await r.text()}`);
+  if (!r.ok) throw new Error(`OpenAI request failed (HTTP ${r.status}).`);
   return extractOpenAIText(await r.json());
 }
 
