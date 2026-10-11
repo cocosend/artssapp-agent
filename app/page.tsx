@@ -12,6 +12,8 @@ import { StudioSidebar, type StudioSection } from "./studio-sidebar";
 import { CodeWorkspace } from "./code-workspace";
 import { MultiAgentBoard, type TeamLastRun, type TeamMode, type AgentRunReport } from "./multi-agent-board";
 import { beginRunClock, elapsedRunSeconds } from "./run-clock";
+import { mergeRunHistory } from "@/lib/run-history";
+import { makeChatTranscript } from "@/lib/chat-transcript";
 
 type Provider = "openai" | "deepseek" | "gemini" | "claude" | "mistral";
 type Mode = Provider | "multi";
@@ -113,7 +115,7 @@ export default function Home() {
   const requestController = useRef<AbortController | null>(null);
   const inFlightPrompt = useRef<string | null>(null);
   const activeRunId = useRef<number | null>(null);
-  const recentRuns = runs.length ? runs : storedRuns;
+  const recentRuns = mergeRunHistory(runs, storedRuns);
   const configured = health?.providers.configured ?? [];
   const ready = selected === "multi" ? configured.length > 0 : configured.includes(selected);
 
@@ -179,6 +181,30 @@ export default function Home() {
     setToolMode("agent");
     composerRef.current?.fill("");
   }
+  async function exportConversation() {
+    if (!messages.length) { setNotice("Немає повідомлень для експорту."); return; }
+    try {
+      const transcript = makeChatTranscript(messages);
+      const file = new File([transcript], "ARTSS-AI-conversation.md", { type: "text/markdown" });
+      if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] }) && navigator.share) {
+        await navigator.share({ files: [file], title: "ARTSS AI — розмова" });
+      } else {
+        const url = URL.createObjectURL(file);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = file.name;
+        document.body.append(anchor);
+        anchor.click();
+        anchor.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 2_000);
+      }
+      setNotice("Експорт готовий. Зображення не додаються до текстового файлу.");
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return;
+      setNotice("Не вдалося поділитися розмовою на цьому пристрої.");
+    }
+  }
+
   async function saveImage(data: string) {
     try {
       if (!data.startsWith("data:image/png;base64,") || data.length > 20_000_000) {
@@ -460,6 +486,7 @@ export default function Home() {
         {menu ? <div className="flagship-header-menu" role="region" aria-label={menu === "profile" ? "Профіль" : "Сповіщення"}>
           {menu === "profile" ? <><strong>Приватний простір ARTSS AI</strong><p>Доступ до AI, інтеграцій та робочих сценаріїв.</p>
           <button type="button" onClick={() => { setMenu(null); setSettingsOpen(true); }}>⚙ Налаштування інтерфейсу</button>
+          <button type="button" onClick={() => { setMenu(null); void exportConversation(); }} disabled={!messages.length}>↧ Експорт розмови (.md)</button>
           <button type="button" onClick={() => { setMenu(null); setLoading(true); void refresh(); }}><Icon name="refresh" size={16}/> Оновити стан</button>
           <button type="button" onClick={() => { void logout(); }}><Icon name="logout" size={16}/> Вийти</button></> :
           <><strong>Запуски та сповіщення</strong>{recentRuns.length ? recentRuns.slice(0,4).map(run =>

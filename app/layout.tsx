@@ -9,6 +9,7 @@ import "./blue-night.css";
 import "./trash-polka.css";
 import "./multi-agent-studio.css";
 import "./obsidian-burgundy.css";
+import "./obsidian-quality.css";
 
 export const metadata: Metadata = {
   title: "ARTSS AI — Obsidian Studio",
