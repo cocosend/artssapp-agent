@@ -40,6 +40,37 @@ export function StudioSidebar({ open, active, busy, onClose, onNavigate, onSetti
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (!open || !window.matchMedia("(max-width: 980px)").matches) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    const sidebar = document.getElementById("studio-nav");
+    document.body.style.overflow = "hidden";
+    sidebar?.querySelector<HTMLButtonElement>(".studio-sidebar-close")?.focus({ preventScroll: true });
+
+    const keepKeyboardInside = (event: KeyboardEvent) => {
+      if (event.key !== "Tab" || !sidebar) return;
+      const focusable = Array.from(sidebar.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], summary, input:not([disabled]), select:not([disabled])'
+      )).filter(element => element.getClientRects().length > 0);
+      if (!focusable.length) return;
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", keepKeyboardInside);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", keepKeyboardInside);
+      previousFocus?.focus({ preventScroll: true });
+    };
+  }, [open]);
+
   return <>
     {open ? <button type="button" className="studio-sidebar-scrim" onClick={onClose} aria-label="Закрити меню"/> : null}
     <aside className={"studio-sidebar night-sidebar" + (open ? " is-open" : "")} id="studio-nav" aria-label="Навігація ARTSS AI">

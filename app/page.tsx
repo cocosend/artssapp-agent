@@ -11,6 +11,7 @@ import { StudioSettingsPanel, DEFAULT_SETTINGS, sanitizeSettings, type StudioSet
 import { StudioSidebar, type StudioSection } from "./studio-sidebar";
 import { CodeWorkspace } from "./code-workspace";
 import { MultiAgentBoard, type TeamLastRun, type TeamMode, type AgentRunReport } from "./multi-agent-board";
+import { decodeLocalChat, encodeLocalChat } from "@/lib/local-chat";
 import { beginRunClock, elapsedRunSeconds } from "./run-clock";
 import { mergeRunHistory } from "@/lib/run-history";
 import { makeChatTranscript } from "@/lib/chat-transcript";
@@ -87,6 +88,7 @@ export default function Home() {
   const [selected, setSelected] = useState<Mode>("multi");
   const [preferences, setPreferences] = useState<StudioSettings>(DEFAULT_SETTINGS);
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -161,6 +163,18 @@ export default function Home() {
   }, [preferences, preferencesLoaded]);
 
   useEffect(() => {
+    if (!preferencesLoaded || !sessionReady) return;
+    try {
+      if (preferences.rememberChat) {
+        if (messages.length) window.sessionStorage.setItem("artss-chat-session-v1", encodeLocalChat(messages));
+        else window.sessionStorage.removeItem("artss-chat-session-v1");
+      } else {
+        window.sessionStorage.removeItem("artss-chat-session-v1");
+      }
+    } catch { /* Browser storage is optional and may be disabled. */ }
+  }, [messages, preferences.rememberChat, preferencesLoaded, sessionReady]);
+
+  useEffect(() => {
     if (!openedImage) return;
     const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setOpenedImage(null); };
     window.addEventListener("keydown", onKey);
@@ -178,6 +192,8 @@ export default function Home() {
   function newChat() {
     if (busy) return;
     setMessages([]);
+    setLastTeam(null);
+    try { window.sessionStorage.removeItem("artss-chat-session-v1"); } catch { /* Optional browser storage. */ }
     setToolMode("agent");
     composerRef.current?.fill("");
   }
@@ -244,12 +260,28 @@ export default function Home() {
   }, [messages]);
 
   useEffect(() => {
+    if (!preferencesLoaded) return;
     const controller = new AbortController();
     void fetch("/api/auth/session", { cache: "no-store", signal: controller.signal })
-      .then(response => { if (response.status === 401 && !controller.signal.aborted) router.replace("/login"); })
-      .catch(() => { /* No false redirects on network interruptions. */ });
+      .then(response => {
+        if (controller.signal.aborted) return;
+        if (response.status === 401) {
+          try { window.sessionStorage.removeItem("artss-chat-session-v1"); } catch { /* Optional storage. */ }
+          router.replace("/login");
+          return;
+        }
+        if (!response.ok) return;
+        if (preferences.rememberChat) {
+          try {
+            const recovered = decodeLocalChat(window.sessionStorage.getItem("artss-chat-session-v1"));
+            if (recovered.length) setMessages(previous => previous.length ? previous : recovered);
+          } catch { /* Optional browser storage. */ }
+        }
+        setSessionReady(true);
+      })
+      .catch(() => { /* Do not treat a network failure as successful authentication. */ });
     return () => controller.abort();
-  }, [router]);
+  }, [router, preferencesLoaded, preferences.rememberChat]);
 
   useEffect(() => {
     let active = true;
@@ -440,6 +472,7 @@ export default function Home() {
   }
 
   async function logout() {
+    try { window.sessionStorage.removeItem("artss-chat-session-v1"); } catch { /* Storage may be disabled. */ }
     try { await fetch("/api/auth/logout", { method: "POST" }); }
     finally { router.push("/login"); router.refresh(); }
   }
@@ -627,7 +660,7 @@ export default function Home() {
         {healthError ? <div className="pm-notice-error" role="alert">{healthError}<button type="button" onClick={() => { void refresh(); }}>Повторити</button></div> : null}
         {!loading && health && !configured.length ? <div className="pm-notice-error">Жоден AI-провайдер не має налаштованого ключа.</div> : null}
       </section>
-      <MultiAgentBoard configured={configured} selected={selected} working={busy && toolMode === "agent"}
+      <MultiAgentBoard configured={configured} selected={selected} working={busy && workingMode !== null}
         workingMode={workingMode} last={lastTeam}
         onSelect={mode => { chooseModel(mode); setToolMode("agent"); }}
         onCompose={() => { setActiveSection("home"); window.setTimeout(() => composerRef.current?.focus(), 0); }}

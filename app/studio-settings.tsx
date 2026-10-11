@@ -8,6 +8,7 @@ export type StudioSettings = {
   density: "comfortable" | "compact";
   motion: "system" | "reduced";
   effects: boolean;
+  rememberChat: boolean;
   textSize: "normal" | "large";
   imageAspect: ImageAspect;
   imageQuality: ImageQuality;
@@ -15,7 +16,7 @@ export type StudioSettings = {
 };
 
 export const DEFAULT_SETTINGS: StudioSettings = {
-  density: "comfortable", motion: "system", effects: true, textSize: "normal",
+  density: "comfortable", motion: "system", effects: true, rememberChat: false, textSize: "normal",
   imageAspect: "square", imageQuality: "low", model: "multi",
 };
 
@@ -32,6 +33,7 @@ export function sanitizeSettings(value: unknown): StudioSettings {
     density: x.density === "compact" ? "compact" : "comfortable",
     motion: x.motion === "reduced" ? "reduced" : "system",
     effects: x.effects !== false,
+    rememberChat: x.rememberChat === true,
     textSize: x.textSize === "large" ? "large" : "normal",
     imageAspect: imageAspects.includes(x.imageAspect as ImageAspect) ? x.imageAspect as ImageAspect : "square",
     imageQuality: imageQualities.includes(x.imageQuality as ImageQuality) ? x.imageQuality as ImageQuality : "low",
@@ -108,6 +110,7 @@ export function StudioSettingsPanel({ open, value, onChange, onClose, onNewChat,
           <p className="settings-explain">Формат і якість передаються безпосередньо серверній генерації зображень. Вища якість може коштувати дорожче.</p>
         </fieldset>
         <fieldset className="settings-group"><legend>Сесія та екран</legend>
+          <label className="settings-toggle"><input type="checkbox" checked={value.rememberChat} onChange={e => update("rememberChat", e.target.checked)}/><span>Відновлювати текст розмови<small>Необов’язково. Зберігаються лише останні текстові повідомлення в сесії цього браузера. Зображення та файли не зберігаються.</small></span></label>
           <div className="settings-device"><strong>Поточний екран</strong><span>{viewport || "Визначення…"}</span><small>Розміри CSS viewport; фізична діагональ не визначається браузером.</small></div>
           <div className="settings-buttons">
             <button type="button" onClick={() => { onRefresh(); onClose(); }}>Оновити підключення</button>
@@ -115,7 +118,7 @@ export function StudioSettingsPanel({ open, value, onChange, onClose, onNewChat,
           </div>
         </fieldset>
       </div>
-      <footer className="settings-footer"><span>Параметри зберігаються лише в цьому браузері. API-ключі тут не зберігаються.</span><button type="button" onClick={onClose}>Готово</button></footer>
+      <footer className="settings-footer"><span>Налаштування зберігаються локально. Текст чату — лише за окремою згодою. Не вмикайте цю опцію для розмов із секретними даними.</span><button type="button" onClick={onClose}>Готово</button></footer>
     </section>
   </div>;
 }
