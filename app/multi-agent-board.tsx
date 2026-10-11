@@ -40,20 +40,23 @@ type Props = {
 
 export function MultiAgentBoard({ configured, selected, working, workingMode, last, onSelect, onCompose, onStop, onNewChat }: Props) {
   const parallel = configured.slice(0, 3);
+  const activeSelection = selected === "multi" ? configured.length > 0 : configured.includes(selected);
+  const canSubmit = !working && configured.length > 0;
   return <aside className="multi-team-panel" id="team-status" aria-labelledby="team-heading">
     <div className="multi-team-heading">
       <div><span className="multi-team-eyebrow">ОРКЕСТРАЦІЯ МОДЕЛЕЙ</span><h2 id="team-heading">Команда агентів</h2></div>
-      <span className="multi-team-live" title="Стан останнього запиту">
+      <span className="multi-team-live" title="Стан запиту" aria-live="polite">
         <span className={working ? "pulse" : ""}/>
-        {working ? "Виконується" : "Готово"}
+        {working ? "Виконується" : configured.length ? "Готово до запиту" : "Немає моделей"}
       </span>
     </div>
     <p className="multi-team-desc">Один запит, кілька незалежних відповідей та фінальне зведення, коли це можливо.</p>
+    {!activeSelection && configured.length > 0 ? <p className="multi-config-hint" role="status">Обрана модель зараз недоступна. Виберіть налаштовану модель або режим Multi AI.</p> : null}
     <div className="multi-mode-switch" role="group" aria-label="Режим роботи агентів">
       <button type="button" className={selected === "multi" ? "active" : ""} disabled={working || !configured.length}
         aria-pressed={selected === "multi"} onClick={() => onSelect("multi")}>✦ Multi AI</button>
       <button type="button" className={selected !== "multi" ? "active" : ""} disabled={working || !configured.length}
-        aria-pressed={selected !== "multi"} onClick={() => onSelect(configured[0] || "openai")}>◉ Одна модель</button>
+        aria-pressed={selected !== "multi"} onClick={() => onSelect(configured.includes(selected as TeamProvider) ? selected : configured[0])}>◉ Одна модель</button>
     </div>
     <div className="multi-team-flow" aria-label="Етапи обробки">
       <span>01 <strong>Запит</strong></span><span className="multi-flow-arrow" aria-hidden="true">→</span>
@@ -94,7 +97,7 @@ export function MultiAgentBoard({ configured, selected, working, workingMode, la
       <p>Після першого запиту тут з&apos;являться фактичні учасники, результат і час виконання. Приклади не підставляються.</p>
     </div>}
     <div className="multi-team-actions">
-      <button type="button" className="multi-run-button" disabled={working || !configured.length}
+      <button type="button" className="multi-run-button" disabled={!canSubmit}
         onClick={() => { onSelect("multi"); onCompose(); }}>✦ Поставити задачу команді</button>
       {working ? <button type="button" className="multi-stop-button" onClick={onStop}>Зупинити запит</button> :
         <button type="button" className="multi-secondary-button" onClick={onNewChat}>Нова розмова</button>}
