@@ -6,7 +6,7 @@ export type ExportChatMessage = {
   sources?: { title: string; url: string }[];
 };
 
-/** Generate an offline, explicit, text-only transcript. Never embed base64 images or API tokens. */
+/** Explicit, text-only export; no image data or credentials fetched from application storage. */
 export function makeChatTranscript(messages: readonly ExportChatMessage[]): string {
   const lines = ["# ARTSS AI — розмова", "", "Експорт створено користувачем. Зображення у файл не включаються.", ""];
   for (const entry of messages.slice(-50)) {
