@@ -11,6 +11,7 @@ import { StudioSettingsPanel, DEFAULT_SETTINGS, sanitizeSettings, type StudioSet
 import { StudioSidebar, type StudioSection } from "./studio-sidebar";
 import { CodeWorkspace } from "./code-workspace";
 import { MultiAgentBoard, type TeamLastRun, type TeamMode, type AgentRunReport } from "./multi-agent-board";
+import { decodeLocalChat, encodeLocalChat } from "@/lib/local-chat";
 import { beginRunClock, elapsedRunSeconds } from "./run-clock";
 import { mergeRunHistory } from "@/lib/run-history";
 import { makeChatTranscript } from "@/lib/chat-transcript";
@@ -147,6 +148,10 @@ export default function Home() {
           const next = sanitizeSettings(JSON.parse(stored));
           setPreferences(next);
           setSelected(next.model);
+          if (next.rememberChat) {
+            const recovered = decodeLocalChat(window.sessionStorage.getItem("artss-chat-session-v1"));
+            if (recovered.length) setMessages(recovered);
+          }
         }
       } catch { /* Invalid or inaccessible preference storage. */ }
       setPreferencesLoaded(true);
@@ -159,6 +164,18 @@ export default function Home() {
     try { window.localStorage.setItem("artss-studio-settings-v1", JSON.stringify(preferences)); }
     catch { /* localStorage may be disabled. */ }
   }, [preferences, preferencesLoaded]);
+
+  useEffect(() => {
+    if (!preferencesLoaded) return;
+    try {
+      if (preferences.rememberChat) {
+        if (messages.length) window.sessionStorage.setItem("artss-chat-session-v1", encodeLocalChat(messages));
+        else window.sessionStorage.removeItem("artss-chat-session-v1");
+      } else {
+        window.sessionStorage.removeItem("artss-chat-session-v1");
+      }
+    } catch { /* Browser storage is optional and may be disabled. */ }
+  }, [messages, preferences.rememberChat, preferencesLoaded]);
 
   useEffect(() => {
     if (!openedImage) return;
@@ -178,6 +195,8 @@ export default function Home() {
   function newChat() {
     if (busy) return;
     setMessages([]);
+    setLastTeam(null);
+    try { window.sessionStorage.removeItem("artss-chat-session-v1"); } catch { /* Optional browser storage. */ }
     setToolMode("agent");
     composerRef.current?.fill("");
   }
@@ -440,6 +459,7 @@ export default function Home() {
   }
 
   async function logout() {
+    try { window.sessionStorage.removeItem("artss-chat-session-v1"); } catch { /* Storage may be disabled. */ }
     try { await fetch("/api/auth/logout", { method: "POST" }); }
     finally { router.push("/login"); router.refresh(); }
   }
@@ -627,7 +647,7 @@ export default function Home() {
         {healthError ? <div className="pm-notice-error" role="alert">{healthError}<button type="button" onClick={() => { void refresh(); }}>Повторити</button></div> : null}
         {!loading && health && !configured.length ? <div className="pm-notice-error">Жоден AI-провайдер не має налаштованого ключа.</div> : null}
       </section>
-      <MultiAgentBoard configured={configured} selected={selected} working={busy && toolMode === "agent"}
+      <MultiAgentBoard configured={configured} selected={selected} working={busy && workingMode !== null}
         workingMode={workingMode} last={lastTeam}
         onSelect={mode => { chooseModel(mode); setToolMode("agent"); }}
         onCompose={() => { setActiveSection("home"); window.setTimeout(() => composerRef.current?.focus(), 0); }}
