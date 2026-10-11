@@ -91,3 +91,39 @@
 @media(max-width:980px){
  .night-shell .studio-sidebar.is-open{max-height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch}
 }
+
+/* 2026-10-11: touch-safe Obsidian polish. Keep gradients static for 60fps-class compositing. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.night-shell button,.night-shell summary,.night-shell a,.studio-login button{min-height:40px}
+.night-shell .multi-agent-card,.night-shell .multi-mode-switch button,.night-shell .multi-team-actions button{min-height:44px}
+.night-shell .multi-agent-card:focus-visible,.night-shell .night-stair-summary:focus-visible{
+ outline:2px solid #fff!important;outline-offset:2px
+}
+.night-shell .multi-config-hint{padding:10px 12px;border:1px solid #c66080;border-radius:10px;background:#2d1323;color:#fff;font-size:12px;line-height:1.5}
+.night-shell .multi-team-panel,.night-shell .neo-chat-section{contain:layout style}
+.night-shell .multi-team-panel .multi-agent-copy,.night-shell .multi-agent-state{min-width:0;overflow-wrap:anywhere}
+.night-shell .multi-team-panel .multi-agent-state{max-width:110px}
+.night-shell .multi-last-details{flex-wrap:wrap}
+.night-shell .neo-main{padding-bottom:max(28px,env(safe-area-inset-bottom,0px))}
+.night-shell .neo-header{padding-top:env(safe-area-inset-top,0px)}
+@media(max-width:550px){
+ .night-shell .multi-workbench{grid-template-columns:minmax(0,1fr)!important}
+ .night-shell .multi-team-panel,.night-shell .neo-chat-section{width:100%;min-width:0}
+ .night-shell .multi-chat-heading{flex-wrap:wrap}
+ .night-shell .multi-team-flow{overflow-x:auto}
+ .night-shell .multi-team-heading{flex-wrap:wrap}
+ .night-shell .multi-agent-card{min-width:0}
+ .night-shell .multi-agent-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .night-shell .multi-agent-state{max-width:100%}
+}
+@media(max-width:350px){
+ .night-shell .multi-agent-cards{grid-template-columns:minmax(0,1fr)}
+ .night-shell .multi-agent-state{max-width:none;margin-left:auto}
+}
+@media(prefers-contrast:more){
+ .night-shell .multi-team-panel,.night-shell .neo-chat-section,.night-shell .night-fold{border-color:#aaa0ad!important}
+ .night-shell .multi-agent-copy small,.night-shell .multi-team-desc{color:#f0e8f1!important}
+}
+@media(prefers-reduced-transparency:reduce){
+ .night-shell .neo-header,.night-shell .night-sidebar{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+}
