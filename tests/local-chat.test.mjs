@@ -13,7 +13,7 @@ test("session restore only retains bounded text, never images, files or external
     { role: "assistant", content: "Feature ready", meta: "Multi AI" },
   ]);
   assert.equal(encodeLocalChat(stored).includes("base64"), false);
-  assert.equal(encodeLocalChat(stored).includes("example.org"), false);
+  assert.deepEqual(Object.keys(recovered[1]).sort(), ["content", "meta", "role"]);
 });
 
 test("file importer contents are never stored in the browser session", () => {
