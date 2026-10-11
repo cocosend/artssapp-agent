@@ -16,6 +16,14 @@ test("session restore only retains bounded text, never images, files or external
   assert.equal(encodeLocalChat(stored).includes("example.org"), false);
 });
 
+test("file importer contents are never stored in the browser session", () => {
+  const data = [{ role: "user", content: "Файл: private-settings.md\n\nSECRET_FILE_CONTENT" },
+    { role: "user", content: "Ordinary safe chat" }];
+  const encoded = encodeLocalChat(data);
+  assert.equal(encoded.includes("SECRET_FILE_CONTENT"), false);
+  assert.deepEqual(decodeLocalChat(encoded), [{ role: "user", content: "Ordinary safe chat" }]);
+});
+
 test("malformed or oversized browser storage cannot crash chat hydration", () => {
   assert.deepEqual(decodeLocalChat("{not json"), []);
   assert.deepEqual(decodeLocalChat(JSON.stringify({ version: 999, messages: [{ role: "user", content: "a" }] })), []);
