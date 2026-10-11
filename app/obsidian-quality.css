@@ -1,0 +1,85 @@
+/* ARTSS Obsidian Quality Pass: iPhone accessibility, stable gloss & intentional device preferences. */
+:root{--steel-highlight:#f5f7fa;--graphite-seam:#5b5360;--gloss-burgundy:#d51a54;--tool-violet:#a975f8;--tool-orange:#ff994c}
+.night-shell .multi-agent-card,.night-shell .night-stair-item,.night-shell .night-fold-summary,
+.night-shell .neo-action,.night-shell .neo-model{touch-action:manipulation}
+.night-shell .neo-main,.night-shell .multi-workbench,.night-shell .neo-chat-section,
+.night-shell .multi-team-panel,.night-shell .night-fold,.night-shell .neo-thread{
+ min-width:0;max-width:100%
+}
+.night-shell .pm-bubble,.night-shell .multi-last-run p,.night-shell .neo-run-info strong{
+ overflow-wrap:anywhere;word-break:break-word
+}
+.night-shell .multi-team-panel{border-top-color:#938194!important}
+.night-shell .multi-agent-card.is-selected{
+ border-color:#fb93b8!important;box-shadow:inset 3px 0 0 #ef4b82!important
+}
+.night-shell .multi-run-button,.night-shell .neo-chat-section .pm-submit{
+ background-image:linear-gradient(115deg,#670d35,#cb1a53 57%,#f16995)!important
+}
+/* Optional visual effects switch actually reduces every heavy shadow in the last CSS layer. */
+.night-shell[data-effects="off"] .neo-header,
+.night-shell[data-effects="off"] .pm-brand-mark.flagship-logo,
+.night-shell[data-effects="off"] .neo-hero,
+.night-shell[data-effects="off"] .night-intro,
+.night-shell[data-effects="off"] .neo-chat-section,
+.night-shell[data-effects="off"] .pm-composer,
+.night-shell[data-effects="off"] .pm-submit,
+.night-shell[data-effects="off"] .multi-team-panel,
+.night-shell[data-effects="off"] .night-fold,
+.night-shell[data-effects="off"] .neo-model,
+.night-shell[data-effects="off"] .neo-action,
+.night-shell[data-effects="off"] .multi-agent-card,
+.night-shell[data-effects="off"] .neo-service-card,
+.night-shell[data-effects="off"] .neo-header .pm-round-icon{
+ box-shadow:none!important;text-shadow:none!important;filter:none!important
+}
+.night-shell[data-effects="off"] .night-intro::before,
+.night-shell[data-effects="off"] .night-intro::after{display:none!important}
+.night-shell[data-effects="off"] .night-intro{
+ background:#1a0d1c!important
+}
+.night-shell[data-effects="off"] .neo-header{background:#100c14!important}
+.night-shell[data-effects="off"] .multi-run-button,
+.night-shell[data-effects="off"] .neo-chat-section .pm-submit{
+ background:#9e1545!important
+}
+/* Larger text is legible even in previously collapsed multi-agent cards. */
+.night-shell[data-textsize="large"] .multi-agent-copy strong,
+.night-shell[data-textsize="large"] .night-stair-item strong{font-size:14px!important}
+.night-shell[data-textsize="large"] .multi-agent-copy small,
+.night-shell[data-textsize="large"] .multi-agent-state,
+.night-shell[data-textsize="large"] .multi-last-details span{font-size:11px!important}
+.night-shell[data-textsize="large"] .multi-team-desc,
+.night-shell[data-textsize="large"] .night-intro p{font-size:14px!important}
+.night-shell[data-textsize="large"] .pm-bubble{font-size:16px!important;line-height:1.55}
+.night-shell[data-density="compact"] .multi-agent-card{min-height:49px!important;padding:6px 8px!important;gap:8px!important}
+.night-shell[data-density="compact"] .multi-team-panel{padding:12px!important}
+.night-shell[data-density="compact"] .night-fold-summary{min-height:50px!important}
+.night-shell[data-density="compact"] .neo-chat-section{padding:10px!important}
+.night-shell[data-motion="reduced"] *,
+.night-shell[data-motion="reduced"] *::before,
+.night-shell[data-motion="reduced"] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+.studio-login-card .login-input-wrap input:-webkit-autofill,
+.studio-login-card .login-input-wrap input:-webkit-autofill:focus{
+ -webkit-box-shadow:0 0 0 1000px #100d17 inset!important;
+ -webkit-text-fill-color:#f9f7ff!important;
+ caret-color:#fff!important
+}
+@media(max-width:550px){
+ .night-shell .night-intro{overflow:hidden}
+ .night-shell .multi-agent-cards{min-width:0}
+ .night-shell .multi-agent-card{min-width:0}
+ .night-shell .multi-agent-copy{min-width:0}
+ .night-shell .multi-agent-copy small{overflow-wrap:anywhere}
+ .night-shell .neo-thread{overflow-wrap:anywhere}
+ .night-shell .neo-composer-tools{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+ .night-shell .neo-composer-tools::-webkit-scrollbar{display:none}
+ .night-shell .neo-composer-tools button,.night-shell .flagship-file-trigger{flex-shrink:0;scroll-snap-align:start}
+}
+@media(orientation:landscape) and (max-height:510px){
+ .studio-settings-overlay,.image-lightbox{align-items:flex-start}
+ .night-shell .night-intro{min-height:0!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .night-shell *,.night-shell *::before,.night-shell *::after{animation:none!important;transition:none!important}
+}
