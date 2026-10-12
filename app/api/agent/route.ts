@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { configuredProviders, runModelWithFallback, type ChatMessage, type ProviderId, type AgentMode } from "@/lib/providers";
 import { addEvent, addMessage, createRun, createSession, finishRun } from "@/lib/supabase";
-import { createBranch, createPullRequest, deployVercel, listRepo, readRepoFile, commitFiles } from "@/lib/github";
+import { createBranch, createPullRequest, deployVercel, listRepo, readRepoFile, commitFiles, getGithubToken } from "@/lib/github";
 import { parsePlan, validatePath } from "@/lib/agent-plan";
 import { isAgentAuthenticated } from "@/lib/auth";
 
@@ -178,9 +178,10 @@ export async function POST(req: Request) {
 
     if (runId) await safeAddEvent(runId, "editing", `Підготовлено ${safeFiles.length} файлів.`, { files: safeFiles.map((f) => f.path) });
 
-    const executionEnabled = process.env.AGENT_EXECUTION_ENABLED === "true" && Boolean(process.env.GITHUB_TOKEN?.trim());
+    const githubAuthorized = Boolean(await getGithubToken().catch(() => undefined));
+    const executionEnabled = process.env.AGENT_EXECUTION_ENABLED === "true" && githubAuthorized;
     if (!executionEnabled || plan.commit !== true) {
-      const text = `${plan.message}\n\nПідготовлено файли: ${safeFiles.map((f) => f.path).join(", ")}.\n\nРежим preview: зміни не записані в GitHub.${!process.env.GITHUB_TOKEN ? "\nВідсутній токен GitHub для запису." : ""}`;
+      const text = `${plan.message}\n\nПідготовлено файли: ${safeFiles.map((f) => f.path).join(", ")}.\n\nРежим preview: зміни не записані в GitHub.${!githubAuthorized ? "\nGitHub App доступ недоступний: перевірте авторизацію Vercel Connect." : process.env.AGENT_EXECUTION_ENABLED !== "true" ? "\nВиконання вимкнено налаштуванням AGENT_EXECUTION_ENABLED." : ""}`;
       if (runId) await safeFinishRun(runId, "completed", text);
       return NextResponse.json({ text, provider: activeProvider, contributors: modelResult.contributors, orchestration: modelResult.orchestration, available, action: "preview", files: safeFiles.map((f) => f.path) });
     }
