@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { configuredProviders, runModelWithFallback, type ChatMessage, type ProviderId, type AgentMode } from "@/lib/providers";
 import { addEvent, addMessage, createRun, createSession, finishRun } from "@/lib/supabase";
-import { createBranch, createPullRequest, deployVercel, listRepo, readRepoFile, commitFiles, getGithubToken } from "@/lib/github";
+import { createBranch, createPullRequest, deployVercel, listRepo, readRepoFile, commitFiles, getGithubToken, vercelGitIntegrationConfigured } from "@/lib/github";
 import { parsePlan, validatePath } from "@/lib/agent-plan";
 import { isAgentAuthenticated } from "@/lib/auth";
 import { isAgentServiceAuthorized } from "@/lib/service-auth";
@@ -213,19 +213,35 @@ export async function POST(req: Request) {
     }
 
     let deploymentUrl: string | undefined;
+    let deploymentStatus: "pending" | "manual" | undefined;
     if (req.signal.aborted) return NextResponse.json({ error: "Request cancelled before deployment." }, { status: 499 });
     if (plan.deploy) {
       const target = plan.deployTarget === "production" ? "production" : "preview";
       if (target === "production") {
         throw new Error("Production deployment is blocked until the agent branch is merged. Request a preview deployment or merge the PR first.");
       }
-      if (runId) await safeAddEvent(runId, "deploying", `Запускаю Vercel ${target} deployment для ${branch}.`);
-      const deployment = await deployVercel(undefined, target, branch);
-      deploymentUrl = deployment?.url ? `https://${deployment.url}` : deployment?.inspectorUrl;
-      if (runId) await safeAddEvent(runId, "deployed", deploymentUrl || "Vercel deployment started.", { branch, target });
+      if (process.env.VERCEL_TOKEN?.trim()) {
+        if (runId) await safeAddEvent(runId, "deploying", `Запускаю Vercel ${target} deployment для ${branch}.`);
+        const deployment = await deployVercel(undefined, target, branch);
+        deploymentUrl = deployment?.url ? `https://${deployment.url}` : deployment?.inspectorUrl;
+        deploymentStatus = "pending";
+      } else if (vercelGitIntegrationConfigured()) {
+        // Vercel Git integration automatically creates preview builds from pushed branches.
+        // A commit is NOT proof that deployment finished. Never invent a live preview URL.
+        deploymentStatus = "pending";
+        if (runId) await safeAddEvent(runId, "deploying",
+          "Гілку надіслано в GitHub. Vercel Git integration обробляє preview-збірку.", { branch, target });
+      } else {
+        deploymentStatus = "manual";
+        if (runId) await safeAddEvent(runId, "warning",
+          "Git branch created; no Vercel Git integration or deploy token was configured.", { branch });
+      }
     }
 
-    const result = `${plan.message}\n\nCommit: ${commit.sha}\nBranch: ${branch}${prUrl ? `\nPR: ${prUrl}` : ""}${deploymentUrl ? `\nDeploy: ${deploymentUrl}` : ""}`;
+    const deployNote = deploymentStatus === "pending"
+      ? "\nPreview: очікує підтвердження READY від Vercel."
+      : deploymentStatus === "manual" ? "\nPreview: потрібно підключити Vercel Git integration." : "";
+    const result = `${plan.message}\n\nCommit: ${commit.sha}\nBranch: ${branch}${prUrl ? `\nPR: ${prUrl}` : ""}${deploymentUrl ? `\nDeploy: ${deploymentUrl}` : ""}${deployNote}`;
     if (runId) await safeFinishRun(runId, "completed", result);
 
     return NextResponse.json({
@@ -239,6 +255,7 @@ export async function POST(req: Request) {
       commitSha: commit.sha,
       prUrl,
       deploymentUrl,
+      deploymentStatus,
     });
   } catch (error) {
     if (req.signal.aborted) {
