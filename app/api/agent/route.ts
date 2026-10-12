@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
-import { createHash, timingSafeEqual } from "node:crypto";
 import { configuredProviders, runModelWithFallback, type ChatMessage, type ProviderId, type AgentMode } from "@/lib/providers";
 import { addEvent, addMessage, createRun, createSession, finishRun } from "@/lib/supabase";
 import { createBranch, createPullRequest, deployVercel, listRepo, readRepoFile, commitFiles, getGithubToken } from "@/lib/github";
 import { parsePlan, validatePath } from "@/lib/agent-plan";
 import { isAgentAuthenticated } from "@/lib/auth";
+import { isAgentServiceAuthorized } from "@/lib/service-auth";
 
 export const runtime = "nodejs";
+export const maxDuration = 120;
 
 const REPO = process.env.GITHUB_REPO || "cocosend/artssapp-agent";
 const MAX_MESSAGE_CHARS = 12_000;
@@ -89,13 +90,7 @@ async function safeFinishRun(runId: string, status: "completed" | "failed", resu
 }
 
 export async function POST(req: Request) {
-  const serviceKey = req.headers.get("x-agent-service-key");
-  // Never accept a Supabase service-role key as an agent authentication secret.
-  const expectedServiceKey = process.env.AGENT_SERVICE_KEY;
-  const serviceAuthorized = Boolean(serviceKey && expectedServiceKey && timingSafeEqual(
-    createHash("sha256").update(serviceKey).digest(),
-    createHash("sha256").update(expectedServiceKey).digest(),
-  ));
+  const serviceAuthorized = isAgentServiceAuthorized(req);
   if (!serviceAuthorized && !(await isAgentAuthenticated())) {
     return NextResponse.json({ error: "Authentication required. Open /login." }, { status: 401 });
   }
@@ -107,6 +102,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const messages = normalizeMessages(body?.messages);
     const requested = body?.provider as AgentMode | undefined;
+    const forcePreview = body?.executionMode === "preview";
     const available = configuredProviders();
 
     if (!messages.length) return NextResponse.json({ error: "messages is required" }, { status: 400 });
@@ -180,7 +176,7 @@ export async function POST(req: Request) {
 
     const githubAuthorized = Boolean(await getGithubToken().catch(() => undefined));
     const executionEnabled = process.env.AGENT_EXECUTION_ENABLED === "true" && githubAuthorized;
-    if (!executionEnabled || plan.commit !== true) {
+    if (!executionEnabled || plan.commit !== true || forcePreview) {
       const text = `${plan.message}\n\nПідготовлено файли: ${safeFiles.map((f) => f.path).join(", ")}.\n\nРежим preview: зміни не записані в GitHub.${!githubAuthorized ? "\nGitHub App доступ недоступний: перевірте авторизацію Vercel Connect." : process.env.AGENT_EXECUTION_ENABLED !== "true" ? "\nВиконання вимкнено налаштуванням AGENT_EXECUTION_ENABLED." : ""}`;
       if (runId) await safeFinishRun(runId, "completed", text);
       return NextResponse.json({ text, provider: activeProvider, contributors: modelResult.contributors, orchestration: modelResult.orchestration, available, action: "preview", files: safeFiles.map((f) => f.path) });
