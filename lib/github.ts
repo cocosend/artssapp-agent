@@ -1,6 +1,10 @@
 const API = "https://api.github.com";
 const GITHUB_TIMEOUT_MS = 30_000;
 
+export function vercelGitIntegrationConfigured(): boolean {
+  return Boolean(process.env.VERCEL_PROJECT_ID?.trim() && process.env.VERCEL_GITHUB_REPO_ID?.trim());
+}
+
 import { getVercelOidcTokenSync } from "@vercel/oidc";
 
 const CONNECTOR_UID = "github/artssapp-agent";
