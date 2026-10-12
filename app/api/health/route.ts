@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { configuredProviders, gatewayConfigured } from "@/lib/providers";
-import { getGithubToken } from "@/lib/github";
+import { getGithubToken, vercelGitIntegrationConfigured } from "@/lib/github";
 
 export const runtime = "nodejs";
 
@@ -27,7 +27,7 @@ export async function GET() {
     integrations: {
       github: githubReady,
       supabase: configured("SUPABASE_URL") && configured("SUPABASE_SERVICE_ROLE_KEY"),
-      vercel: configured("VERCEL_TOKEN"),
+      vercel: configured("VERCEL_TOKEN") || vercelGitIntegrationConfigured(),
     },
     gateway: {
       configured: gatewayConfigured(),
@@ -38,6 +38,7 @@ export async function GET() {
       githubWriteConfigured: githubReady,
       githubExecutionReady: githubReady && process.env.AGENT_EXECUTION_ENABLED === "true",
       vercelApiConfigured: configured("VERCEL_TOKEN"),
+      vercelGitAutoDeployConfigured: vercelGitIntegrationConfigured(),
       imageGenerationConfigured: configured("OPENAI_API_KEY"),
       webSearchConfigured: configured("OPENAI_API_KEY"),
       supabaseConfigured: configured("SUPABASE_URL") && configured("SUPABASE_SERVICE_ROLE_KEY"),

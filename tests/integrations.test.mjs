@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { configuredProviders, gatewayConfigured, runModel } from "../lib/providers.ts";
-import { github } from "../lib/github.ts";
+import { github, vercelGitIntegrationConfigured } from "../lib/github.ts";
 
 function withEnv(names, run) {
   const originals = Object.fromEntries(names.map(name => [name, process.env[name]]));
@@ -103,5 +103,16 @@ test("GitHub writes use the existing app-scoped Vercel Connect connector", async
     } finally {
       globalThis.fetch = originalFetch;
     }
+  });
+});
+
+test("Vercel Git deployment detection uses project and repository config, not a PAT", async () => {
+  await withEnv(["VERCEL_PROJECT_ID", "VERCEL_GITHUB_REPO_ID", "VERCEL_TOKEN"], () => {
+    delete process.env.VERCEL_TOKEN;
+    process.env.VERCEL_PROJECT_ID = "prj_test";
+    process.env.VERCEL_GITHUB_REPO_ID = "1404333676";
+    assert.equal(vercelGitIntegrationConfigured(), true);
+    delete process.env.VERCEL_GITHUB_REPO_ID;
+    assert.equal(vercelGitIntegrationConfigured(), false);
   });
 });
