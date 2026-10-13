@@ -347,6 +347,7 @@ export default function Home() {
     if (section === "web") setToolMode("web");
     if (section === "images") setToolMode("image");
     window.setTimeout(() => {
+      if (section === "team") (document.getElementById("gemini-team-details") as HTMLDetailsElement | null)?.setAttribute("open", "");
       const target = section === "home" ? null :
         section === "team" ? document.getElementById("team-status") :
         section === "models" ? modelRef.current :
@@ -500,7 +501,7 @@ export default function Home() {
     catch { setNotice("Копіювання недоступне у цьому браузері."); }
   }
 
-  return <div className={"pm-shell neo-app flagship-app studio-layout night-shell" + (sidebarCollapsed ? " night-sidebar-hidden" : "")} data-density={preferences.density} data-effects={preferences.effects ? "on" : "off"} data-motion={preferences.motion} data-textsize={preferences.textSize}>
+  return <div className={"pm-shell neo-app flagship-app studio-layout night-shell gemini-shell" + (sidebarCollapsed ? " night-sidebar-hidden" : "")} data-density={preferences.density} data-effects={preferences.effects ? "on" : "off"} data-motion={preferences.motion} data-textsize={preferences.textSize}>
     <StudioSidebar open={sidebarOpen} active={activeSection} busy={busy} onClose={() => setSidebarOpen(false)}
       onNavigate={goToSection} onSettings={() => { setSidebarOpen(false); setSettingsOpen(true); }}
       onNewChat={() => { setSidebarOpen(false); newChat(); goToSection("home"); }} onCollapse={() => setSidebarCollapsed(true)}/>
@@ -534,17 +535,10 @@ export default function Home() {
         <CodeWorkspace onSendToAgent={sendEditorDraft} onClose={() => goToSection("home")}
           githubWrite={Boolean(health?.integrations.github && health?.executionEnabled)}/> :
       <>
-      <section className="night-intro" aria-labelledby="neo-title">
-        <div>
-          <span className="night-kicker">ARTSS ONE / AI COMMAND CENTER</span>
-          <h1 id="neo-title">Один простір.<span> Усі AI-можливості.</span></h1>
-          <p>П&apos;ять моделей, розробка, GitHub, Vercel, Supabase, пошук і генерація — в одному застосунку.</p>
-          <div className="one-hero-actions">
-            <button type="button" className="one-primary" onClick={() => { setTool("agent"); chooseModel("multi"); jumpTo("chat"); window.setTimeout(() => composerRef.current?.focus(), 0); }}>✦ Почати з Multi-Agent <span aria-hidden="true">→</span></button>
-            <button type="button" className="one-secondary" onClick={() => goToSection("code")}>〈/〉 Відкрити код</button>
-          </div>
-        </div>
-        <span className={"night-system-indicator" + (health?.ok ? " online" : "")}><i/>{loading ? "Перевірка" : health?.ok ? "Система активна" : "Немає зв'язку"}</span>
+      <section className={"night-intro gemini-greeting" + (messages.length ? " has-conversation" : "")} aria-labelledby="neo-title">
+        <span className="gemini-greeting-kicker"><span className="gemini-sparkle" aria-hidden="true">✦</span> ARTSS ONE · AI WORKSPACE</span>
+        <h1 id="neo-title"><span className="gemini-gradient-text">Привіт!</span> Чим можу допомогти?</h1>
+        <p>Ставте запитання, створюйте код, досліджуйте інтернет або працюйте з командою AI.</p>
       </section>
       <nav className="one-service-rail" aria-label="Сервіси одного застосунку">
         <button type="button" onClick={() => goToSection("models")} aria-label="Відкрити AI-моделі">
@@ -651,12 +645,18 @@ export default function Home() {
       </section>
       </details>
 
-      <div className="multi-workbench">
+      <div className={"multi-workbench gemini-workbench" + (messages.length ? " has-conversation" : "")}>
       <section className="neo-chat-section" id="agent-composer" aria-label="AI-чат">
         <div className="multi-chat-heading">
-          <div><span>ARTSS ONE / WORKSPACE</span><h2>{toolMode === "agent" ? selected === "multi" ? "Multi-agent чат" : "Чат із " + (models.find(m => m.id === selected)?.title || selected) : toolMode === "web" ? "Інтернет-дослідження" : "Генерація зображень"}</h2></div>
-          <button type="button" onClick={() => goToSection("team")} aria-label="Показати команду агентів">Команда <span aria-hidden="true">↗</span></button>
+          <div><span>ВАШ AI-ПОМІЧНИК</span><h2>{toolMode === "agent" ? selected === "multi" ? "Multi-agent чат" : "Чат із " + (models.find(m => m.id === selected)?.title || selected) : toolMode === "web" ? "Інтернет-дослідження" : "Генерація зображень"}</h2></div>
+          <button type="button" className="gemini-model-picker" onClick={() => goToSection("models")} aria-label="Вибрати AI-модель"><span className="gemini-sparkle" aria-hidden="true">✦</span>{selected === "multi" ? "Multi AI" : models.find(m => m.id === selected)?.title || selected}<span aria-hidden="true">⌄</span></button>
         </div>
+        {!messages.length ? <div className="gemini-suggestions" aria-label="Швидкий початок">
+          <button type="button" onClick={() => { chooseTask(shortcuts[2].value); window.setTimeout(() => composerRef.current?.focus(), 0); }}><span className="gemini-chip-icon blue">◎</span><strong>Проаналізувати проєкт</strong><small>Архітектура і ризики</small></button>
+          <button type="button" onClick={() => goToSection("code")}><span className="gemini-chip-icon violet">⌘</span><strong>Написати код</strong><small>GitHub workspace</small></button>
+          <button type="button" onClick={() => { setTool("image"); window.setTimeout(() => composerRef.current?.focus(), 0); }}><span className="gemini-chip-icon coral">▧</span><strong>Створити зображення</strong><small>Генерація AI</small></button>
+          <button type="button" onClick={() => { setTool("web"); window.setTimeout(() => composerRef.current?.focus(), 0); }}><span className="gemini-chip-icon mint">↗</span><strong>Знайти в інтернеті</strong><small>Пошук із джерелами</small></button>
+        </div> : null}
         {messages.length ? <div className="pm-thread neo-thread" ref={threadRef} role="log" aria-live="polite">
           {messages.map((message, index) => <article className={"pm-message " + message.role} key={index}>
             <span className="pm-message-label">{message.role === "user" ? "ВИ" : "ARTSS ONE"} <small>{message.meta || ""}</small></span>
@@ -682,11 +682,14 @@ export default function Home() {
         {healthError ? <div className="pm-notice-error" role="alert">{healthError}<button type="button" onClick={() => { void refresh(); }}>Повторити</button></div> : null}
         {!loading && health && !configured.length ? <div className="pm-notice-error">Жоден AI-провайдер не має налаштованого ключа.</div> : null}
       </section>
+      <details className="gemini-team-details" id="gemini-team-details">
+        <summary><span className="gemini-sparkle" aria-hidden="true">✦</span><strong>Команда моделей</strong><small>Режими, провайдери й останній запуск</small><span aria-hidden="true">⌄</span></summary>
       <MultiAgentBoard configured={configured} selected={selected} working={busy && workingMode !== null}
         workingMode={workingMode} last={lastTeam}
         onSelect={mode => { chooseModel(mode); setToolMode("agent"); }}
         onCompose={() => { setActiveSection("home"); window.setTimeout(() => composerRef.current?.focus(), 0); }}
         onStop={skipRequest} onNewChat={() => { newChat(); setActiveSection("home"); }}/>
+      </details>
       </div>
 
       </>}
