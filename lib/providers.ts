@@ -261,7 +261,6 @@ export async function runModelWithFallback(preferred: AgentMode, messages: ChatM
   const order = preferred === "multi" ? configured : [preferred, ...configured.filter(p => p !== preferred)];
   const attempted: ProviderId[] = [];
   const failed: ProviderId[] = [];
-  let lastError: unknown;
   for (const provider of order) {
     checkAbort();
     if (!configured.includes(provider)) continue;
@@ -276,7 +275,6 @@ export async function runModelWithFallback(preferred: AgentMode, messages: ChatM
     } catch (error) {
       failed.push(provider);
       failureDetails.push(providerErrorSummary(provider, error));
-      lastError = error;
     }
   }
   throw new Error("All configured AI providers failed: " + failureDetails.join("; "));
