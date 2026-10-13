@@ -49,11 +49,11 @@ export default function LoginPage() {
     <div className="login-glow" aria-hidden="true"/>
     <section className="pm-login-card studio-login-card" aria-labelledby="login-heading">
       <div className="studio-login-top"><div className="pm-login-icon flagship-login-mark" aria-hidden="true"><ArtssMark size={55}/></div>
-        <span className="login-private-badge">✦ PRIVATE AGENT STUDIO</span></div>
-      <span className="login-eyebrow">ARTSS AI · ДОСТУП</span>
-      <h1 id="login-heading">З поверненням <span>додому.</span></h1>
-      <p>Увійдіть до вашої приватної студії: AI-моделі, зображення, код і підключення з одного екрана.</p>
-      <form onSubmit={submit} aria-label="Вхід до ARTSS AI">
+        <span className="login-private-badge">✦ UNIFIED AI WORKSPACE</span></div>
+      <span className="login-eyebrow">ARTSS ONE · ДОСТУП</span>
+      <h1 id="login-heading">Усі інструменти. <span>Один вхід.</span></h1>
+      <p>Увійдіть до ARTSS ONE: мультимодельний агент, кодинг, зображення, пошук, GitHub, Vercel і Supabase в одному місці.</p>
+      <form onSubmit={submit} aria-label="Вхід до ARTSS ONE">
         <label htmlFor="pm-code">Персональний код доступу</label>
         <div className="login-input-wrap">
           <input id="pm-code" type={showCode ? "text" : "password"} inputMode="numeric" autoComplete="current-password"
