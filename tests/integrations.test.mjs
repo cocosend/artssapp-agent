@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { configuredProviders, gatewayConfigured, runModel } from "../lib/providers.ts";
-import { github } from "../lib/github.ts";
+import { github, vercelGitIntegrationConfigured } from "../lib/github.ts";
 
 function withEnv(names, run) {
   const originals = Object.fromEntries(names.map(name => [name, process.env[name]]));
@@ -53,8 +53,9 @@ test("Claude and Mistral use the OIDC gateway for explicit model requests", asyn
 });
 
 test("GitHub public read is allowed without token, but writes fail closed", async () => {
-  await withEnv(["GITHUB_TOKEN"], async () => {
+  await withEnv(["GITHUB_TOKEN", "VERCEL_OIDC_TOKEN"], async () => {
     delete process.env.GITHUB_TOKEN;
+    delete process.env.VERCEL_OIDC_TOKEN;
     const originalFetch = globalThis.fetch;
     globalThis.fetch = async (url, opts) => {
       assert.equal(String(url), "https://api.github.com/repos/cocosend/artssapp-agent");
@@ -66,5 +67,52 @@ test("GitHub public read is allowed without token, but writes fail closed", asyn
       assert.equal(response.full_name, "cocosend/artssapp-agent");
       await assert.rejects(() => github("/repos/cocosend/artssapp-agent/git/refs", { method: "POST" }), /GITHUB_TOKEN/);
     } finally { globalThis.fetch = originalFetch; }
+  });
+});
+
+test("GitHub writes use the existing app-scoped Vercel Connect connector", async () => {
+  await withEnv(["GITHUB_TOKEN", "VERCEL_OIDC_TOKEN"], async () => {
+    delete process.env.GITHUB_TOKEN;
+    process.env.VERCEL_OIDC_TOKEN = "test-project-oidc";
+    const originalFetch = globalThis.fetch;
+    const seen = [];
+    globalThis.fetch = async (url, opts) => {
+      seen.push(String(url));
+      if (String(url) === "https://api.vercel.com/v1/connect/token/github%2Fartssapp-agent") {
+        assert.equal(opts.method, "POST");
+        assert.equal(opts.headers.Authorization, "Bearer test-project-oidc");
+        assert.deepEqual(JSON.parse(opts.body).subject, { type: "app" });
+        return new Response(JSON.stringify({
+          token: "test-installation-token",
+          expiresAt: new Date(Date.now() + 120_000).toISOString(),
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      assert.equal(String(url), "https://api.github.com/repos/cocosend/artssapp-agent/git/refs");
+      assert.equal(opts.headers.Authorization, "Bearer test-installation-token");
+      return new Response(JSON.stringify({ ref: "refs/heads/agent/test" }), {
+        status: 201, headers: { "Content-Type": "application/json" },
+      });
+    };
+    try {
+      const result = await github("/repos/cocosend/artssapp-agent/git/refs", {
+        method: "POST",
+        body: JSON.stringify({ ref: "refs/heads/agent/test", sha: "example" }),
+      });
+      assert.equal(result.ref, "refs/heads/agent/test");
+      assert.equal(seen.length, 2);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});
+
+test("Vercel Git deployment detection uses project and repository config, not a PAT", async () => {
+  await withEnv(["VERCEL_PROJECT_ID", "VERCEL_GITHUB_REPO_ID", "VERCEL_TOKEN"], () => {
+    delete process.env.VERCEL_TOKEN;
+    process.env.VERCEL_PROJECT_ID = "prj_test";
+    process.env.VERCEL_GITHUB_REPO_ID = "1404333676";
+    assert.equal(vercelGitIntegrationConfigured(), true);
+    delete process.env.VERCEL_GITHUB_REPO_ID;
+    assert.equal(vercelGitIntegrationConfigured(), false);
   });
 });

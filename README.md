@@ -29,10 +29,12 @@ Copy `.env.example` to `.env.local` locally. Configure the corresponding server-
 Required for AI:
 - `DEEPSEEK_API_KEY` or `GEMINI_API_KEY` or `OPENAI_API_KEY`
 
-Required for GitHub execution:
-- `GITHUB_TOKEN`
+Required for GitHub execution on Vercel:
+- A linked, authorized Vercel Connect GitHub App connector (`github/artssapp-agent`).
 - `GITHUB_REPO=cocosend/artssapp-agent`
 - `AGENT_EXECUTION_ENABLED=true`
+
+For local development outside Vercel, an optional server-only `GITHUB_TOKEN` can be used instead. The production GitHub connector issues temporary installation tokens from project OIDC, without storing a personal access token.
 
 Optional for persistence:
 - `SUPABASE_URL`
@@ -87,4 +89,4 @@ The gateway accepts GET health checks and authenticated POST requests.
 Required execution secret:
 `AGENT_ACCESS_PASSWORD`.
 
-Keep `AGENT_EXECUTION_ENABLED=false` until the selected runtime has its AI provider key, `GITHUB_TOKEN`, and service authentication configured. Then enable execution and test with a small branch/PR task.
+Keep `AGENT_EXECUTION_ENABLED=false` until the runtime has an AI provider key, valid GitHub App Connect authorization (or `GITHUB_TOKEN` outside Vercel), and service authentication configured. Then enable execution and test with a small branch/PR task.

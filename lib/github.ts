@@ -1,10 +1,78 @@
 const API = "https://api.github.com";
 const GITHUB_TIMEOUT_MS = 30_000;
 
-function authHeaders(method: string) {
-  const token = process.env.GITHUB_TOKEN?.trim();
+export function vercelGitIntegrationConfigured(): boolean {
+  return Boolean(process.env.VERCEL_PROJECT_ID?.trim() && process.env.VERCEL_GITHUB_REPO_ID?.trim());
+}
+
+import { getVercelOidcTokenSync } from "@vercel/oidc";
+
+const CONNECTOR_UID = "github/artssapp-agent";
+const CONNECT_TOKEN_TIMEOUT_MS = 12_000;
+let cachedConnectToken: { value: string; validUntil: number } | undefined;
+let inFlightConnectToken: Promise<string> | undefined;
+
+/** Use the project-scoped GitHub App installation; no personal access token is required. */
+export async function getGithubToken(): Promise<string | undefined> {
+  const personalToken = process.env.GITHUB_TOKEN?.trim();
+  if (personalToken) return personalToken;
+
+  let oidc: string | undefined;
+  try {
+    oidc = getVercelOidcTokenSync() || process.env.VERCEL_OIDC_TOKEN?.trim();
+  } catch {
+    oidc = process.env.VERCEL_OIDC_TOKEN?.trim();
+  }
+  if (!oidc) return undefined;
+
+  if (cachedConnectToken && Date.now() < cachedConnectToken.validUntil) {
+    return cachedConnectToken.value;
+  }
+  if (!inFlightConnectToken) {
+    inFlightConnectToken = (async () => {
+      const connector = process.env.GITHUB_CONNECTOR?.trim() || CONNECTOR_UID;
+      const response = await fetch(
+        `https://api.vercel.com/v1/connect/token/${encodeURIComponent(connector)}`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${oidc}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ subject: { type: "app" } }),
+          cache: "no-store",
+          signal: AbortSignal.timeout(CONNECT_TOKEN_TIMEOUT_MS),
+        },
+      );
+      if (!response.ok) {
+        throw new Error(`GitHub Vercel Connect authorization failed (HTTP ${response.status}).`);
+      }
+      const data = (await response.json()) as { token?: string; expiresAt?: string | number };
+      if (typeof data.token !== "string" || !data.token) {
+        throw new Error("GitHub Vercel Connect did not return an installation token.");
+      }
+      const expiry = typeof data.expiresAt === "number"
+        ? data.expiresAt > 1e12 ? data.expiresAt : data.expiresAt * 1000
+        : typeof data.expiresAt === "string" ? Date.parse(data.expiresAt) : NaN;
+      cachedConnectToken = {
+        value: data.token,
+        validUntil: Number.isFinite(expiry)
+          ? Math.max(Date.now() + 1_000, expiry - 60_000)
+          : Date.now() + 60_000,
+      };
+      return data.token;
+    })().finally(() => { inFlightConnectToken = undefined; });
+  }
+  return inFlightConnectToken;
+}
+
+async function authHeaders(method: string) {
+  let token: string | undefined;
+  try {
+    token = await getGithubToken();
+  } catch (error) {
+    if (method !== "GET") throw error;
+    // Public read access must remain functional if Connect is unavailable.
+  }
   if (!token && method !== "GET") {
-    throw new Error("GitHub write access is unavailable: GITHUB_TOKEN is not configured.");
+    throw new Error("GitHub write access is unavailable: configure GITHUB_TOKEN or authorize the Vercel Connect GitHub App.");
   }
   return {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -17,7 +85,7 @@ function authHeaders(method: string) {
 export async function github(path: string, init: RequestInit = {}) {
   const r = await fetch(API + path, {
     ...init,
-    headers: { ...authHeaders((init.method || "GET").toUpperCase()), ...(init.headers || {}) },
+    headers: { ...(await authHeaders((init.method || "GET").toUpperCase())), ...(init.headers || {}) },
     cache: "no-store",
     signal: init.signal ?? AbortSignal.timeout(GITHUB_TIMEOUT_MS),
   });

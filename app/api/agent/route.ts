@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
-import { createHash, timingSafeEqual } from "node:crypto";
 import { configuredProviders, runModelWithFallback, type ChatMessage, type ProviderId, type AgentMode } from "@/lib/providers";
 import { addEvent, addMessage, createRun, createSession, finishRun } from "@/lib/supabase";
-import { createBranch, createPullRequest, deployVercel, listRepo, readRepoFile, commitFiles } from "@/lib/github";
+import { createBranch, createPullRequest, deployVercel, listRepo, readRepoFile, commitFiles, getGithubToken, vercelGitIntegrationConfigured } from "@/lib/github";
 import { parsePlan, validatePath } from "@/lib/agent-plan";
 import { isAgentAuthenticated } from "@/lib/auth";
+import { isAgentServiceAuthorized } from "@/lib/service-auth";
 
 export const runtime = "nodejs";
+export const maxDuration = 120;
 
 const REPO = process.env.GITHUB_REPO || "cocosend/artssapp-agent";
 const MAX_MESSAGE_CHARS = 12_000;
@@ -89,13 +90,7 @@ async function safeFinishRun(runId: string, status: "completed" | "failed", resu
 }
 
 export async function POST(req: Request) {
-  const serviceKey = req.headers.get("x-agent-service-key");
-  // Never accept a Supabase service-role key as an agent authentication secret.
-  const expectedServiceKey = process.env.AGENT_SERVICE_KEY;
-  const serviceAuthorized = Boolean(serviceKey && expectedServiceKey && timingSafeEqual(
-    createHash("sha256").update(serviceKey).digest(),
-    createHash("sha256").update(expectedServiceKey).digest(),
-  ));
+  const serviceAuthorized = isAgentServiceAuthorized(req);
   if (!serviceAuthorized && !(await isAgentAuthenticated())) {
     return NextResponse.json({ error: "Authentication required. Open /login." }, { status: 401 });
   }
@@ -107,6 +102,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const messages = normalizeMessages(body?.messages);
     const requested = body?.provider as AgentMode | undefined;
+    const forcePreview = body?.executionMode === "preview";
     const available = configuredProviders();
 
     if (!messages.length) return NextResponse.json({ error: "messages is required" }, { status: 400 });
@@ -178,9 +174,10 @@ export async function POST(req: Request) {
 
     if (runId) await safeAddEvent(runId, "editing", `Підготовлено ${safeFiles.length} файлів.`, { files: safeFiles.map((f) => f.path) });
 
-    const executionEnabled = process.env.AGENT_EXECUTION_ENABLED === "true" && Boolean(process.env.GITHUB_TOKEN?.trim());
-    if (!executionEnabled || plan.commit !== true) {
-      const text = `${plan.message}\n\nПідготовлено файли: ${safeFiles.map((f) => f.path).join(", ")}.\n\nРежим preview: зміни не записані в GitHub.${!process.env.GITHUB_TOKEN ? "\nВідсутній токен GitHub для запису." : ""}`;
+    const githubAuthorized = Boolean(await getGithubToken().catch(() => undefined));
+    const executionEnabled = process.env.AGENT_EXECUTION_ENABLED === "true" && githubAuthorized;
+    if (!executionEnabled || plan.commit !== true || forcePreview) {
+      const text = `${plan.message}\n\nПідготовлено файли: ${safeFiles.map((f) => f.path).join(", ")}.\n\nРежим preview: зміни не записані в GitHub.${!githubAuthorized ? "\nGitHub App доступ недоступний: перевірте авторизацію Vercel Connect." : process.env.AGENT_EXECUTION_ENABLED !== "true" ? "\nВиконання вимкнено налаштуванням AGENT_EXECUTION_ENABLED." : ""}`;
       if (runId) await safeFinishRun(runId, "completed", text);
       return NextResponse.json({ text, provider: activeProvider, contributors: modelResult.contributors, orchestration: modelResult.orchestration, available, action: "preview", files: safeFiles.map((f) => f.path) });
     }
@@ -216,19 +213,35 @@ export async function POST(req: Request) {
     }
 
     let deploymentUrl: string | undefined;
+    let deploymentStatus: "pending" | "manual" | undefined;
     if (req.signal.aborted) return NextResponse.json({ error: "Request cancelled before deployment." }, { status: 499 });
     if (plan.deploy) {
       const target = plan.deployTarget === "production" ? "production" : "preview";
       if (target === "production") {
         throw new Error("Production deployment is blocked until the agent branch is merged. Request a preview deployment or merge the PR first.");
       }
-      if (runId) await safeAddEvent(runId, "deploying", `Запускаю Vercel ${target} deployment для ${branch}.`);
-      const deployment = await deployVercel(undefined, target, branch);
-      deploymentUrl = deployment?.url ? `https://${deployment.url}` : deployment?.inspectorUrl;
-      if (runId) await safeAddEvent(runId, "deployed", deploymentUrl || "Vercel deployment started.", { branch, target });
+      if (process.env.VERCEL_TOKEN?.trim()) {
+        if (runId) await safeAddEvent(runId, "deploying", `Запускаю Vercel ${target} deployment для ${branch}.`);
+        const deployment = await deployVercel(undefined, target, branch);
+        deploymentUrl = deployment?.url ? `https://${deployment.url}` : deployment?.inspectorUrl;
+        deploymentStatus = "pending";
+      } else if (vercelGitIntegrationConfigured()) {
+        // Vercel Git integration automatically creates preview builds from pushed branches.
+        // A commit is NOT proof that deployment finished. Never invent a live preview URL.
+        deploymentStatus = "pending";
+        if (runId) await safeAddEvent(runId, "deploying",
+          "Гілку надіслано в GitHub. Vercel Git integration обробляє preview-збірку.", { branch, target });
+      } else {
+        deploymentStatus = "manual";
+        if (runId) await safeAddEvent(runId, "warning",
+          "Git branch created; no Vercel Git integration or deploy token was configured.", { branch });
+      }
     }
 
-    const result = `${plan.message}\n\nCommit: ${commit.sha}\nBranch: ${branch}${prUrl ? `\nPR: ${prUrl}` : ""}${deploymentUrl ? `\nDeploy: ${deploymentUrl}` : ""}`;
+    const deployNote = deploymentStatus === "pending"
+      ? "\nPreview: очікує підтвердження READY від Vercel."
+      : deploymentStatus === "manual" ? "\nPreview: потрібно підключити Vercel Git integration." : "";
+    const result = `${plan.message}\n\nCommit: ${commit.sha}\nBranch: ${branch}${prUrl ? `\nPR: ${prUrl}` : ""}${deploymentUrl ? `\nDeploy: ${deploymentUrl}` : ""}${deployNote}`;
     if (runId) await safeFinishRun(runId, "completed", result);
 
     return NextResponse.json({
@@ -242,6 +255,7 @@ export async function POST(req: Request) {
       commitSha: commit.sha,
       prUrl,
       deploymentUrl,
+      deploymentStatus,
     });
   } catch (error) {
     if (req.signal.aborted) {

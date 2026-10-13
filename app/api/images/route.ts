@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { isAgentAuthenticated } from "@/lib/auth";
+import { isAgentServiceAuthorized } from "@/lib/service-auth";
 import { imageOptions } from "@/lib/image-options";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  if (!(await isAgentAuthenticated())) {
+  if (!isAgentServiceAuthorized(req) && !(await isAgentAuthenticated())) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   }
   const key = process.env.OPENAI_API_KEY;

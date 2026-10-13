@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { configuredProviders, gatewayConfigured } from "@/lib/providers";
+import { getGithubToken, vercelGitIntegrationConfigured } from "@/lib/github";
 
 export const runtime = "nodejs";
 
@@ -9,6 +10,7 @@ function configured(name: string) {
 
 export async function GET() {
   const providers = configuredProviders();
+  const githubReady = Boolean(await getGithubToken().catch(() => undefined));
 
   return NextResponse.json({
     ok: true,
@@ -23,9 +25,9 @@ export async function GET() {
       mistral: configured("MISTRAL_API_KEY") || gatewayConfigured(),
     },
     integrations: {
-      github: configured("GITHUB_TOKEN"),
+      github: githubReady,
       supabase: configured("SUPABASE_URL") && configured("SUPABASE_SERVICE_ROLE_KEY"),
-      vercel: configured("VERCEL_TOKEN"),
+      vercel: configured("VERCEL_TOKEN") || vercelGitIntegrationConfigured(),
     },
     gateway: {
       configured: gatewayConfigured(),
@@ -33,13 +35,14 @@ export async function GET() {
     },
     capabilities: {
       publicGithubRead: true,
-      githubWriteConfigured: configured("GITHUB_TOKEN"),
-      githubExecutionReady: configured("GITHUB_TOKEN") && process.env.AGENT_EXECUTION_ENABLED === "true",
+      githubWriteConfigured: githubReady,
+      githubExecutionReady: githubReady && process.env.AGENT_EXECUTION_ENABLED === "true",
       vercelApiConfigured: configured("VERCEL_TOKEN"),
+      vercelGitAutoDeployConfigured: vercelGitIntegrationConfigured(),
       imageGenerationConfigured: configured("OPENAI_API_KEY"),
       webSearchConfigured: configured("OPENAI_API_KEY"),
       supabaseConfigured: configured("SUPABASE_URL") && configured("SUPABASE_SERVICE_ROLE_KEY"),
     },
-    executionEnabled: process.env.AGENT_EXECUTION_ENABLED === "true" && configured("GITHUB_TOKEN"),
+    executionEnabled: process.env.AGENT_EXECUTION_ENABLED === "true" && githubReady,
   });
 }
