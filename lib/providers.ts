@@ -273,9 +273,11 @@ export async function runModelWithFallback(preferred: AgentMode, messages: ChatM
         orchestration: { strategy: "sequential", attempted, contributors: [provider], failed, synthesized: false },
       };
     } catch (error) {
+      checkAbort();
       failed.push(provider);
       failureDetails.push(providerErrorSummary(provider, error));
     }
   }
+  checkAbort();
   throw new Error("All configured AI providers failed: " + failureDetails.join("; "));
 }
