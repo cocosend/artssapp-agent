@@ -20,7 +20,7 @@ const MODEL_TIMEOUT_MS = 60_000;
 function providerErrorSummary(provider: ProviderId, error: unknown): string {
   const detail = error instanceof Error ? error.message : String(error);
   const httpCode = detail.match(/(?:HTTP\s*|failed\s*\(|\bGemini\s+|\bDeepSeek\s+)([1-5][0-9]{2})\b/);
-  if (httpCode) return `${provider}: HTTP ${httpCode[1]}`;
+  if (httpCode) { const safeReason = detail.match(/; code ([a-z][a-z0-9_]{1,79})/i); return `${provider}: HTTP ${httpCode[1]}${safeReason ? " (" + safeReason[1] + ")" : ""}`; }
   if (/abort|timeout|timed out/i.test(detail)) return `${provider}: timeout`;
   if (/empty response|no text/i.test(detail)) return `${provider}: empty response`;
   return `${provider}: unavailable`;
@@ -46,7 +46,15 @@ async function callOpenAI(messages: ChatMessage[], model: string, signal?: Abort
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({ model, instructions: SYSTEM, input: messages, store: false }),
   });
-  if (!r.ok) throw new Error(`OpenAI request failed (HTTP ${r.status}).`);
+  if (!r.ok) {
+    if (r.status === 429) {
+      const body = await r.json().catch(() => null);
+      const code = body?.error?.code;
+      const safeCode = typeof code === "string" && /^[a-z][a-z0-9_]{1,79}$/i.test(code) ? code : undefined;
+      throw new Error(`OpenAI request failed (HTTP 429${safeCode ? "; code " + safeCode : ""}).`);
+    }
+    throw new Error(`OpenAI request failed (HTTP ${r.status}).`);
+  }
   return extractOpenAIText(await r.json());
 }
 
@@ -77,7 +85,7 @@ async function callGemini(messages: ChatMessage[], model: string, signal?: Abort
     {
       method: "POST", signal,
       headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
-      body: JSON.stringify({ systemInstruction: { parts: [{ text: instructions }] }, contents }),
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: instructions }] }, contents, ...(model === "gemini-3.8-flash" ? { generationConfig: { thinkingConfig: { thinkingLevel: "low" } } } : {}) }),
     },
   );
   if (!r.ok) throw new Error(`Gemini request failed (HTTP ${r.status}).`);
@@ -158,7 +166,24 @@ async function callMistral(messages: ChatMessage[], model: string, signal?: Abor
 
 export async function runModel(provider: ProviderId, messages: ChatMessage[], signal?: AbortSignal) {
   if (provider === "deepseek") return callDeepSeek(messages, process.env.DEEPSEEK_MODEL || "deepseek-flash", signal);
-  if (provider === "gemini") return callGemini(messages, process.env.GEMINI_MODEL || "gemini-3.8-flash", signal);
+  if (provider === "gemini") {
+    const primary = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+    const backup = process.env.GEMINI_FALLBACK_MODEL || (primary === "gemini-3.5-flash-lite" ? "gemini-3.1-flash-lite" : "gemini-3.5-flash-lite");
+    const primarySignal = signal
+      ? AbortSignal.any([signal, AbortSignal.timeout(35_000)])
+      : AbortSignal.timeout(35_000);
+    try {
+      return await callGemini(messages, primary, primarySignal);
+    } catch (error) {
+      if (signal?.aborted) throw signal.reason ?? error;
+      const reason = error instanceof Error ? error.name + ": " + error.message : String(error);
+      if (!/timeout|aborterror/i.test(reason) || backup === "off" || backup === primary) throw error;
+      const backupSignal = signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(20_000)])
+        : AbortSignal.timeout(20_000);
+      return callGemini(messages, backup, backupSignal);
+    }
+  }
   if (provider === "claude") return (process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY)
     ? callClaude(messages, process.env.CLAUDE_MODEL || "claude-sonnet-5-5", signal)
     : callGateway(messages, process.env.GATEWAY_CLAUDE_MODEL || "anthropic/claude-sonnet-5.5", signal);

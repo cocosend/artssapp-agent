@@ -185,3 +185,50 @@ test("sequential provider calls propagate request cancellation", async () => {
     }
   });
 });
+
+test("Gemini 3.8 transport timeout falls back to Flash-Lite without repeating other providers", async () => {
+  await withEnv(["GEMINI_API_KEY", "GEMINI_MODEL", "GEMINI_FALLBACK_MODEL"], async () => {
+    process.env.GEMINI_API_KEY = "test-gemini";
+    process.env.GEMINI_MODEL = "gemini-3.8-flash";
+    process.env.GEMINI_FALLBACK_MODEL = "gemini-3.5-flash-lite";
+    const originalFetch = globalThis.fetch;
+    const models = [];
+    globalThis.fetch = async (url, options) => {
+      models.push(String(url));
+      if (models.length === 1) {
+        assert.equal(JSON.parse(options.body).generationConfig.thinkingConfig.thinkingLevel, "low");
+        throw Object.assign(new Error("The request timed out"), { name: "TimeoutError" });
+      }
+      return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "Flash-Lite recovered" }] } }] }), {
+        status: 200, headers: { "Content-Type": "application/json" },
+      });
+    };
+    try {
+      const response = await runModel("gemini", [{ role: "user", content: "Respond briefly" }]);
+      assert.equal(response, "Flash-Lite recovered");
+      assert.match(models[0], /gemini-3\.8-flash/);
+      assert.match(models[1], /gemini-3\.5-flash-lite/);
+      assert.equal(models.length, 2);
+    } finally { globalThis.fetch = originalFetch; }
+  });
+});
+
+test("OpenAI 429 identifies exhausted API credits without leaking provider response text", async () => {
+  await withEnv(["OPENAI_API_KEY"], async () => {
+    process.env.OPENAI_API_KEY = "test-openai";
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response(JSON.stringify({
+      error: { code: "credit_balance_exhausted", message: "private billable account context" },
+    }), { status: 429, headers: { "Content-Type": "application/json" } });
+    try {
+      await assert.rejects(
+        runModel("openai", [{ role: "user", content: "Check readiness" }]),
+        (error) => {
+          assert.match(error.message, /HTTP 429; code credit_balance_exhausted/);
+          assert.doesNotMatch(error.message, /private billable account context/);
+          return true;
+        },
+      );
+    } finally { globalThis.fetch = originalFetch; }
+  });
+});
