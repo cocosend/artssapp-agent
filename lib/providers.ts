@@ -158,7 +158,24 @@ async function callMistral(messages: ChatMessage[], model: string, signal?: Abor
 
 export async function runModel(provider: ProviderId, messages: ChatMessage[], signal?: AbortSignal) {
   if (provider === "deepseek") return callDeepSeek(messages, process.env.DEEPSEEK_MODEL || "deepseek-flash", signal);
-  if (provider === "gemini") return callGemini(messages, process.env.GEMINI_MODEL || "gemini-3.8-flash", signal);
+  if (provider === "gemini") {
+    const primary = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+    const backup = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite";
+    const primarySignal = signal
+      ? AbortSignal.any([signal, AbortSignal.timeout(35_000)])
+      : AbortSignal.timeout(35_000);
+    try {
+      return await callGemini(messages, primary, primarySignal);
+    } catch (error) {
+      if (signal?.aborted) throw signal.reason ?? error;
+      const reason = error instanceof Error ? error.name + ": " + error.message : String(error);
+      if (!/timeout|aborterror/i.test(reason) || backup === "off" || backup === primary) throw error;
+      const backupSignal = signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(20_000)])
+        : AbortSignal.timeout(20_000);
+      return callGemini(messages, backup, backupSignal);
+    }
+  }
   if (provider === "claude") return (process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY)
     ? callClaude(messages, process.env.CLAUDE_MODEL || "claude-sonnet-5-5", signal)
     : callGateway(messages, process.env.GATEWAY_CLAUDE_MODEL || "anthropic/claude-sonnet-5.5", signal);
