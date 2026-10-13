@@ -338,7 +338,7 @@ export default function Home() {
   function goToSection(section: StudioSection) {
     setSidebarOpen(false);
     if (section === "code") { setActiveSection("code"); return; }
-    if (section === "team") { setToolMode("agent"); chooseModel("multi"); document.getElementById("gemini-team-details")?.setAttribute("open", ""); }
+    if (section === "team") { setToolMode("agent"); chooseModel("multi"); }
     setActiveSection(section);
     if (section === "models" || section === "integrations" || section === "runs") {
       const fold = document.getElementById("fold-" + section) as HTMLDetailsElement | null;
@@ -347,6 +347,7 @@ export default function Home() {
     if (section === "web") setToolMode("web");
     if (section === "images") setToolMode("image");
     window.setTimeout(() => {
+      if (section === "team") (document.getElementById("gemini-team-details") as HTMLDetailsElement | null)?.setAttribute("open", "");
       const target = section === "home" ? null :
         section === "team" ? document.getElementById("team-status") :
         section === "models" ? modelRef.current :
