@@ -20,7 +20,7 @@ const MODEL_TIMEOUT_MS = 60_000;
 function providerErrorSummary(provider: ProviderId, error: unknown): string {
   const detail = error instanceof Error ? error.message : String(error);
   const httpCode = detail.match(/(?:HTTP\s*|failed\s*\(|\bGemini\s+|\bDeepSeek\s+)([1-5][0-9]{2})\b/);
-  if (httpCode) return `${provider}: HTTP ${httpCode[1]}`;
+  if (httpCode) { const safeReason = detail.match(/; code ([a-z][a-z0-9_]{1,79})/i); return `${provider}: HTTP ${httpCode[1]}${safeReason ? " (" + safeReason[1] + ")" : ""}`; }
   if (/abort|timeout|timed out/i.test(detail)) return `${provider}: timeout`;
   if (/empty response|no text/i.test(detail)) return `${provider}: empty response`;
   return `${provider}: unavailable`;
