@@ -46,7 +46,15 @@ async function callOpenAI(messages: ChatMessage[], model: string, signal?: Abort
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({ model, instructions: SYSTEM, input: messages, store: false }),
   });
-  if (!r.ok) throw new Error(`OpenAI request failed (HTTP ${r.status}).`);
+  if (!r.ok) {
+    if (r.status === 429) {
+      const body = await r.json().catch(() => null);
+      const code = body?.error?.code;
+      const safeCode = typeof code === "string" && /^[a-z][a-z0-9_]{1,79}$/i.test(code) ? code : undefined;
+      throw new Error(`OpenAI request failed (HTTP 429${safeCode ? "; code " + safeCode : ""}).`);
+    }
+    throw new Error(`OpenAI request failed (HTTP ${r.status}).`);
+  }
   return extractOpenAIText(await r.json());
 }
 
