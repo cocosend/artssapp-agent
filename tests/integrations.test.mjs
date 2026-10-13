@@ -133,10 +133,10 @@ test("all-provider failure reports sanitized HTTP status per provider", async ()
 
     const originalFetch = globalThis.fetch;
     globalThis.fetch = async (url) => {
-      const target = String(url);
-      const status = target.includes("api.openai.com") ? 401
-        : target.includes("api.deepseek.com") ? 402
-        : target.includes("generativelanguage.googleapis.com") ? 429 : 403;
+      const hostname = new URL(String(url)).hostname;
+      const status = hostname === "api.openai.com" ? 401
+        : hostname === "api.deepseek.com" ? 402
+        : hostname === "generativelanguage.googleapis.com" ? 429 : 403;
       return new Response(JSON.stringify({ error: { message: "private provider response" } }), {
         status, headers: { "Content-Type": "application/json" },
       });
