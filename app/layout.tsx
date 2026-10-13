@@ -11,9 +11,10 @@ import "./multi-agent-studio.css";
 import "./obsidian-burgundy.css";
 import "./obsidian-quality.css";
 import "./unified-studio.css";
+import "./gemini-inspired.css";
 
 export const metadata: Metadata = {
-  title: "ARTSS ONE — Єдиний AI-простір",
+  title: "ARTSS ONE — AI Assistant",
   description: "Єдиний AI-простір: мультимодельний агент, GitHub-кодинг, Vercel, Supabase, генерація зображень та веб-дослідження.",
   applicationName: "ARTSS ONE",
   manifest: "/manifest.webmanifest",
@@ -25,7 +26,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#080d16",
+  themeColor: "#121318",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
