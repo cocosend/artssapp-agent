@@ -11,6 +11,7 @@ export const maxDuration = 120;
 
 const REPO = process.env.GITHUB_REPO || "cocosend/artssapp-agent";
 const MAX_MESSAGE_CHARS = 12_000;
+const BASE_CONTEXT_CHARS = 4_000;
 const SYSTEM_APPEND = `
 Return ONLY valid JSON, with no markdown fences.
 Schema:
@@ -24,6 +25,8 @@ Set createPr=true when changes should be proposed through a pull request; otherw
 Set deploy=true only when the user explicitly asks for deployment. Use deployTarget=preview unless production deployment is explicitly requested.
 Never write directly to main. The execution engine always creates an agent branch.
 If the repository context is insufficient and no specific files can be identified, return action=answer and explain what is missing.
+When editing existing files, use readFiles to obtain complete source; never invent unseen file content.
+For an explicit implementation request, do not answer only with a promise to inspect files: request readFiles or return a complete change plan.
 `;
 
 function normalizeMessages(value: unknown): ChatMessage[] {
@@ -39,25 +42,25 @@ function normalizeMessages(value: unknown): ChatMessage[] {
     .map((m) => ({ role: m.role, content: m.content.slice(0, MAX_MESSAGE_CHARS) }));
 }
 
-async function repoContext() {
+async function repoContext(task: string) {
   try {
     const root = await listRepo(REPO, "", "main");
     const names = Array.isArray(root) ? root.map((x: any) => x.path).slice(0, 100) : [];
     const important = [
       "package.json",
       "README.md",
-      "app/page.tsx",
-      "app/globals.css",
       "app/api/agent/route.ts",
       "lib/agent-plan.ts",
       "lib/providers.ts",
       "lib/github.ts",
       "lib/supabase.ts",
+      ...(/ui|css|design|mobile|iphone|layout|component|interface|інтерфейс|дизайн|екран|стил|верстк/i.test(task)
+        ? ["app/page.tsx", "app/globals.css"] : []),
     ];
     const files = await Promise.all(important.map(async (path) => {
       try {
         const data = await readRepoFile(REPO, path, "main");
-        return `FILE: ${path}\n${Buffer.from(data.content, "base64").toString("utf8").slice(0, 18_000)}`;
+        return `FILE: ${path}\n${Buffer.from(data.content, "base64").toString("utf8").slice(0, BASE_CONTEXT_CHARS)}`;
       } catch {
         return `FILE: ${path}\n<not found>`;
       }
@@ -130,7 +133,7 @@ export async function POST(req: Request) {
     }
 
     if (req.signal.aborted) return NextResponse.json({ error: "Request cancelled." }, { status: 499 });
-    const context = await repoContext();
+    const context = await repoContext(task);
     if (req.signal.aborted) return NextResponse.json({ error: "Request cancelled." }, { status: 499 });
     const baseMessages: ChatMessage[] = [
       ...messages,
