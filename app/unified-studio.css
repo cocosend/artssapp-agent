@@ -265,3 +265,49 @@ body{background:var(--one-bg)!important;font-family:Inter,-apple-system,BlinkMac
 @media(prefers-reduced-motion:reduce){
  .night-shell *,.night-shell *::before,.night-shell *::after{animation:none!important;transition:none!important}
 }
+
+/* Auth, settings and code tools share the same ARTSS ONE palette. */
+.studio-login,.pm-login{background:radial-gradient(ellipse at 50% 0%,#253969 0%,#101a2b 38%,#080d16 80%)!important;color:#eaf2ff!important}
+.studio-login .login-glow{opacity:.24!important;filter:hue-rotate(85deg)}
+.studio-login-card,.pm-login-card{
+  background:#121e30!important;border:1px solid #435572!important;border-radius:24px!important;
+  box-shadow:0 28px 65px #0007,inset 0 1px #ffffff18!important
+}
+.studio-login-card .login-private-badge{background:#253455!important;border:1px solid #536e9e!important;color:#c6d5ff!important}
+.studio-login-card .login-eyebrow{color:#a5b8f4!important}
+.studio-login-card h1{color:#fff!important;letter-spacing:-.04em}
+.studio-login-card h1 span{color:#a7adff!important}
+.studio-login-card>p,.studio-login-card .login-footnote,.studio-login-card .login-meta{color:#b0bfd8!important}
+.studio-login-card form>label{color:#e6efff!important}
+.studio-login-card .login-input-wrap{background:#0c1523!important;border:1px solid #465b7b!important;box-shadow:none!important;border-radius:12px!important}
+.studio-login-card .login-input-wrap input{background:transparent!important;color:#fff!important}
+.studio-login-card .login-input-wrap input:focus{outline:none!important}
+.studio-login-card .login-input-wrap:focus-within{border-color:#9aa8ff!important;box-shadow:0 0 0 3px #879eff22!important}
+.studio-login-card .login-reveal{color:#b2c4ff!important}
+.studio-login-card .pm-login-submit{
+  background:#8192ff!important;background-image:none!important;color:#08142c!important;
+  border:1px solid #abb6ff!important;border-radius:12px!important;box-shadow:none!important
+}
+.studio-login-card .pm-login-error{color:#ffc5d3!important;background:#472636!important;border-color:#805068!important}
+.studio-login-card .pm-login-icon{background:#26345c!important;border-color:#6f85c6!important}
+.studio-settings-overlay,.image-lightbox{background:#070c15e9!important}
+.studio-settings-panel,.image-lightbox-content{background:#121e30!important;border:1px solid #435471!important;color:#f0f5ff!important;border-radius:20px!important;box-shadow:0 22px 58px #0008!important}
+.settings-head,.settings-body,.settings-footer{border-color:#31425b!important}
+.settings-eyebrow,.settings-explain,.settings-device small,.settings-footer>span{color:#a6b7d5!important}
+.settings-head h2,.settings-group legend,.settings-device strong{color:#f5f7ff!important}
+.settings-group{background:#172538!important;border:1px solid #34445d!important;border-radius:14px!important}
+.settings-group label,.settings-device span{color:#dbe5fc!important}
+.settings-group select{background:#111b2c!important;color:#f5f7ff!important;border:1px solid #44577a!important;border-radius:10px!important}
+.settings-group button,.settings-footer button,.settings-close{background:#253858!important;border:1px solid #516588!important;color:#e4edff!important;border-radius:11px!important}
+.settings-footer button{background:#7a8df3!important;color:#0c1830!important;border-color:#9caeff!important}
+.night-shell .online-code-studio,.night-shell .code-studio-head,.night-shell .code-file-list,.night-shell .code-edit-area{
+  background:#121e30!important;border-color:#33465e!important;color:#edf3ff!important
+}
+.night-shell .code-studio-head h2,.night-shell .code-editor-toolbar strong{color:#fff!important}
+.night-shell .code-studio-head p,.night-shell .code-editor-disclaimer{color:#adbed7!important}
+.night-shell .code-file-list button{background:#192940!important;border-color:#354b68!important;color:#cad9f4!important}
+.night-shell .code-file-list button.active{background:#2b4170!important;border-color:#8898d8!important;color:#fff!important}
+.night-shell .code-editor-toolbar{background:#18263a!important;border-color:#36475f!important;color:#bfd0e9!important}
+.night-shell .code-editor-actions button,.night-shell .code-studio-exit{background:#233754!important;border:1px solid #455f81!important;color:#e1ebff!important}
+.night-shell .code-editor-actions .code-submit{background:#7b8eff!important;color:#0b1734!important}
+@media(max-width:580px){.studio-login-card,.pm-login-card{border-radius:20px!important}}
