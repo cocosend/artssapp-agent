@@ -7,8 +7,8 @@ export type StudioSection = "team" | "home" | "code" | "web" | "images" | "model
 
 const groups: { id: string; title: string; icon: string; items: { id: StudioSection; icon: string; title: string; subtitle: string }[] }[] = [
   { id: "work", title: "Робочий простір", icon: "▤", items: [
-    { id: "home", icon: "⌂", title: "AI студія", subtitle: "Ваші запити" },
-    { id: "team", icon: "✦", title: "Команда агентів", subtitle: "Multi AI · результати" },
+    { id: "home", icon: "⌂", title: "Головна", subtitle: "Єдиний AI-простір" },
+    { id: "team", icon: "✦", title: "Multi-Agent", subtitle: "Команда моделей" },
     { id: "code", icon: "〈/〉", title: "Онлайн-кодинг", subtitle: "Файли GitHub" },
     { id: "web", icon: "◎", title: "Інтернет", subtitle: "Пошук та джерела" },
     { id: "images", icon: "▧", title: "Зображення", subtitle: "Генерація AI" },
@@ -76,10 +76,10 @@ export function StudioSidebar({ open, active, busy, onClose, onNavigate, onSetti
     <aside className={"studio-sidebar night-sidebar" + (open ? " is-open" : "")} id="studio-nav" aria-label="Навігація ARTSS AI">
       <div className="studio-sidebar-brand">
         <span className="studio-sidebar-logo"><ArtssMark size={30}/></span>
-        <span><strong>ARTSS AI</strong><small>OBSIDIAN AGENT STUDIO</small></span>
+        <span><strong>ARTSS ONE</strong><small>UNIFIED WORKSPACE</small></span>
         <button type="button" className="studio-sidebar-close" aria-label="Закрити меню" onClick={onClose}>×</button>
       </div>
-      <div className="studio-sidebar-caption">НАВІГАЦІЯ</div>
+      <div className="studio-sidebar-caption">УСЕ В ОДНОМУ МІСЦІ</div>
       <nav className="studio-nav-links night-stairs" aria-label="Розділи">
         {groups.map(group => <details key={group.id} className="night-stair-group" open={expandedGroup === group.id}>
           <summary className="night-stair-summary" onClick={event => { event.preventDefault(); setExpandedGroup(previous => previous === group.id ? null : group.id); }}>
@@ -101,7 +101,7 @@ export function StudioSidebar({ open, active, busy, onClose, onNavigate, onSetti
         <button type="button" onClick={onSettings}><span aria-hidden="true">⚙</span> Налаштування</button>
         <button type="button" onClick={onNewChat} disabled={busy}><span aria-hidden="true">＋</span> Новий запит</button>
         <button type="button" className="night-sidebar-collapse" onClick={onCollapse}><span aria-hidden="true">←</span> Згорнути панель</button>
-        <p>Робочі інструменти згруповано в бічному меню. Натисніть на групу, щоб розгорнути її.</p>
+        <p>AI, код, зображення, пошук і підключення працюють в одному застосунку.</p>
       </div>
     </aside>
   </>;
