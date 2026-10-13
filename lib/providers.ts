@@ -77,7 +77,7 @@ async function callGemini(messages: ChatMessage[], model: string, signal?: Abort
     {
       method: "POST", signal,
       headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
-      body: JSON.stringify({ systemInstruction: { parts: [{ text: instructions }] }, contents }),
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: instructions }] }, contents, ...(model === "gemini-3.8-flash" ? { generationConfig: { thinkingConfig: { thinkingLevel: "low" } } } : {}) }),
     },
   );
   if (!r.ok) throw new Error(`Gemini request failed (HTTP ${r.status}).`);
@@ -160,7 +160,7 @@ export async function runModel(provider: ProviderId, messages: ChatMessage[], si
   if (provider === "deepseek") return callDeepSeek(messages, process.env.DEEPSEEK_MODEL || "deepseek-flash", signal);
   if (provider === "gemini") {
     const primary = process.env.GEMINI_MODEL || "gemini-3.8-flash";
-    const backup = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite";
+    const backup = process.env.GEMINI_FALLBACK_MODEL || (primary === "gemini-3.5-flash-lite" ? "gemini-3.1-flash-lite" : "gemini-3.5-flash-lite");
     const primarySignal = signal
       ? AbortSignal.any([signal, AbortSignal.timeout(35_000)])
       : AbortSignal.timeout(35_000);
