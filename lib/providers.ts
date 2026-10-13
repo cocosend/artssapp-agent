@@ -16,6 +16,16 @@ changes, return the structured JSON plan requested by the server.`;
 
 const MODEL_TIMEOUT_MS = 60_000;
 
+/** Public-safe errors only. Provider bodies may contain sensitive information. */
+function providerErrorSummary(provider: ProviderId, error: unknown): string {
+  const detail = error instanceof Error ? error.message : String(error);
+  const httpCode = detail.match(/(?:HTTP\s*|failed\s*\(|\bGemini\s+|\bDeepSeek\s+)([1-5][0-9]{2})\b/);
+  if (httpCode) return `${provider}: HTTP ${httpCode[1]}`;
+  if (/abort|timeout|timed out/i.test(detail)) return `${provider}: timeout`;
+  if (/empty response|no text/i.test(detail)) return `${provider}: empty response`;
+  return `${provider}: unavailable`;
+}
+
 async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}) {
   return fetch(input, { ...init, signal: init.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(MODEL_TIMEOUT_MS)]) : AbortSignal.timeout(MODEL_TIMEOUT_MS) });
 }
@@ -70,7 +80,7 @@ async function callGemini(messages: ChatMessage[], model: string, signal?: Abort
       body: JSON.stringify({ systemInstruction: { parts: [{ text: instructions }] }, contents }),
     },
   );
-  if (!r.ok) throw new Error(`Gemini ${r.status}: ${await r.text()}`);
+  if (!r.ok) throw new Error(`Gemini request failed (HTTP ${r.status}).`);
   const data = await r.json();
   return data?.candidates?.[0]?.content?.parts?.map((p: any) => p.text ?? "").join("\n") ?? "";
 }
@@ -181,6 +191,7 @@ export async function runModelWithFallback(preferred: AgentMode, messages: ChatM
   provider: AgentMode; text: string; contributors: ProviderId[]; orchestration: OrchestrationReport
 }> {
   const checkAbort = () => { if (signal?.aborted) throw signal.reason ?? new Error("Agent request cancelled."); };
+  const failureDetails: string[] = [];
   checkAbort();
   const configured = configuredProviders();
   if (!configured.length) throw new Error("No AI providers are configured.");
@@ -196,6 +207,10 @@ export async function runModelWithFallback(preferred: AgentMode, messages: ChatM
         : []
     );
     const failed = selected.filter(p => !successes.some(s => s.provider === p));
+    settled.forEach((result, index) => {
+      if (result.status === "rejected") failureDetails.push(providerErrorSummary(selected[index], result.reason));
+      else if (!result.value.trim()) failureDetails.push(`${selected[index]}: empty response`);
+    });
     const attempted = [...selected];
     if (!successes.length) {
       for (const provider of configured.slice(3)) {
@@ -207,9 +222,12 @@ export async function runModelWithFallback(preferred: AgentMode, messages: ChatM
             provider, text, contributors: [provider],
             orchestration: { strategy: "parallel", attempted, contributors: [provider], failed, synthesized: false },
           };
-        } catch { failed.push(provider); }
+        } catch (error) {
+          failed.push(provider);
+          failureDetails.push(providerErrorSummary(provider, error));
+        }
       }
-      throw new Error("All configured AI providers failed.");
+      throw new Error("All configured AI providers failed: " + failureDetails.join("; "));
     }
 
     const contributors = successes.map(r => r.provider);
@@ -243,22 +261,23 @@ export async function runModelWithFallback(preferred: AgentMode, messages: ChatM
   const order = preferred === "multi" ? configured : [preferred, ...configured.filter(p => p !== preferred)];
   const attempted: ProviderId[] = [];
   const failed: ProviderId[] = [];
-  let lastError: unknown;
   for (const provider of order) {
     checkAbort();
     if (!configured.includes(provider)) continue;
     attempted.push(provider);
     try {
-      const text = await runModel(provider, messages);
+      const text = await runModel(provider, messages, signal);
       if (!text.trim()) throw new Error(provider + " returned an empty response.");
       return {
         provider, text, contributors: [provider],
         orchestration: { strategy: "sequential", attempted, contributors: [provider], failed, synthesized: false },
       };
     } catch (error) {
+      checkAbort();
       failed.push(provider);
-      lastError = error;
+      failureDetails.push(providerErrorSummary(provider, error));
     }
   }
-  throw lastError instanceof Error ? lastError : new Error("All configured AI providers failed.");
+  checkAbort();
+  throw new Error("All configured AI providers failed: " + failureDetails.join("; "));
 }

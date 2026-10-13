@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { configuredProviders, gatewayConfigured, runModel } from "../lib/providers.ts";
+import { configuredProviders, gatewayConfigured, runModel, runModelWithFallback } from "../lib/providers.ts";
 import { github, vercelGitIntegrationConfigured } from "../lib/github.ts";
 
 function withEnv(names, run) {
@@ -114,5 +114,74 @@ test("Vercel Git deployment detection uses project and repository config, not a 
     assert.equal(vercelGitIntegrationConfigured(), true);
     delete process.env.VERCEL_GITHUB_REPO_ID;
     assert.equal(vercelGitIntegrationConfigured(), false);
+  });
+});
+
+test("all-provider failure reports sanitized HTTP status per provider", async () => {
+  const keys = ["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "GEMINI_API_KEY",
+    "ANTHROPIC_API_KEY", "CLAUDE_API_KEY", "MISTRAL_API_KEY",
+    "AI_GATEWAY_API_KEY", "VERCEL_OIDC_TOKEN"];
+  await withEnv(keys, async () => {
+    process.env.OPENAI_API_KEY = "unit-openai";
+    process.env.DEEPSEEK_API_KEY = "unit-deepseek";
+    process.env.GEMINI_API_KEY = "unit-gemini";
+    process.env.VERCEL_OIDC_TOKEN = "unit-oidc";
+    delete process.env.ANTHROPIC_API_KEY;
+    delete process.env.CLAUDE_API_KEY;
+    delete process.env.MISTRAL_API_KEY;
+    delete process.env.AI_GATEWAY_API_KEY;
+
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+      const hostname = new URL(String(url)).hostname;
+      const status = hostname === "api.openai.com" ? 401
+        : hostname === "api.deepseek.com" ? 402
+        : hostname === "generativelanguage.googleapis.com" ? 429 : 403;
+      return new Response(JSON.stringify({ error: { message: "private provider response" } }), {
+        status, headers: { "Content-Type": "application/json" },
+      });
+    };
+    try {
+      await assert.rejects(
+        runModelWithFallback("multi", [{ role: "user", content: "inspect repository" }]),
+        (error) => {
+          assert.match(error.message, /openai: HTTP 401/);
+          assert.match(error.message, /deepseek: HTTP 402/);
+          assert.match(error.message, /gemini: HTTP 429/);
+          assert.match(error.message, /claude: HTTP 403/);
+          assert.match(error.message, /mistral: HTTP 403/);
+          assert.doesNotMatch(error.message, /private provider response/);
+          return true;
+        },
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});
+
+test("sequential provider calls propagate request cancellation", async () => {
+  await withEnv(["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "GEMINI_API_KEY",
+    "VERCEL_OIDC_TOKEN", "AI_GATEWAY_API_KEY"], async () => {
+    process.env.OPENAI_API_KEY = "unit-openai";
+    delete process.env.DEEPSEEK_API_KEY;
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.VERCEL_OIDC_TOKEN;
+    delete process.env.AI_GATEWAY_API_KEY;
+    const controller = new AbortController();
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (_url, options) => {
+      controller.abort(new Error("request cancelled"));
+      assert.equal(options.signal.aborted, true);
+      throw new Error("request cancelled");
+    };
+    try {
+      await assert.rejects(
+        runModelWithFallback("openai", [{ role: "user", content: "test" }], controller.signal),
+        /request cancelled/,
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 });
