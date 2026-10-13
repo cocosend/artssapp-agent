@@ -51,10 +51,10 @@ export const AgentComposer = memo(forwardRef<ComposerHandle, Props>(function Age
     <label className="pm-sr-only" htmlFor="pm-task">Завдання для агента</label>
     <textarea ref={textarea} id="pm-task" value={draft} maxLength={12000} rows={3}
       onChange={event => setDraft(event.target.value)} onKeyDown={keyDown}
-      placeholder="Напишіть, що потрібно зробити…" aria-label="Завдання для агента"
+      placeholder="Запитайте ARTSS ONE про що завгодно…" aria-label="Завдання для агента"
       disabled={busy} enterKeyHint="enter" />
     <div className="pm-composer-bottom">
-      <span><Lock /> Приватна сесія · {model}</span>
+      <span><Lock /> Приватно · {model}</span>
       <button className="pm-submit" type="submit" disabled={busy || unavailable || !draft.trim()}>
         {busy ? "Обробка…" : "Надіслати"}<Arrow />
       </button>

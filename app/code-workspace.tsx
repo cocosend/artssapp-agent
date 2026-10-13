@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 type FileReply = { path: string; content: string; sha: string; ref: string; error?: string };
 type Props = { onSendToAgent: (text: string) => void; onClose: () => void; githubWrite: boolean; };
 
-const initialPaths = ["app/page.tsx", "app/agent-composer.tsx", "app/flagship.css", "app/api/web-search/route.ts"];
+const initialPaths = ["app/page.tsx", "app/agent-composer.tsx", "app/unified-studio.css", "app/api/web-search/route.ts"];
 
 export function CodeWorkspace({ onSendToAgent, onClose, githubWrite }: Props) {
   const [paths, setPaths] = useState<string[]>(initialPaths);
@@ -68,7 +68,7 @@ export function CodeWorkspace({ onSendToAgent, onClose, githubWrite }: Props) {
     onSendToAgent("Перевір і запропонуй застосування цього зміненого файлу до репозиторію cocosend/artssapp-agent.\n" +
       "Шлях: " + path + "\n" +
       "Вимоги: поясни ризики, перевір логіку, тести та формат, не змінюй main напряму. " +
-      (githubWrite ? "Якщо виконання дозволено сервером — створи окрему гілку і PR. " : "GitHub запис не налаштований; покажи лише preview план. ") +
+      (githubWrite ? "Якщо виконання дозволено сервером — створи окрему гілку і PR. " : " ") +
       "\nОНОВЛЕНИЙ ПОВНИЙ ВМІСТ ФАЙЛУ:\n```\n" + draft + "\n```");
   }
 
@@ -100,7 +100,7 @@ export function CodeWorkspace({ onSendToAgent, onClose, githubWrite }: Props) {
           <button className="code-submit" type="button" onClick={send} disabled={status !== "ready" || !changed}>Передати в AI-чат ↗</button>
         </div>
         {notice ? <p className="code-editor-notice" role="status">{notice}</p> : null}
-        <p className="code-editor-disclaimer">Жодного виконання довільного коду на сервері. Запис у GitHub: {githubWrite ? "ключ налаштовано; залежить від дозволу виконання" : "недоступний без GITHUB_TOKEN"}. Передача агенту не означає автоматичний commit.</p>
+        <p className="code-editor-disclaimer">Жодного виконання довільного коду на сервері. Запис у GitHub: {githubWrite ? "доступ підтверджено, запис залежить від дозволу агента" : "доступ до запису не підтверджено"}. Передача агенту не означає автоматичний commit.</p>
       </div>
     </div>
   </section>;
