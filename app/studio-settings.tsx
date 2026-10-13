@@ -71,7 +71,7 @@ export function StudioSettingsPanel({ open, value, onChange, onClose, onNewChat,
   return <div className="studio-settings-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
     <section className="studio-settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-heading">
       <header className="settings-head">
-        <div><span className="settings-eyebrow">ARTSS AI · PRIVATE</span><h2 id="settings-heading">Налаштування</h2><p>Точна адаптація інтерфейсу під ваш iPhone.</p></div>
+        <div><span className="settings-eyebrow">ARTSS ONE · PRIVATE</span><h2 id="settings-heading">Налаштування</h2><p>Налаштування єдиного простору для телефона та комп’ютера.</p></div>
         <button type="button" className="settings-close" onClick={onClose} aria-label="Закрити налаштування">×</button>
       </header>
       <div className="settings-body">
