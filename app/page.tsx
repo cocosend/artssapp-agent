@@ -510,7 +510,7 @@ export default function Home() {
         aria-label={sidebarOpen ? "Закрити бічне меню" : "Відкрити бічне меню"} onClick={() => { if (window.matchMedia("(min-width: 981px)").matches) setSidebarCollapsed(x => !x); else setSidebarOpen(x => !x); }}>☰</button>
       <Link className="pm-brand" href="/" aria-label="ARTSS AI — головна">
         <span className="pm-brand-mark flagship-logo"><ArtssMark size={48}/></span>
-        <span className="pm-brand-label">ARTSS<span className="pm-dot">●</span>AI<small>MULTI-AGENT STUDIO</small></span>
+        <span className="pm-brand-label">ARTSS<span className="pm-dot">✦</span>ONE<small>UNIFIED AI WORKSPACE</small></span>
       </Link>
       <div className="pm-header-right">
         <span className={"pm-live " + (health ? "up" : "")} title={health ? "API відповідає" : "API не перевірено"}><i /><span className="neo-status-caption">{loading ? "Перевірка" : health ? "API онлайн" : "Офлайн"}</span></span>
@@ -535,9 +535,31 @@ export default function Home() {
           githubWrite={Boolean(health?.integrations.github && health?.executionEnabled)}/> :
       <>
       <section className="night-intro" aria-labelledby="neo-title">
-        <div><span className="night-kicker">ARTSS AI / AGENT WORKSPACE</span><h1 id="neo-title">Працюйте з командою AI<span> ✦</span></h1><p>Одна задача. Кілька моделей. Перевірений спільний результат.</p></div>
+        <div>
+          <span className="night-kicker">ARTSS ONE / AI COMMAND CENTER</span>
+          <h1 id="neo-title">Один простір.<span> Усі AI-можливості.</span></h1>
+          <p>П&apos;ять моделей, розробка, GitHub, Vercel, Supabase, пошук і генерація — в одному застосунку.</p>
+          <div className="one-hero-actions">
+            <button type="button" className="one-primary" onClick={() => { setTool("agent"); chooseModel("multi"); jumpTo("chat"); window.setTimeout(() => composerRef.current?.focus(), 0); }}>✦ Почати з Multi-Agent <span aria-hidden="true">→</span></button>
+            <button type="button" className="one-secondary" onClick={() => goToSection("code")}>〈/〉 Відкрити код</button>
+          </div>
+        </div>
         <span className={"night-system-indicator" + (health?.ok ? " online" : "")}><i/>{loading ? "Перевірка" : health?.ok ? "Система активна" : "Немає зв'язку"}</span>
       </section>
+      <nav className="one-service-rail" aria-label="Сервіси одного застосунку">
+        <button type="button" onClick={() => goToSection("models")} aria-label="Відкрити AI-моделі">
+          <span className="one-service-icon">AI</span><span className="one-service-copy"><strong>Multi-Agent</strong><small>{loading ? "Перевірка" : configured.length ? configured.length + " моделей налаштовано" : "Моделі не налаштовані"}</small></span><i className={"one-service-light" + (configured.length ? " on" : "")} aria-hidden="true"/>
+        </button>
+        <button type="button" onClick={() => goToSection("code")} aria-label="Відкрити GitHub-кодинг">
+          <span className="one-service-icon">GH</span><span className="one-service-copy"><strong>GitHub</strong><small>{loading ? "Перевірка" : health?.integrations.github ? "Підключено" : "Потрібна перевірка"}</small></span><i className={"one-service-light" + (health?.integrations.github ? " on" : "")} aria-hidden="true"/>
+        </button>
+        <button type="button" onClick={() => goToSection("integrations")} aria-label="Відкрити Vercel та перевірку деплоїв">
+          <span className="one-service-icon">▲</span><span className="one-service-copy"><strong>Vercel</strong><small>{loading ? "Перевірка" : health?.integrations.vercel ? "Git-деплой готовий" : "Перевірте деплой"}</small></span><i className={"one-service-light" + (health?.integrations.vercel ? " on" : "")} aria-hidden="true"/>
+        </button>
+        <button type="button" onClick={() => goToSection("integrations")} aria-label="Відкрити інтеграцію Supabase">
+          <span className="one-service-icon">S</span><span className="one-service-copy"><strong>Supabase</strong><small>{loading ? "Перевірка" : health?.integrations.supabase ? "Пам’ять налаштована" : "Потрібна перевірка"}</small></span><i className={"one-service-light" + (health?.integrations.supabase ? " on" : "")} aria-hidden="true"/>
+        </button>
+      </nav>
 
       <details className="night-fold" id="fold-models">
         <summary className="night-fold-summary"><span className="night-fold-number">01</span><strong>Моделі AI</strong><small>Вибір та маршрутизація</small><span className="night-fold-chevron" aria-hidden="true">⌄</span></summary>
@@ -586,11 +608,11 @@ export default function Home() {
         <div className="neo-service-strip">
           {integrations.map(s => <a className="neo-service-card" href={s.href} key={s.key} target="_blank" rel="noreferrer">
             <span className={"neo-service-logo neo-service-" + s.key}>{s.mark}</span>
-            <span className="neo-service-text"><strong>{s.title}</strong><small>{loading ? "Перевірка" : health?.integrations[s.key] ? "Ключ налаштовано" : "Не налаштовано"}</small></span>
+            <span className="neo-service-text"><strong>{s.title}</strong><small>{loading ? "Перевірка" : health?.integrations[s.key] ? "Інтеграція налаштована" : "Потрібна перевірка"}</small></span>
             <i className={"neo-service-dot" + (health?.integrations[s.key] ? " active" : "")} aria-hidden="true"/>
           </a>)}
         </div>
-        <p className="neo-small-note">Статус у картках показує наявність ключа, а не успіх запиту. Режим запису в GitHub: {health?.executionEnabled ? "дозволений" : "вимкнений"}.</p>
+        <p className="neo-small-note">Статус показує конфігурацію сервісів, а не результат тестового запису. Режим запису в GitHub: {health?.executionEnabled ? "дозволений" : "вимкнений"}.</p>
         <button className="diagnostic-button" type="button" onClick={() => { void checkIntegrations(); }} disabled={diagnosticsBusy}>
           <Icon name="refresh" size={16}/> {diagnosticsBusy ? "Перевіряю 8 підключень…" : "Перевірити реальні підключення"}
         </button>
@@ -606,7 +628,7 @@ export default function Home() {
               </span>
             </div>;
           })}</div>
-          <p className="diagnostic-caption">Читання GitHub: {diagnostics.githubRead ? "працює" : "недоступне"}. Запис у GitHub: {diagnostics.githubWrite === "missing_key" ? "немає токена" : diagnostics.githubWrite === "token_present_not_write_tested" ? "токен є, запис не тестувався" : "недоступний"}. Автоматичне виконання: {diagnostics.agentExecution === "disabled" ? "вимкнене" : "налаштоване, не тестувалося"}.</p>
+          <p className="diagnostic-caption">Читання GitHub: {diagnostics.githubRead ? "працює" : "недоступне"}. Запис у GitHub: {diagnostics.githubWrite === "missing_key" ? "не перевірено" : diagnostics.githubWrite === "token_present_not_write_tested" ? "авторизація є, запис не тестувався" : "недоступний"}. Автоматичне виконання: {diagnostics.agentExecution === "disabled" ? "вимкнене" : "налаштоване, не тестувалося"}.</p>
         </div> : null}
       </section>
       </details>
@@ -632,12 +654,12 @@ export default function Home() {
       <div className="multi-workbench">
       <section className="neo-chat-section" id="agent-composer" aria-label="AI-чат">
         <div className="multi-chat-heading">
-          <div><span>СТУДІЯ ARTSS</span><h2>{toolMode === "agent" ? selected === "multi" ? "Multi-agent чат" : "Чат із " + (models.find(m => m.id === selected)?.title || selected) : toolMode === "web" ? "Інтернет-дослідження" : "Генерація зображень"}</h2></div>
+          <div><span>ARTSS ONE / WORKSPACE</span><h2>{toolMode === "agent" ? selected === "multi" ? "Multi-agent чат" : "Чат із " + (models.find(m => m.id === selected)?.title || selected) : toolMode === "web" ? "Інтернет-дослідження" : "Генерація зображень"}</h2></div>
           <button type="button" onClick={() => goToSection("team")} aria-label="Показати команду агентів">Команда <span aria-hidden="true">↗</span></button>
         </div>
         {messages.length ? <div className="pm-thread neo-thread" ref={threadRef} role="log" aria-live="polite">
           {messages.map((message, index) => <article className={"pm-message " + message.role} key={index}>
-            <span className="pm-message-label">{message.role === "user" ? "ВИ" : "ARTSS AI"} <small>{message.meta || ""}</small></span>
+            <span className="pm-message-label">{message.role === "user" ? "ВИ" : "ARTSS ONE"} <small>{message.meta || ""}</small></span>
             <div className="pm-bubble">{message.content}{message.imageUrl ? <div className="image-result"><Image className="flagship-generated-image" src={message.imageUrl} alt="Зображення, створене агентом" width={1024} height={1024} unoptimized/><div className="image-result-actions"><button type="button" onClick={() => setOpenedImage(message.imageUrl!)}>Переглянути</button><button type="button" onClick={() => { void saveImage(message.imageUrl!); }}>Зберегти / Поділитися</button></div></div> : null}</div>
             {message.sources?.length ? <div className="web-source-list">{message.sources.map((src,i) => <a key={i} href={src.url} rel="noopener noreferrer" target="_blank">↗ {src.title || "Джерело " + (i+1)}</a>)}</div> : null}
             {message.role === "assistant" ? <button type="button" className="pm-copy" onClick={() => { void copy(message.content); }}><Icon name="copy" size={14}/> Копіювати</button> : null}
@@ -669,7 +691,7 @@ export default function Home() {
 
       </>}
       {notice ? <div className="pm-toast" role="status"><Icon name="check" size={16}/><span>{notice}</span><button type="button" onClick={() => setNotice("")} aria-label="Закрити">×</button></div> : null}
-      <footer className="pm-footer"><span>ARTSS AI <span className="pm-dot">●</span> PRIVATE AGENT STUDIO</span><span>Зв&apos;язок перевірено: {lastCheck || "—"}</span></footer>
+      <footer className="pm-footer"><span>ARTSS ONE <span className="pm-dot">✦</span> UNIFIED WORKSPACE</span><span>Зв&apos;язок перевірено: {lastCheck || "—"}</span></footer>
     </main>
     </div>
     <StudioSettingsPanel open={settingsOpen} value={preferences} onChange={setStudioSettings} onClose={() => setSettingsOpen(false)}
