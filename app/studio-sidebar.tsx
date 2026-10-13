@@ -79,7 +79,8 @@ export function StudioSidebar({ open, active, busy, onClose, onNavigate, onSetti
         <span><strong>ARTSS ONE</strong><small>UNIFIED WORKSPACE</small></span>
         <button type="button" className="studio-sidebar-close" aria-label="Закрити меню" onClick={onClose}>×</button>
       </div>
-      <div className="studio-sidebar-caption">УСЕ В ОДНОМУ МІСЦІ</div>
+      <button type="button" className="gemini-new-chat" disabled={busy} onClick={onNewChat}><span aria-hidden="true">＋</span> Новий чат</button>
+      <div className="studio-sidebar-caption">МОЇ ІНСТРУМЕНТИ</div>
       <nav className="studio-nav-links night-stairs" aria-label="Розділи">
         {groups.map(group => <details key={group.id} className="night-stair-group" open={expandedGroup === group.id}>
           <summary className="night-stair-summary" onClick={event => { event.preventDefault(); setExpandedGroup(previous => previous === group.id ? null : group.id); }}>
@@ -99,9 +100,8 @@ export function StudioSidebar({ open, active, busy, onClose, onNavigate, onSetti
       </nav>
       <div className="studio-sidebar-bottom night-sidebar-bottom">
         <button type="button" onClick={onSettings}><span aria-hidden="true">⚙</span> Налаштування</button>
-        <button type="button" onClick={onNewChat} disabled={busy}><span aria-hidden="true">＋</span> Новий запит</button>
         <button type="button" className="night-sidebar-collapse" onClick={onCollapse}><span aria-hidden="true">←</span> Згорнути панель</button>
-        <p>AI, код, зображення, пошук і підключення працюють в одному застосунку.</p>
+        <p>ARTSS ONE · Приватний AI-простір</p>
       </div>
     </aside>
   </>;
