@@ -212,6 +212,37 @@ export type OrchestrationReport = {
   judge?: ProviderId;
 };
 
+/** Avoid repeating known quota/authorization failures within a warm server instance.
+ * Explicit provider selections bypass cooldown so a newly fixed account can be retried. */
+const providerCooldown = new Map<ProviderId, { until: number; summary: string }>();
+
+async function runAvailableModel(
+  provider: ProviderId,
+  messages: ChatMessage[],
+  signal?: AbortSignal,
+  explicitlyRequested = false,
+) {
+  const blocked = providerCooldown.get(provider);
+  if (blocked && blocked.until <= Date.now()) providerCooldown.delete(provider);
+  else if (blocked && !explicitlyRequested) throw new Error(blocked.summary);
+
+  try {
+    const answer = await runModel(provider, messages, signal);
+    providerCooldown.delete(provider);
+    return answer;
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    const summary = providerErrorSummary(provider, error);
+    const code = Number(summary.match(/HTTP (402|403|429)\b/)?.[1]);
+    const cooldownMs = code === 402 ? 300_000
+      : code === 403 ? 120_000
+      : code === 429 ? 45_000
+      : summary.endsWith(": timeout") ? 30_000 : 0;
+    if (cooldownMs) providerCooldown.set(provider, { until: Date.now() + cooldownMs, summary });
+    throw error;
+  }
+}
+
 export async function runModelWithFallback(preferred: AgentMode, messages: ChatMessage[], signal?: AbortSignal): Promise<{
   provider: AgentMode; text: string; contributors: ProviderId[]; orchestration: OrchestrationReport
 }> {
@@ -224,7 +255,7 @@ export async function runModelWithFallback(preferred: AgentMode, messages: ChatM
   if (preferred === "multi" && configured.length > 1) {
     // Max 3 actual primary calls. Only count models that really returned text.
     const selected = configured.slice(0, 3);
-    const settled = await Promise.allSettled(selected.map(provider => runModel(provider, messages, signal)));
+    const settled = await Promise.allSettled(selected.map(provider => runAvailableModel(provider, messages, signal, preferred === provider)));
     checkAbort();
     const successes = settled.flatMap((result, index) =>
       result.status === "fulfilled" && result.value.trim()
@@ -242,7 +273,7 @@ export async function runModelWithFallback(preferred: AgentMode, messages: ChatM
         checkAbort();
         attempted.push(provider);
         try {
-          const text = await runModel(provider, messages, signal);
+          const text = await runAvailableModel(provider, messages, signal, preferred === provider);
           if (text.trim()) return {
             provider, text, contributors: [provider],
             orchestration: { strategy: "parallel", attempted, contributors: [provider], failed, synthesized: false },
@@ -267,7 +298,7 @@ export async function runModelWithFallback(preferred: AgentMode, messages: ChatM
           ...messages,
           { role: "system", content: "Combine and critically evaluate these independent AI outputs for the original request. Preserve valid structured JSON required by the calling application; do not expose provider internals or secrets. Return one complete final answer or one safe coherent JSON edit plan.\n\n" + candidates },
         ];
-        const text = await runModel(judge.provider, synthesis, signal);
+        const text = await runAvailableModel(judge.provider, synthesis, signal);
         if (text.trim()) return {
           provider: "multi", text, contributors,
           orchestration: { strategy: "parallel", attempted, contributors, failed, synthesized: true, judge: judge.provider },
@@ -291,7 +322,7 @@ export async function runModelWithFallback(preferred: AgentMode, messages: ChatM
     if (!configured.includes(provider)) continue;
     attempted.push(provider);
     try {
-      const text = await runModel(provider, messages, signal);
+      const text = await runAvailableModel(provider, messages, signal, preferred === provider);
       if (!text.trim()) throw new Error(provider + " returned an empty response.");
       return {
         provider, text, contributors: [provider],
