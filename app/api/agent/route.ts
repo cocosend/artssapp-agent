@@ -272,6 +272,10 @@ export async function POST(req: Request) {
         await safeFinishRun(runId, "failed", message);
       } catch {}
     }
-    return NextResponse.json({ error: message }, { status: 500 });
+    const providersUnavailable = message.startsWith("All configured AI providers failed:");
+    return NextResponse.json(
+      providersUnavailable ? { error: message, code: "PROVIDERS_UNAVAILABLE" } : { error: message },
+      { status: providersUnavailable ? 503 : 500 },
+    );
   }
 }
