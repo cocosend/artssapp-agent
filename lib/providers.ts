@@ -255,7 +255,7 @@ export async function runModelWithFallback(preferred: AgentMode, messages: ChatM
   if (preferred === "multi" && configured.length > 1) {
     // Max 3 actual primary calls. Only count models that really returned text.
     const selected = configured.slice(0, 3);
-    const settled = await Promise.allSettled(selected.map(provider => runAvailableModel(provider, messages, signal, preferred === provider)));
+    const settled = await Promise.allSettled(selected.map(provider => runAvailableModel(provider, messages, signal)));
     checkAbort();
     const successes = settled.flatMap((result, index) =>
       result.status === "fulfilled" && result.value.trim()
@@ -273,7 +273,7 @@ export async function runModelWithFallback(preferred: AgentMode, messages: ChatM
         checkAbort();
         attempted.push(provider);
         try {
-          const text = await runAvailableModel(provider, messages, signal, preferred === provider);
+          const text = await runAvailableModel(provider, messages, signal);
           if (text.trim()) return {
             provider, text, contributors: [provider],
             orchestration: { strategy: "parallel", attempted, contributors: [provider], failed, synthesized: false },
