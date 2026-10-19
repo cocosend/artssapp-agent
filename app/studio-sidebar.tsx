@@ -1,108 +1,91 @@
-"use client";
+import React from "react";
 
-import { useEffect, useState } from "react";
-import { ArtssMark } from "./artss-mark";
+export type StudioSection = "home" | "code" | "team" | "runs" | "models" | "integrations" | "web" | "images" | "painter";
 
-export type StudioSection = "team" | "home" | "code" | "web" | "images" | "models" | "integrations" | "runs";
-
-const groups: { id: string; title: string; icon: string; items: { id: StudioSection; icon: string; title: string; subtitle: string }[] }[] = [
-  { id: "work", title: "Робочий простір", icon: "▤", items: [
-    { id: "home", icon: "⌂", title: "Головна", subtitle: "Єдиний AI-простір" },
-    { id: "team", icon: "✦", title: "Multi-Agent", subtitle: "Команда моделей" },
-    { id: "code", icon: "〈/〉", title: "Онлайн-кодинг", subtitle: "Файли GitHub" },
-    { id: "web", icon: "◎", title: "Інтернет", subtitle: "Пошук та джерела" },
-    { id: "images", icon: "▧", title: "Зображення", subtitle: "Генерація AI" },
-  ]},
-  { id: "systems", title: "Моделі та система", icon: "◫", items: [
-    { id: "models", icon: "✳", title: "AI-моделі", subtitle: "Вибір провайдера" },
-    { id: "integrations", icon: "⬡", title: "Інтеграції", subtitle: "Статус підключень" },
-    { id: "runs", icon: "◷", title: "Запуски", subtitle: "Історія задач" },
-  ]},
-];
-
-type Props = {
+export function StudioSidebar({
+  activeSection,
+  onSelectSection,
+  open,
+  onClose,
+}: {
+  activeSection: StudioSection;
+  onSelectSection: (section: StudioSection) => void;
   open: boolean;
-  active: StudioSection;
-  busy: boolean;
   onClose: () => void;
-  onNavigate: (id: StudioSection) => void;
-  onSettings: () => void;
-  onNewChat: () => void;
-  onCollapse: () => void;
-};
+}) {
+  const items: { id: StudioSection; title: string; symbol: string; badge?: string }[] = [
+    { id: "home", title: "Головна Студія", symbol: "⌂" },
+    { id: "painter", title: "Онлайн Рисовалка", symbol: "✎", badge: "NEW" },
+    { id: "code", title: "Редактор Коду", symbol: "⟨/⟩" },
+    { id: "team", title: "Multi-Agent Команда", symbol: "✳" },
+    { id: "images", title: "Генератор Зображень", symbol: "❖" },
+    { id: "web", title: "Веб Пошук та Аналіз", symbol: "🌐" },
+    { id: "runs", title: "Історія Запусків", symbol: "⚡" },
+    { id: "models", title: "ШІ Моделі", symbol: "◎" },
+    { id: "integrations", title: "Інтеграції та Ключі", symbol: "⚙" },
+  ];
 
-export function StudioSidebar({ open, active, busy, onClose, onNavigate, onSettings, onNewChat, onCollapse }: Props) {
-  const [expandedGroup, setExpandedGroup] = useState<string | null>("work");
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  return (
+    <>
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 flex flex-col transition-transform duration-300 lg:static lg:translate-x-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="h-16 px-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+          <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-indigo-600 to-sky-500 bg-clip-text text-transparent">
+            ARTSS AI Studio
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="lg:hidden w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          >
+            ✕
+          </button>
+        </div>
 
-  useEffect(() => {
-    if (!open || !window.matchMedia("(max-width: 980px)").matches) return;
-    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const previousOverflow = document.body.style.overflow;
-    const sidebar = document.getElementById("studio-nav");
-    document.body.style.overflow = "hidden";
-    sidebar?.querySelector<HTMLButtonElement>(".studio-sidebar-close")?.focus({ preventScroll: true });
+        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
+          {items.map(item => {
+            const isActive = activeSection === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  onSelectSection(item.id);
+                  onClose();
+                }}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition ${
+                  isActive
+                    ? "bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-semibold"
+                    : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <span className="text-base w-5 text-center">{item.symbol}</span>
+                  {item.title}
+                </span>
+                {item.badge && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-600 text-white">
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
 
-    const keepKeyboardInside = (event: KeyboardEvent) => {
-      if (event.key !== "Tab" || !sidebar) return;
-      const focusable = Array.from(sidebar.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), a[href], summary, input:not([disabled]), select:not([disabled])'
-      )).filter(element => element.getClientRects().length > 0);
-      if (!focusable.length) return;
-      const first = focusable[0], last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener("keydown", keepKeyboardInside);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener("keydown", keepKeyboardInside);
-      previousFocus?.focus({ preventScroll: true });
-    };
-  }, [open]);
-
-  return <>
-    {open ? <button type="button" className="studio-sidebar-scrim" onClick={onClose} aria-label="Закрити меню"/> : null}
-    <aside className={"studio-sidebar night-sidebar" + (open ? " is-open" : "")} id="studio-nav" aria-label="Навігація ARTSS AI">
-      <div className="studio-sidebar-brand">
-        <span className="studio-sidebar-logo"><ArtssMark size={30}/></span>
-        <span><strong>ARTSS ONE</strong><small>UNIFIED WORKSPACE</small></span>
-        <button type="button" className="studio-sidebar-close" aria-label="Закрити меню" onClick={onClose}>×</button>
-      </div>
-      <button type="button" className="gemini-new-chat" disabled={busy} onClick={onNewChat}><span aria-hidden="true">＋</span> Новий чат</button>
-      <div className="studio-sidebar-caption">МОЇ ІНСТРУМЕНТИ</div>
-      <nav className="studio-nav-links night-stairs" aria-label="Розділи">
-        {groups.map(group => <details key={group.id} className="night-stair-group" open={expandedGroup === group.id}>
-          <summary className="night-stair-summary" onClick={event => { event.preventDefault(); setExpandedGroup(previous => previous === group.id ? null : group.id); }}>
-            <span aria-hidden="true">{group.icon}</span><strong>{group.title}</strong><span className="night-stair-arrow" aria-hidden="true">⌄</span>
-          </summary>
-          <div className="night-stair-children">
-            {group.items.map(item => <button type="button" key={item.id}
-              className={"studio-nav-item night-stair-item" + (active === item.id ? " active" : "")}
-              aria-current={active === item.id ? "page" : undefined}
-              onClick={() => onNavigate(item.id)}>
-              <span className="studio-nav-symbol" aria-hidden="true">{item.icon}</span>
-              <span><strong>{item.title}</strong><small>{item.subtitle}</small></span>
-              <span className="studio-nav-arrow" aria-hidden="true">›</span>
-            </button>)}
-          </div>
-        </details>)}
-      </nav>
-      <div className="studio-sidebar-bottom night-sidebar-bottom">
-        <button type="button" onClick={onSettings}><span aria-hidden="true">⚙</span> Налаштування</button>
-        <button type="button" className="night-sidebar-collapse" onClick={onCollapse}><span aria-hidden="true">←</span> Згорнути панель</button>
-        <p>ARTSS ONE · Приватний AI-простір</p>
-      </div>
-    </aside>
-  </>;
+        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 text-xs text-zinc-400 text-center">
+          ARTSS Apps v0.1 • Android & PWA Ready
+        </div>
+      </aside>
+    </>
+  );
 }
