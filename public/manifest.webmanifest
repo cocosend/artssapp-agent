@@ -1,7 +1,7 @@
 {
   "name": "ARTSS ONE — AI Workspace",
   "short_name": "ARTSS ONE",
-  "description": "Приватний мультимодельний AI-агент ARTSS для iPhone.",
+  "description": "ARTSS ONE CHROMA: приватний мультимодельний AI-агент для iPhone та Android.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
