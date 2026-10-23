@@ -1,0 +1,58 @@
+/* ARTSS ONE / CHROMA COMMAND — canonical AI agent visual system.
+   Presentation-only; authorization, model routing and task execution remain unchanged. */
+:root{color-scheme:dark;--chroma-void:#080611;--chroma-panel:#171020;--chroma-pink:#ff3c87;--chroma-orange:#ff9160;--chroma-lime:#c5ff45;--chroma-ice:#67ffe1;--chroma-purple:#9d63ff}
+html,body{background:#080611!important;color:#fff6fc!important}
+.gemini-shell,.gemini-shell .studio-layout{background:radial-gradient(ellipse at 18% -10%,#72235e65,transparent 43%),radial-gradient(ellipse at 87% 20%,#33349a55,transparent 48%),linear-gradient(145deg,#120c1b,#080611 58%,#120917)!important;color:#fff7fb!important}
+.gemini-shell{font-family:Inter,-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif!important;-webkit-font-smoothing:antialiased}
+.gemini-shell .studio-workarea,.gemini-shell .neo-main,.gemini-shell .studio-layout .studio-workarea{background:transparent!important}
+.gemini-shell .neo-header{background:linear-gradient(125deg,#311a38e8,#140e21f0)!important;border-bottom:1px solid #ad6aa0!important;box-shadow:0 6px 25px #0007!important;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.gemini-shell .pm-brand-label,.gemini-shell .studio-sidebar-logo strong{color:#fff!important;font-weight:1000!important;letter-spacing:-.035em!important;text-shadow:1px 2px #8d2755,0 0 19px #ff398960}
+.gemini-shell .pm-brand-mark,.gemini-shell .flagship-logo{background:linear-gradient(135deg,#ff4b8f,#893dca)!important;border:1px solid #ff97c7!important;box-shadow:0 0 17px #ff3b885d,inset 0 1px #fff9!important}
+.gemini-shell .pm-dot,.gemini-shell .pm-live,.gemini-shell .neo-service-dot.on{background:var(--chroma-lime)!important;box-shadow:0 0 12px #c5ff4599!important}
+.gemini-shell .neo-header button,.gemini-shell .pm-round-icon,.gemini-shell .flagship-header-menu{background:linear-gradient(150deg,#412347,#170f24)!important;border:1px solid #805483!important;color:#fff!important;box-shadow:inset 0 1px #fff4!important;border-radius:12px!important}
+.gemini-shell .night-sidebar,.gemini-shell .studio-sidebar{background:linear-gradient(165deg,#26132f,#100b1c 68%,#080710)!important;border-right:1px solid #714479!important;box-shadow:9px 0 27px #0009!important}
+.gemini-shell .studio-sidebar-brand,.gemini-shell .night-stair-group,.gemini-shell .night-sidebar-bottom{border-color:#594067!important}
+.gemini-shell .studio-sidebar-caption,.gemini-shell .night-stair-summary,.gemini-shell .night-fold-summary{color:#e4c9f5!important}
+.gemini-shell .night-stair-item{color:#dbcae8!important;border-radius:13px!important;transition:background .14s,border-color .14s}
+.gemini-shell .night-stair-item:hover{background:#512554!important}
+.gemini-shell .night-stair-item.active{background:linear-gradient(110deg,#e8378c,#a943bd)!important;border:1px solid #ff9dca!important;color:#fff!important;box-shadow:0 5px 19px #e52f8055,inset 0 1px #fff7!important}
+.gemini-shell .night-stair-item.active .studio-nav-symbol{color:var(--chroma-lime)!important}
+.gemini-shell .gemini-new-chat{background:linear-gradient(115deg,#ff428e,#ff875d)!important;border:1px solid #ffb6be!important;color:#160d1e!important;font-weight:1000!important;box-shadow:0 8px 22px #f3368170,inset 0 1px #fff9!important;border-radius:14px!important}
+.gemini-shell .gemini-greeting-kicker{color:var(--chroma-lime)!important;font-weight:950!important;letter-spacing:.22em!important}
+.gemini-shell .gemini-greeting h1{color:#fff!important;font-weight:1000!important;line-height:1.1!important;letter-spacing:-.045em!important}
+.gemini-shell .gemini-gradient-text{background:linear-gradient(100deg,#ff458d 4%,#ffac69 38%,#d2ff58 72%,#78ffdf)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;filter:drop-shadow(0 0 21px #ff408b3b)}
+.gemini-shell .gemini-sparkle{color:var(--chroma-orange)!important;filter:drop-shadow(0 0 12px #ff875b80)}
+.gemini-shell .gemini-suggestions{gap:11px!important}
+.gemini-shell .gemini-suggestions button,.gemini-shell .neo-action,.gemini-shell .neo-service-card,.gemini-shell .one-service-rail button{position:relative;border:1px solid #865b91!important;border-radius:20px!important;background:radial-gradient(ellipse at 85% -18%,#8f2c824b,transparent 64%),linear-gradient(145deg,#32203e,#120e21 78%)!important;box-shadow:inset 0 1px #ffffff61,0 11px 25px #0008!important;color:#fff!important;transition:transform .16s,box-shadow .16s,filter .16s!important}
+.gemini-shell .gemini-suggestions button:nth-child(2),.gemini-shell .one-service-rail button:nth-child(2){border-color:#9c6ac7!important;background:linear-gradient(150deg,#38234a,#151024)!important}
+.gemini-shell .gemini-suggestions button:nth-child(3),.gemini-shell .one-service-rail button:nth-child(3){border-color:#cf6883!important;background:linear-gradient(150deg,#46223d,#151024)!important}
+.gemini-shell .gemini-suggestions button:nth-child(4),.gemini-shell .one-service-rail button:nth-child(4){border-color:#4a978f!important;background:linear-gradient(150deg,#193d41,#141021)!important}
+@media(hover:hover){.gemini-shell .gemini-suggestions button:hover,.gemini-shell .neo-service-card:hover,.gemini-shell .one-service-rail button:hover{transform:translateY(-3px);box-shadow:inset 0 1px #fff9,0 15px 27px #ff2c8945!important;filter:brightness(1.12)}}
+.gemini-shell .gemini-chip-icon.blue{background:linear-gradient(145deg,#ff478d,#a03bce)!important;color:white!important}
+.gemini-shell .gemini-chip-icon.violet{background:linear-gradient(145deg,#8552f6,#e957a1)!important;color:white!important}
+.gemini-shell .gemini-chip-icon.coral{background:linear-gradient(145deg,#ff6b65,#ffae63)!important;color:#1c0b10!important}
+.gemini-shell .gemini-chip-icon.mint{background:linear-gradient(145deg,#bfff3c,#5ef5bd)!important;color:#121820!important}
+.gemini-shell .neo-section,.gemini-shell .neo-chat-section,.gemini-shell .multi-team-panel,.gemini-shell .diagnostic-panel,.gemini-shell .online-code-studio{background:linear-gradient(150deg,#24152e,#110c1d)!important;border:1px solid #764d82!important;border-radius:20px!important;box-shadow:inset 0 1px #ffffff30,0 10px 26px #0008!important}
+.gemini-shell .neo-section-head,.gemini-shell .multi-team-heading,.gemini-shell .multi-chat-heading{color:#fff!important}
+.gemini-shell .neo-model,.gemini-shell .multi-agent-card{border:1px solid #6f537f!important;background:linear-gradient(145deg,#2c1e39,#130f22)!important;color:#e7dbf4!important;border-radius:15px!important}
+.gemini-shell .neo-model.chosen,.gemini-shell .multi-agent-card.is-selected{background:linear-gradient(130deg,#6b285e,#342054)!important;border:1px solid #ff78b0!important;box-shadow:inset 4px 0 0 var(--chroma-lime),0 0 20px #ff368744!important;color:#fff!important}
+.gemini-shell .gemini-model-picker,.gemini-shell .neo-composer-tools button{color:#f4e6fd!important;background:#2b1938!important;border:1px solid #7c5793!important;border-radius:12px!important}
+.gemini-shell .neo-composer-tools button.tool-active{background:#8f356e!important;border-color:#ff9ec7!important}
+.gemini-shell .pm-composer{background:linear-gradient(145deg,#301c3b,#120e20)!important;border:1px solid #a36aa1!important;border-radius:21px!important;box-shadow:0 7px 30px #000c,0 0 20px #f33e8f29,inset 0 1px #ffffff50!important}
+.gemini-shell .pm-composer textarea{color:white!important;background:transparent!important;caret-color:var(--chroma-lime)!important}
+.gemini-shell .pm-composer textarea::placeholder{color:#bfaecc!important}
+.gemini-shell .neo-chat-section .pm-submit,.gemini-shell .multi-run-button,.gemini-shell .code-submit{background:linear-gradient(120deg,#d5ff62,#9cf9af,#64fce0)!important;color:#171722!important;border:1px solid #edffa5!important;border-radius:14px!important;box-shadow:0 7px 23px #bfff3951,inset 0 1px white!important;font-weight:1000!important}
+.gemini-shell .neo-chat-section .pm-submit:disabled{background:#353046!important;color:#bbadcc!important;border-color:#5d4b72!important;box-shadow:none!important}
+.gemini-shell .pm-bubble{background:#21162d!important;border:1px solid #563d68!important;color:#fbf0ff!important;border-radius:18px!important}
+.gemini-shell .pm-message.user .pm-bubble{background:linear-gradient(125deg,#7f2e72,#41275c)!important;border-color:#e773ad!important}
+.gemini-shell .pm-message-label,.gemini-shell .neo-model-status,.gemini-shell .multi-agent-state{color:#d5c0e3!important}
+.gemini-shell .pm-footer,.gemini-shell .neo-small-note,.gemini-shell .multi-team-disclaimer{color:#ad9dbd!important}
+.gemini-shell button:focus-visible,.gemini-shell a:focus-visible,.gemini-shell input:focus-visible,.gemini-shell textarea:focus-visible,.gemini-shell summary:focus-visible{outline:2px solid var(--chroma-ice)!important;outline-offset:3px!important}
+.studio-login,.pm-login{background:radial-gradient(ellipse at 30% -15%,#993b7d,#1b1029 47%,#080611)!important}
+.studio-login-card,.pm-login-card,.studio-settings-panel{background:linear-gradient(145deg,#321c40,#120e21)!important;border:1px solid #b17ab0!important;border-radius:23px!important;box-shadow:0 21px 67px #000b!important;color:white!important}
+.studio-login-card h1 span{background:linear-gradient(105deg,#ff4995,#ffab71,#caff57)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important}
+.studio-login-card .pm-login-submit{background:linear-gradient(125deg,#ff478b,#ff9960)!important;border:1px solid #ffbfa4!important;color:#200f19!important;font-weight:1000!important}
+@media(max-width:600px){.gemini-shell .gemini-greeting h1{font-size:clamp(30px,8vw,45px)!important}.gemini-shell .gemini-suggestions{gap:9px!important}.gemini-shell .gemini-suggestions button{min-height:112px;border-radius:16px!important}.gemini-shell .neo-section,.gemini-shell .neo-chat-section{border-radius:17px!important}}
+@media(prefers-reduced-motion:reduce){.gemini-shell *,.gemini-shell *:before,.gemini-shell *:after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+
+@media(prefers-contrast:more){.gemini-shell .neo-section,.gemini-shell .neo-chat-section,.gemini-shell .pm-composer{border-color:#ffafe3!important}.gemini-shell .pm-footer,.gemini-shell .neo-small-note{color:#f3dfff!important}}

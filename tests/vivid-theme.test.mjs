@@ -29,8 +29,12 @@ test("Installable app and browser chrome use the same ARTSS ONE palette", () => 
   const manifest = JSON.parse(readFileSync(new URL("../public/manifest.webmanifest", import.meta.url), "utf8"));
   const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.equal(manifest.name, "ARTSS ONE — AI Workspace");
-  assert.equal(manifest.theme_color, "#090e1e");
-  assert.equal(manifest.background_color, "#090e1e");
-  assert.match(layout, /themeColor: "#090e1e"/);
+  assert.equal(manifest.theme_color, "#120c1b");
+  assert.equal(manifest.background_color, "#120c1b");
+  assert.match(layout, /themeColor: "#120c1b"/);
   assert.match(layout, /\.\/gemini-inspired\.css/);
+  assert.match(layout, /\.\/chroma-command\.css/);
+  const chroma = readFileSync(new URL("../app/chroma-command.css", import.meta.url), "utf8");
+  assert.ok(chroma.includes("prefers-reduced-motion"));
+  assert.ok(chroma.includes("focus-visible"));
 });
