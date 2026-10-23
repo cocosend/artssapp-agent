@@ -54,3 +54,5 @@ html,body{background:#080611!important;color:#fff6fc!important}
 .studio-login-card .pm-login-submit{background:linear-gradient(125deg,#ff478b,#ff9960)!important;border:1px solid #ffbfa4!important;color:#200f19!important;font-weight:1000!important}
 @media(max-width:600px){.gemini-shell .gemini-greeting h1{font-size:clamp(30px,8vw,45px)!important}.gemini-shell .gemini-suggestions{gap:9px!important}.gemini-shell .gemini-suggestions button{min-height:112px;border-radius:16px!important}.gemini-shell .neo-section,.gemini-shell .neo-chat-section{border-radius:17px!important}}
 @media(prefers-reduced-motion:reduce){.gemini-shell *,.gemini-shell *:before,.gemini-shell *:after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+
+@media(prefers-contrast:more){.gemini-shell .neo-section,.gemini-shell .neo-chat-section,.gemini-shell .pm-composer{border-color:#ffafe3!important}.gemini-shell .pm-footer,.gemini-shell .neo-small-note{color:#f3dfff!important}}
