@@ -12,6 +12,7 @@ import "./obsidian-burgundy.css";
 import "./obsidian-quality.css";
 import "./unified-studio.css";
 import "./gemini-inspired.css";
+import "./chroma-command.css";
 
 export const metadata: Metadata = {
   title: "ARTSS ONE — AI Assistant",
@@ -26,7 +27,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#090e1e",
+  themeColor: "#120c1b",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
