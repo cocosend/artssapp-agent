@@ -48,3 +48,29 @@ The currently deployed canonical static DJ app (`cocosend/artss-djs`) is not the
 - No background execution is implied by this document or the presence of a chat plugin. Scheduled checks need an authorized scheduler with persistent connector access.
 
 _Last reviewed: 2026-10-14._
+
+
+## Audit — 2026-10-23
+
+Checked the connected GitHub, Vercel and Supabase inventories (configuration **names only**, no secret values).
+
+| Service | Confirmed state | Decision |
+| --- | --- | --- |
+| AI control plane | \`cocosend/artssapp-agent\` main \`69502842\`; Vercel \`artssapp-agent\` production READY at the same SHA; main protected, four branches total | **KEEP**; canonical control plane and branch. |
+| AI Vercel duplicate | \`artssgent\` deployed the same \`69502842\` main SHA; it has \`FLAGS_SECRET\` configured separately | **REVIEW / PAUSE** duplicate deploys only after hostname traffic, secret references and rollback checks; do not delete blindly. |
+| DJ source | \`cocosend/artss-djs\` main \`89118b6b\` is v30, with 39 listed branches | **KEEP**; audit 38 non-main branches before pruning. |
+| DJ production | \`artss-djs\` production has READY deployment \`ca9d1989\` from \`release/nexus30-performance-studio\` (v32), not current main | **FIX BRANCH DRIFT** before assigning main to production. Do not accidentally downgrade the working engine. |
+| DJ redesign | PR #57 \`feat/artss-chroma-live32-20261023\`, targeted at the v32 release branch | Verify exact-sha CI, Chromium/WebKit and Vercel preview before production promotion. |
+| Eve | \`cocosend/artssgents-agent\` ↔ Vercel \`artssgents\`; separate production runtime | **KEEP** until feature/data/session migration audit. |
+| Supabase | \`ARTSSAGENTSSBOT\` (\`hyvsmtxewxpfnlzfjvca\`) ACTIVE_HEALTHY | **KEEP** one persistence system and its access controls. |
+| Legacy Vercel | Four \`Techno-ej\` linked targets: \`techno-ej\`, \`techno-yezh\`, \`texnoezh\`, \`texnoyizhak\`; additional \`artsocksss\` apps and \`artss-camera\` | **AUDIT** first. Do not assume duplication. |
+
+Canonical AI Vercel currently enforces SSO for all targets; public \`/api/health\` checks cannot substitute authenticated verification.
+DJ and AI are two functionally distinct applications and should stay on separate repositories and domains.
+
+### Exact cleanup gate
+1. Save a rollback commit and last known READY production deployment; check domain traffic and outgoing integrations.
+2. Compare env-key names and scopes (never publish values), migrations, storage keys, API consumers and domain bindings for each duplicate candidate.
+3. Build and test the chosen DJ source with \`npm run check\`, native DSP test, mobile Chromium/WebKit and a READY Vercel deployment matching the exact commit.
+4. Unify the DJ release history and protect one production branch; only then remove unmerged redundant refs after conflict and uniqueness checks.
+5. Pause proved-duplicate deployments; delete or rename a resource only after feature parity, backup/export, consumer check and rollback.
